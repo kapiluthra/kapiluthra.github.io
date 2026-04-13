@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrating 150M Documents to Kubernetes-Native Content Server — Kapil Uthra</title>
+<meta name="description" content="Architecture, tooling, and hard lessons from the Securex Belgium engagement: migrating 150 million documents into a Kubernetes-native OpenText Content Server deployment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin: 2rem 0; }
+.stat-cell { background: var(--bg-2); padding: 1.25rem; text-align: center; }
+.stat-num { font-size: 1.6rem; font-weight: 700; color: var(--amber); line-height: 1; margin-bottom: 0.3rem; }
+.stat-label { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / deep dive
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Deep Dive · Migration</div>
+    <h1 class="article-title">Migrating 150M Documents to Kubernetes-Native Content Server</h1>
+    <p class="article-subtitle">Architecture, tooling, and hard lessons from the Securex Belgium engagement — moving 150 million documents from a legacy ECM system into a cloud-native OpenText Content Server deployment, with zero data loss.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>February 2026</span>
+      <span>~16 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">migration</span><span class="tag">kubernetes</span><span class="tag">opentext</span><span class="tag">enterprise</span><span class="tag">cloud</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <div class="stat-row">
+      <div class="stat-cell"><div class="stat-num">150M</div><div class="stat-label">Documents</div></div>
+      <div class="stat-cell"><div class="stat-num">0</div><div class="stat-label">Data Loss</div></div>
+      <div class="stat-cell"><div class="stat-num">K8s</div><div class="stat-label">Target Platform</div></div>
+    </div>
+
+    <p>When Securex Belgium approached us at Turnpikes, they had a specific problem: 150 million documents sitting in a legacy ECM system that had reached end-of-life, and a hard deadline to complete the migration. The target was a Kubernetes-native OpenText Content Server deployment, also integrated with their Salesforce CRM through Extended ECM for Salesforce.</p>
+
+    <p>This is the architecture writeup. What we built, how the migration tooling worked, and what surprised us along the way.</p>
+
+    <h2>Why Kubernetes for Content Server</h2>
+
+    <p>Content Server on Kubernetes is fundamentally different from traditional on-premise or even cloud-VM deployments. The main benefits are horizontal pod autoscaling (you can spin up additional CS nodes during migration bursts and scale back down), rolling deployments with zero downtime, and native integration with cloud storage backends (S3 or Azure Blob) for the binary object store.</p>
+
+    <p>The main challenge is stateful storage. Content Server has two storage concerns: the <strong>database</strong> (Oracle or SQL Server — must run outside the cluster on a managed service) and the <strong>OTCS file store</strong> (the binary objects — which maps to S3 or a persistent volume). Getting the persistent volume and storage class configuration right is essential. We learned this the hard way on an earlier engagement where the wrong storage class caused I/O latency that looked like Content Server performance issues.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Storage class matters:</strong> For the OTCS file store on AKS or EKS, use premium SSD storage classes for the primary node and blob/object storage for archive tiers. The default standard storage classes that come with managed Kubernetes will cause performance issues at scale.</p></div>
+    </div>
+
+    <h2>The Migration Architecture</h2>
+
+    <p>We used the Turnpikes Migration Tool — a tool I product-managed — as the core migration engine. The overall flow breaks into three phases: <strong>extraction</strong> (read from source system), <strong>transformation</strong> (map metadata, clean data, build OTCS target model), and <strong>load</strong> (write into Content Server via API or direct DB + file store injection).</p>
+
+    <p>For 150M documents, API-only ingestion is too slow. We used a <strong>hybrid approach</strong>: metadata goes through the OTCS REST API (which handles the DTree entries, category assignments, and permission sets), while binary content is injected directly into the S3 file store with checksums verified post-injection. This reduced ingestion time from an estimated 180 days (API-only) to under 6 weeks.</p>
+
+    <h2>Metadata Mapping: The Real Work</h2>
+
+    <p>Binary injection is the fast part. The slow, difficult, high-risk part is <strong>metadata mapping</strong>. The source system used a flat metadata model with 40+ fields, some populated inconsistently over 15 years of data entry. The target Content Server model used OTCS Categories with strict attribute types.</p>
+
+    <p>The transformation layer had to handle:</p>
+
+    <ul>
+      <li><strong>Date normalization:</strong> source data had at least 6 different date formats. We wrote an explicit parser chain and logged every document where date parsing required fallback logic.</li>
+      <li><strong>Owner mapping:</strong> source user IDs from the legacy system needed to map to OTCS user accounts. Some legacy users no longer existed; we created a "migrated content" system account as the default owner with the original owner stored in a custom attribute.</li>
+      <li><strong>Category assignment:</strong> not all documents could be auto-categorized. The transformation layer classified documents using filename patterns and source-system metadata, then flagged uncertain classifications for manual review. We ended up manually reviewing ~2% of documents.</li>
+      <li><strong>Permission inheritance:</strong> the legacy system had custom permission sets that didn't map cleanly to OTCS ACLs. We defined a mapping table and validated it with the client's security team before the migration run.</li>
+    </ul>
+
+    <h2>Parallel Migration Streams</h2>
+
+    <p>150M documents can't run in a single sequential process. We partitioned the source corpus into 20 streams by document category and ran them in parallel, each targeting a separate Kubernetes Job. This gave us:</p>
+
+    <ul>
+      <li><strong>Fault isolation:</strong> a failure in one stream doesn't affect others. We could resume failed streams from their last checkpoint.</li>
+      <li><strong>Progress visibility:</strong> each stream reported its count and rate independently. We could see exactly which categories were slow and why.</li>
+      <li><strong>Load distribution:</strong> streams targeting high-volume document types (invoices, contracts) were allocated more Kubernetes resources than low-volume types.</li>
+    </ul>
+
+    <p>Checkpointing was implemented at the document level using a PostgreSQL tracking table. Every document got a status: <code>pending</code>, <code>extracted</code>, <code>transformed</code>, <code>loaded</code>, <code>verified</code>, or <code>failed</code>. If a stream crashed, it resumed from the last <code>verified</code> checkpoint.</p>
+
+    <h2>Verification: Trust Nothing Until Proven</h2>
+
+    <p>For a migration of this scale, you need systematic verification — not spot checks. Our verification pipeline ran after every batch and confirmed:</p>
+
+    <ul>
+      <li><strong>Row count parity:</strong> documents in source vs documents in OTCS target, by category.</li>
+      <li><strong>Checksum verification:</strong> SHA-256 of every binary object in source compared to OTCS file store. This caught two edge cases where the S3 injection had silently corrupted files (the culprit was a character encoding issue in filenames with special characters).</li>
+      <li><strong>Metadata spot checks:</strong> statistical sample of 1000 random documents comparing source metadata to OTCS Category attributes.</li>
+      <li><strong>Permission audit:</strong> for a random sample of 500 documents, verify that the migrated OTCS permissions match the source system permissions.</li>
+    </ul>
+
+    <p>The checksum verification step caught 147 corrupted documents out of 150 million — a rate of about 0.0001%. Trivial in percentage terms, but 147 lost documents would have been unacceptable to the client. We re-migrated all 147 successfully.</p>
+
+    <h2>The Salesforce Integration Layer</h2>
+
+    <p>Alongside the migration, we implemented Extended ECM for Salesforce — so sales users could access relevant documents directly from their Salesforce CRM records. This required mapping Salesforce Account and Opportunity IDs to OTCS workspace structures created during migration.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Timing matters:</strong> the xECM for Salesforce configuration must be in place before migration completes — not after. Workspaces need to be created with the correct Business Workspace type for Salesforce integration to link correctly. Retrofitting the workspace type on millions of nodes after migration is not fun.</p></div>
+    </div>
+
+    <h2>What I'd Do Differently</h2>
+
+    <p>The migration completed successfully — 150M documents, zero data loss, on schedule. But there were things I'd approach differently next time:</p>
+
+    <ul>
+      <li><strong>Start checkpointing earlier in design.</strong> We added document-level checkpointing partway through development. Starting with it would have saved two weeks of rework.</li>
+      <li><strong>Run a 1M document dry-run on production infrastructure</strong> before committing to the full migration. We ran our dry-runs on staging, which had different storage performance characteristics than production. The production run initially ran slower than projected until we tuned the S3 injection batch sizes.</li>
+      <li><strong>Plan the post-migration indexing time explicitly.</strong> After loading 150M documents, Content Server's full-text search index needed significant time to catch up. Users expected search to work immediately after go-live. We should have communicated the indexing window more clearly in advance.</li>
+    </ul>
+
+    <p>Large-scale ECM migrations are one of the more complex, less glamorous problems in enterprise IT — there's no clever algorithm that makes 150 million files move faster. What matters is systematic engineering: good tooling, careful metadata work, verification at every stage, and the discipline to not skip steps when schedule pressure builds.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-xecm-sap-patterns.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">xECM for SAP: Architecture Patterns That Actually Work</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-zero-downtime-ecm-upgrades.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+</body>
+</html>

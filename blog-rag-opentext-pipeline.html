@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a Production RAG Pipeline for OpenText Content Server — Kapil Uthra</title>
+<meta name="description" content="End-to-end walkthrough: OTCSTicket auth, document discovery, chunking strategies, ChromaDB ingestion, and hybrid retrieval with RRF reranking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+
+/* ARTICLE BODY */
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / tutorial
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Tutorial · Deep Dive</div>
+    <h1 class="article-title">Building a Production RAG Pipeline for OpenText Content Server</h1>
+    <p class="article-subtitle">End-to-end walkthrough: OTCSTicket auth, document discovery, chunking strategies, ChromaDB ingestion, and hybrid retrieval with RRF reranking — from a 13-year ECM veteran who actually built this.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>April 2026</span>
+      <span>~18 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">opentext</span>
+      <span class="tag">chromadb</span>
+      <span class="tag">python</span>
+      <span class="tag">ollama</span>
+      <span class="tag">enterprise</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>Most RAG tutorials start with a folder of PDFs and a simple vector store. That's fine for demos. But if you're working in an enterprise environment with OpenText Content Server as your document repository, you face a completely different set of problems: authentication tokens that expire mid-crawl, deeply nested folder hierarchies, container nodes vs document nodes, ACL-based access control, and a REST API that has a few non-obvious quirks if you don't know where to look.</p>
+
+    <p>I've spent 13 years working with OpenText Content Server — from version 9.7 through current cloud-native deployments. Recently, I built a production RAG pipeline targeting 500+ enterprise documents in OTCS. This article is the writeup I wish had existed when I started.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p>The stack: Python 3.11, ChromaDB (vector store), Ollama with <code>nomic-embed-text</code> embeddings, Streamlit (chatbot UI). OTCS version 23.4 on Kubernetes. The patterns apply broadly to any recent OTCS version.</p></div>
+    </div>
+
+    <h2>Architecture Overview</h2>
+
+    <p>Before diving into code, let's establish the overall shape of the system. There are two main phases: <strong>ingestion</strong> (crawling OTCS, chunking, embedding) and <strong>retrieval</strong> (query processing, hybrid search, answer generation).</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">System Architecture — OTCS RAG Pipeline</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Source</div><div class="arch-name">OpenText CS</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Client</div><div class="arch-name">cs_client.py</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Process</div><div class="arch-name">Chunker</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Embed</div><div class="arch-name">Ollama / nomic</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Store</div><div class="arch-name">ChromaDB</div></div>
+      </div>
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 11px; color: var(--text-3);">Query → BM25 + Vector → RRF Rerank → LLM → Answer</div>
+    </div>
+
+    <p>Alongside ChromaDB, I use a <strong>Parquet cold store</strong> for raw document text — so if I need to re-embed with a different model, I don't have to re-crawl OTCS. This turns out to be very important in practice.</p>
+
+    <h2>Authentication: OTCSTicket</h2>
+
+    <p>OpenText Content Server uses a session-ticket authentication model. You POST credentials to <code>/api/v1/auth</code> and receive an <code>OTCSTicket</code> that you pass in subsequent requests. The gotcha: <strong>tickets expire after a configurable timeout</strong>, typically 30–60 minutes. If you're crawling a large repository, you'll hit this mid-operation.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cs_client.py — Authentication with auto-renewal</div>
+      <pre><span class="kw">import</span> requests
+<span class="kw">import</span> time
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">CSClient</span>:
+    base_url: str
+    username: str
+    password: str
+    _ticket: Optional[str] = None
+    _ticket_time: float = 0
+    ticket_ttl: int = 1800  <span class="cmt"># 30 min — refresh before expiry</span>
+
+    <span class="kw">def</span> <span class="fn">_get_ticket</span>(self) -> str:
+        resp = requests.post(
+            f<span class="str">"{self.base_url}/api/v1/auth"</span>,
+            data={<span class="str">"username"</span>: self.username, <span class="str">"password"</span>: self.password},
+            verify=False
+        )
+        resp.raise_for_status()
+        <span class="kw">return</span> resp.json()[<span class="str">"ticket"</span>]
+
+    <span class="kw">@property</span>
+    <span class="kw">def</span> <span class="fn">ticket</span>(self) -> str:
+        <span class="kw">if</span> (time.time() - self._ticket_time) > self.ticket_ttl:
+            self._ticket = self._get_ticket()
+            self._ticket_time = time.time()
+        <span class="kw">return</span> self._ticket
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, path: str, **kwargs):
+        headers = {<span class="str">"OTCSTicket"</span>: self.ticket}
+        <span class="kw">return</span> requests.get(
+            f<span class="str">"{self.base_url}{path}"</span>,
+            headers=headers,
+            verify=False,
+            **kwargs
+        )</pre>
+    </div>
+
+    <p>The property-based ticket renewal is clean — callers never need to think about auth. Every <code>get()</code> call transparently refreshes if needed.</p>
+
+    <h2>Node Discovery: Containers vs Documents</h2>
+
+    <p>This is the most important OTCS-specific concept to understand. In Content Server, <strong>not all nodes are documents</strong>. Folders, workspaces, categories, and compound documents are "container" nodes. The REST API's children endpoint returns both types, and you need to handle them differently.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Key fix:</strong> The children API response wraps results under a <code>results</code> key (not <code>data</code>). This tripped me up for hours. Always extract <code>response["results"]</code> when iterating children nodes.</p></div>
+    </div>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cs_client.py — Recursive document discovery</div>
+      <pre><span class="kw">def</span> <span class="fn">get_children</span>(self, node_id: int) -> list:
+    resp = self.get(f<span class="str">"/api/v2/nodes/{node_id}/nodes"</span>)
+    resp.raise_for_status()
+    data = resp.json()
+    <span class="cmt"># Key insight: children are under "results", not "data"</span>
+    <span class="kw">return</span> data.get(<span class="str">"results"</span>, [])
+
+<span class="kw">def</span> <span class="fn">is_container</span>(self, node: dict) -> bool:
+    <span class="cmt"># container flag is more reliable than node_type alone</span>
+    <span class="kw">return</span> node.get(<span class="str">"data"</span>, {}).get(
+        <span class="str">"properties"</span>, {}
+    ).get(<span class="str">"container"</span>, False)
+
+<span class="kw">def</span> <span class="fn">walk_nodes</span>(self, root_id: int):
+    <span class="str">"""Yield all document nodes recursively."""</span>
+    stack = [root_id]
+    <span class="kw">while</span> stack:
+        node_id = stack.pop()
+        children = self.get_children(node_id)
+        <span class="kw">for</span> node <span class="kw">in</span> children:
+            props = node[<span class="str">"data"</span>][<span class="str">"properties"</span>]
+            <span class="kw">if</span> self.is_container(node):
+                stack.append(props[<span class="str">"id"</span>])
+            <span class="kw">else</span>:
+                <span class="kw">yield</span> node  <span class="cmt"># it's a document</span></pre>
+    </div>
+
+    <p>The <code>container</code> flag is more reliable than checking <code>node_type</code> directly — there are several node types (0=folder, 848=workspace, 136=compound doc) that all behave as containers, and the flag covers them all.</p>
+
+    <h2>Content Extraction</h2>
+
+    <p>Once you have document nodes, you need their content. For most document types, you can download the file content via the versions API and parse it with the appropriate library (<code>pdfminer</code> for PDF, <code>python-docx</code> for Word, etc.).</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">extractor.py — Content extraction by MIME type</div>
+      <pre><span class="kw">from</span> io <span class="kw">import</span> BytesIO
+<span class="kw">import</span> pdfminer.high_level <span class="kw">as</span> pdf_extract
+<span class="kw">from</span> docx <span class="kw">import</span> Document
+
+<span class="kw">def</span> <span class="fn">extract_text</span>(content: bytes, mime_type: str) -> str:
+    <span class="kw">if</span> <span class="str">"pdf"</span> <span class="kw">in</span> mime_type:
+        <span class="kw">return</span> pdf_extract.extract_text(BytesIO(content))
+    <span class="kw">elif</span> <span class="str">"wordprocessingml"</span> <span class="kw">in</span> mime_type:
+        doc = Document(BytesIO(content))
+        <span class="kw">return</span> <span class="str">"\n"</span>.join(p.text <span class="kw">for</span> p <span class="kw">in</span> doc.paragraphs)
+    <span class="kw">elif</span> <span class="str">"text/plain"</span> <span class="kw">in</span> mime_type:
+        <span class="kw">return</span> content.decode(<span class="str">"utf-8"</span>, errors=<span class="str">"replace"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">return</span> <span class="str">""</span>  <span class="cmt"># skip unsupported types gracefully</span></pre>
+    </div>
+
+    <h2>Chunking Strategy: Parent-Child</h2>
+
+    <p>Simple fixed-size chunking loses document structure. The approach I settled on is <strong>parent-child chunking</strong>: split the document into logical "parent" sections (paragraphs, headings), then create smaller "child" chunks with overlap for embedding. At retrieval time, you retrieve the child chunk but return the parent for LLM context — giving you precision in matching and breadth in context.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">chunker.py — Parent-child chunking</div>
+      <pre><span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+
+parent_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="num">1500</span>,
+    chunk_overlap=<span class="num">0</span>,
+    separators=[<span class="str">"\n\n"</span>, <span class="str">"\n"</span>, <span class="str">". "</span>]
+)
+
+child_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="num">400</span>,
+    chunk_overlap=<span class="num">60</span>,
+    separators=[<span class="str">"\n"</span>, <span class="str">". "</span>, <span class="str">" "</span>]
+)
+
+<span class="kw">def</span> <span class="fn">create_chunks</span>(text: str, doc_id: str) -> list[dict]:
+    chunks = []
+    parents = parent_splitter.split_text(text)
+    <span class="kw">for</span> p_idx, parent <span class="kw">in</span> enumerate(parents):
+        children = child_splitter.split_text(parent)
+        <span class="kw">for</span> c_idx, child <span class="kw">in</span> enumerate(children):
+            chunks.append({
+                <span class="str">"doc_id"</span>: doc_id,
+                <span class="str">"parent_id"</span>: f<span class="str">"{doc_id}_p{p_idx}"</span>,
+                <span class="str">"chunk_id"</span>: f<span class="str">"{doc_id}_p{p_idx}_c{c_idx}"</span>,
+                <span class="str">"child_text"</span>: child,   <span class="cmt"># embedded</span>
+                <span class="str">"parent_text"</span>: parent  <span class="cmt"># returned to LLM</span>
+            })
+    <span class="kw">return</span> chunks</pre>
+    </div>
+
+    <h2>Ingestion into ChromaDB</h2>
+
+    <p>ChromaDB is used here as the vector hot store. Each child chunk gets embedded via Ollama's <code>nomic-embed-text</code> model (768 dimensions) and stored with metadata that enables filtering and parent retrieval. The parent texts are stored separately in a Parquet cold store.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">ingester.py — ChromaDB ingestion</div>
+      <pre><span class="kw">import</span> chromadb
+<span class="kw">from</span> ollama <span class="kw">import</span> embeddings
+
+client = chromadb.PersistentClient(path=<span class="str">"./chroma_store"</span>)
+collection = client.get_or_create_collection(
+    name=<span class="str">"otcs_docs"</span>,
+    metadata={<span class="str">"hnsw:space"</span>: <span class="str">"cosine"</span>}
+)
+
+<span class="kw">def</span> <span class="fn">ingest_chunks</span>(chunks: list[dict]):
+    ids, docs, metas, embeds = [], [], [], []
+    <span class="kw">for</span> chunk <span class="kw">in</span> chunks:
+        emb = embeddings(
+            model=<span class="str">"nomic-embed-text"</span>,
+            prompt=chunk[<span class="str">"child_text"</span>]
+        )[<span class="str">"embedding"</span>]
+        ids.append(chunk[<span class="str">"chunk_id"</span>])
+        docs.append(chunk[<span class="str">"child_text"</span>])
+        metas.append({
+            <span class="str">"doc_id"</span>: chunk[<span class="str">"doc_id"</span>],
+            <span class="str">"parent_id"</span>: chunk[<span class="str">"parent_id"</span>]
+        })
+        embeds.append(emb)
+    collection.upsert(
+        ids=ids, documents=docs,
+        metadatas=metas, embeddings=embeds
+    )</pre>
+    </div>
+
+    <h2>Hybrid Retrieval with RRF Reranking</h2>
+
+    <p>Pure vector search misses exact keyword matches — and in enterprise ECM, users often search for specific document IDs, project codes, or contract numbers. Pure BM25 misses semantic similarity. The solution is <strong>hybrid retrieval</strong>: run both, then fuse the ranked lists using <strong>Reciprocal Rank Fusion (RRF)</strong>.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">retriever.py — Hybrid BM25 + Vector with RRF</div>
+      <pre><span class="kw">from</span> rank_bm25 <span class="kw">import</span> BM25Okapi
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">rrf_score</span>(ranks: list[int], k: int = <span class="num">60</span>) -> float:
+    <span class="kw">return</span> sum(<span class="num">1</span> / (k + r) <span class="kw">for</span> r <span class="kw">in</span> ranks)
+
+<span class="kw">def</span> <span class="fn">hybrid_search</span>(query: str, top_k: int = <span class="num">5</span>) -> list[dict]:
+    <span class="cmt"># Vector search</span>
+    q_emb = embeddings(model=<span class="str">"nomic-embed-text"</span>, prompt=query)[<span class="str">"embedding"</span>]
+    vec_results = collection.query(
+        query_embeddings=[q_emb], n_results=<span class="num">20</span>
+    )
+    vec_ids = vec_results[<span class="str">"ids"</span>][<span class="num">0</span>]
+
+    <span class="cmt"># BM25 search over cached corpus</span>
+    bm25_scores = bm25.get_scores(query.lower().split())
+    bm25_top = np.argsort(bm25_scores)[::-<span class="num">1</span>][:<span class="num">20</span>]
+    bm25_ids = [corpus_ids[i] <span class="kw">for</span> i <span class="kw">in</span> bm25_top]
+
+    <span class="cmt"># RRF fusion</span>
+    scores = {}
+    <span class="kw">for</span> rank, cid <span class="kw">in</span> enumerate(vec_ids):
+        scores.setdefault(cid, []).append(rank + <span class="num">1</span>)
+    <span class="kw">for</span> rank, cid <span class="kw">in</span> enumerate(bm25_ids):
+        scores.setdefault(cid, []).append(rank + <span class="num">1</span>)
+
+    ranked = sorted(scores, key=<span class="kw">lambda</span> x: rrf_score(scores[x]), reverse=True)
+    <span class="kw">return</span> ranked[:top_k]</pre>
+    </div>
+
+    <h2>ACL Security Gates</h2>
+
+    <p>One thing most RAG tutorials gloss over entirely: in an enterprise system, not every user should see every document. OpenText Content Server has granular ACL-based permissions. Your RAG pipeline needs to enforce these — otherwise you risk surfacing confidential content to unauthorized users.</p>
+
+    <p>The clean approach is to store the OTCS node ID with every chunk, and at retrieval time, call <code>GET /api/v2/nodes/{id}/permissions</code> to check whether the current user has read access before returning that chunk to the LLM. Yes, this adds API calls — but correctness matters more than latency for enterprise use.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Optimization:</strong> Cache permission checks per user+node pair with a short TTL (5–15 minutes). OTCS permissions rarely change in real-time, and this dramatically reduces API overhead for repeat queries.</p></div>
+    </div>
+
+    <h2>Incremental Sync via OTModifyDate</h2>
+
+    <p>Your knowledge base will go stale without a sync strategy. The key field is <code>OTModifyDate</code> — every OTCS node exposes the last modification timestamp. Track the last successful sync time, and on each run, only fetch nodes where <code>OTModifyDate &gt; last_sync</code>. Combined with the Parquet cold store, this keeps re-embedding costs minimal.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">sync.py — Incremental update</div>
+      <pre><span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">import</span> json, pathlib
+
+SYNC_STATE = pathlib.Path(<span class="str">"sync_state.json"</span>)
+
+<span class="kw">def</span> <span class="fn">get_last_sync</span>() -> str:
+    <span class="kw">if</span> SYNC_STATE.exists():
+        <span class="kw">return</span> json.loads(SYNC_STATE.read_text())[<span class="str">"last_sync"</span>]
+    <span class="kw">return</span> <span class="str">"2000-01-01T00:00:00Z"</span>
+
+<span class="kw">def</span> <span class="fn">save_sync_time</span>():
+    SYNC_STATE.write_text(json.dumps({
+        <span class="str">"last_sync"</span>: datetime.utcnow().isoformat() + <span class="str">"Z"</span>
+    }))
+
+<span class="kw">def</span> <span class="fn">needs_update</span>(node: dict, last_sync: str) -> bool:
+    modify_date = node[<span class="str">"data"</span>][<span class="str">"properties"</span>].get(<span class="str">"modify_date"</span>, <span class="str">""</span>)
+    <span class="kw">return</span> modify_date > last_sync</pre>
+    </div>
+
+    <h2>Results and Lessons Learned</h2>
+
+    <p>Running this pipeline against a 500-document OTCS repository, the results are genuinely useful. The system surfaces accurate answers to queries like "what are the contract renewal terms for vendor X" or "find all documents referencing ISO 27001 compliance" — things that previously required hunting through folder hierarchies manually.</p>
+
+    <p>A few hard-won lessons:</p>
+
+    <ul>
+      <li><strong>Always use the cold store.</strong> Re-embedding 500 documents from scratch costs 20+ minutes. The Parquet cold store paid for itself the first time I switched embedding models.</li>
+      <li><strong>The <code>results</code> key vs <code>data</code> key</strong> is a real gotcha. The children endpoint uses <code>results</code>, but single-node endpoints use <code>data</code>. Don't assume consistency.</li>
+      <li><strong>Container detection via the flag, not node_type.</strong> I initially checked <code>node_type == 0</code> for folders, which missed workspace containers (node_type 848). The <code>container</code> boolean flag is the right check.</li>
+      <li><strong>Parent-child chunking over fixed chunking</strong> — the retrieval quality difference is significant. Child chunks of ~400 tokens retrieve with precision; parent context of ~1500 tokens gives the LLM enough to reason from.</li>
+      <li><strong>RRF reranking is worth the extra complexity.</strong> Hybrid search improved recall on keyword-heavy queries (contract numbers, document IDs) by roughly 40% compared to pure vector search in my testing.</li>
+    </ul>
+
+    <p>The full architecture — OTCS crawler, chunker, ChromaDB ingester, hybrid retriever, and Streamlit UI — is something I'll cover in follow-up posts. If you're building something similar and want to swap notes, reach out on <a href="https://linkedin.com/in/kapiluthra" target="_blank">LinkedIn</a> or <a href="contact.html">drop me a message</a>.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-cs-client-debugging.html" class="related-post">
+          <div class="related-post-cat">Project</div>
+          <div class="related-post-title">How I Debugged 150M Document Download Failures in cs_client.py</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+        <a href="blog-xecm-sap-patterns.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">xECM for SAP: Architecture Patterns That Actually Work</div>
+        </a>
+        <a href="blog-150m-migration.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Migrating 150M Documents to Kubernetes-Native Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+
+</body>
+</html>

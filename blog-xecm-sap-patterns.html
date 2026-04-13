@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xECM for SAP: Architecture Patterns That Actually Work — Kapil Uthra</title>
+<meta name="description" content="After implementing xECM for SAP across 10+ enterprise engagements in pharma, manufacturing, and utilities, here are the patterns that hold up — and the anti-patterns I keep seeing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.pattern-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin: 1.5rem 0; }
+.pattern-cell { background: var(--bg-2); padding: 1.25rem; }
+.pattern-cell-title { font-size: 10px; color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.pattern-cell p { font-family: var(--serif); font-size: 0.95rem; margin-bottom: 0; color: var(--text-2); }
+.pattern-cell.bad .pattern-cell-title { color: var(--red); }
+.pattern-cell.good .pattern-cell-title { color: var(--green); }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .pattern-grid { grid-template-columns: 1fr; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / tutorial
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Tutorial · Enterprise Architecture</div>
+    <h1 class="article-title">xECM for SAP: Architecture Patterns That Actually Work</h1>
+    <p class="article-subtitle">After implementing Extended ECM for SAP across 10+ engagements — pharma, manufacturing, chemicals, utilities — here are the patterns that hold up under production load, and the anti-patterns I keep seeing teams repeat.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>March 2026</span>
+      <span>~14 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">xecm</span><span class="tag">sap</span><span class="tag">opentext</span><span class="tag">architecture</span><span class="tag">enterprise</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>Extended ECM for SAP (xECM) is deceptively complex. On paper, it's a connector between SAP and OpenText Content Server — documents live in OTCS, SAP shows them in context. In practice, you're aligning two very different data models, two authentication systems, and two sets of governance rules, while keeping both systems performant under enterprise load.</p>
+
+    <p>I've been the lead architect on xECM for SAP implementations for companies across five countries, covering MM/PM/HR modules, GxP-regulated pharma environments, and migrations from legacy DMS systems. Here's what I've learned works — and what doesn't.</p>
+
+    <h2>Business Object Architecture</h2>
+
+    <p>The foundation of every xECM deployment is the business object model: which SAP objects get their own OTCS workspace, what folders and categories live inside those workspaces, and how the workspace creation is triggered.</p>
+
+    <p>The most common mistake I see is <strong>over-granular business object definition</strong>. Teams try to create workspaces for every SAP object type — Purchase Order, Purchase Requisition, Goods Receipt, Invoice, Line Item. The result is a Content Server with millions of near-empty workspaces, terrible performance on workspace lookup, and a maintenance nightmare.</p>
+
+    <div class="pattern-grid">
+      <div class="pattern-cell bad">
+        <div class="pattern-cell-title">❌ Anti-Pattern</div>
+        <p>Workspace per transaction: PO + PR + GR + IR = 4 workspaces per procurement cycle. Millions of workspaces, most with 1–2 documents.</p>
+      </div>
+      <div class="pattern-cell good">
+        <div class="pattern-cell-title">✓ Pattern</div>
+        <p>Workspace at the business process level: one workspace per Vendor + Procurement cycle. Child folders for transaction types. Volume scales linearly with business, not transactions.</p>
+      </div>
+    </div>
+
+    <p>For a manufacturing client managing 20K workspace creations per day (TATA Steel), the difference between these approaches is the difference between a sustainable system and a system that degrades linearly with usage.</p>
+
+    <h2>Workspace Creation: Synchronous vs Asynchronous</h2>
+
+    <p>When does the OTCS workspace get created? There are two models:</p>
+
+    <ul>
+      <li><strong>Synchronous</strong>: workspace created at SAP object creation time (PO save triggers workspace creation). Simple, but adds latency to SAP transactions and creates coupling.</li>
+      <li><strong>Asynchronous</strong>: SAP object created normally, workspace created later by a batch job or event queue. More complex, but SAP performance is unaffected and failures are isolated.</li>
+    </ul>
+
+    <p>For high-volume environments (500+ workspaces/day), asynchronous creation is the right choice. The batch job runs every 15–30 minutes, picks up new SAP objects via BAPI/RFC, and creates workspaces in OTCS. Any failures are retried without impacting SAP operations.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>GxP environments:</strong> Synchronous creation is often required for audit trail completeness — regulators want proof that the workspace existed before any document was generated. At Orion (Finland), we implemented synchronous creation with a 2-second timeout and graceful degradation: SAP object saves even if OTCS workspace creation fails, with a reconciliation job to create missing workspaces.</p></div>
+    </div>
+
+    <h2>OTDS: The Authentication Bridge</h2>
+
+    <p>OpenText Directory Services (OTDS) is the SSO layer between SAP and Content Server. Getting this right is critical — misconfigured OTDS is the most common source of "user can log into SAP but gets 401 in the document panel" support tickets.</p>
+
+    <p>The three things that always need to match exactly: <strong>user partition names</strong>, <strong>login attribute mappings</strong> (SAP user ID → OTDS principal), and <strong>resource partition assignment</strong>. A mismatch in any of these produces an error that looks like a permissions problem but is actually an identity federation failure.</p>
+
+    <p>I always recommend running OTDS in a dedicated VM or container separate from the Content Server host. OTDS has different memory and CPU characteristics than OTCS, and co-locating them causes contention that manifests as intermittent authentication failures under load — the hardest class of issue to diagnose.</p>
+
+    <h2>Database Maintenance Strategy</h2>
+
+    <p>At 10K+ active users and years of accumulated documents, Content Server database performance is the dominant operational concern. The patterns that matter:</p>
+
+    <ul>
+      <li><strong>DTree and DAuditNew tables</strong> grow unbounded. DTree holds all node records; DAuditNew holds audit events. Both need periodic archiving or you'll see query plans degrade as the tables hit millions of rows.</li>
+      <li><strong>Index rebuild scheduling</strong> should happen weekly during off-peak windows. OTCS ships with admin console scripts for this. Skipping it for more than a month will cause noticeable slowdowns on search and folder expand.</li>
+      <li><strong>Version pruning</strong>: by default, OTCS keeps unlimited document versions. Set a version retention policy early. We defined 5 major versions + 30 days of minors for most content types. Without this, version tables explode.</li>
+      <li><strong>Statistics updates</strong>: Oracle and SQL Server both need regular statistics updates on the OTCS schema. This is separate from index rebuilds and equally important.</li>
+    </ul>
+
+    <h2>The Workspace Template Problem</h2>
+
+    <p>xECM workspaces are created from templates defined in Content Server. The classic mistake is <strong>creating workspace templates in the live repository</strong> rather than in a dedicated template area. When the template structure needs to change (and it will — business requirements evolve), you can update the template and new workspaces get the new structure — but existing workspaces don't. Now you have two generations of workspace structure with no migration path.</p>
+
+    <p>The pattern I use: version your workspace templates explicitly. When a major structural change is needed, create a new template version. Write a migration script that updates existing workspaces to the new structure. Test it on 100 workspaces, then on 1000, then run it production. This is more upfront work but avoids the structural drift that makes 5-year-old xECM deployments unmaintainable.</p>
+
+    <h2>Performance: The 19 Business Objects Case</h2>
+
+    <p>At TATA Steel, we implemented 19 business objects across MM, PM, and HR modules for 10K active users. A few performance decisions that made a material difference:</p>
+
+    <ul>
+      <li><strong>Physical separation of high-volume and low-volume workspaces.</strong> MM Purchase Order workspaces (millions) live in a different Content Server partition from HR Personal File workspaces (tens of thousands). This prevents high-volume MM operations from competing with HR document access.</li>
+      <li><strong>Faceted search over full-text search for workspace lookup.</strong> SAP users finding a PO workspace by business ID should use a metadata search against the OTCS category, not a full-text index scan. Much faster, deterministic results.</li>
+      <li><strong>Pre-creating folder structure on workspace creation.</strong> Creating the folder hierarchy lazily (on first document upload) causes spiky performance. Pre-create the full structure at workspace creation time, even if most folders stay empty.</li>
+    </ul>
+
+    <h2>What I'd Do Differently</h2>
+
+    <p>Looking back across all the xECM SAP projects: the technical decisions rarely cause failures. What causes failures is scope creep in business object definition, under-investment in OTDS setup, and skipping the database maintenance planning until performance problems appear in production.</p>
+
+    <p>If I were starting a new engagement today, the first three days would be: (1) define and lock down the business object inventory before any technical setup, (2) set up OTDS in a dedicated environment and validate SSO end-to-end before any other configuration, (3) agree on a database maintenance schedule and version retention policy in writing. Everything else is tractable.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-150m-migration.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Migrating 150M Documents to Kubernetes-Native Content Server</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-zero-downtime-ecm-upgrades.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+</body>
+</html>

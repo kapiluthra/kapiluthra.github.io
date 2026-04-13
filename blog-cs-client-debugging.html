@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How I Debugged 150M Document Download Failures in cs_client.py — Kapil Uthra</title>
+<meta name="description" content="The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.codeblock .bad { color: var(--red); }
+.codeblock .good { color: var(--green); }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.err { border-left: 3px solid var(--red); }
+.diff-block { background: var(--bg-3); border: 1px solid var(--border-2); padding: 1.25rem 1.5rem; margin: 1.5rem 0; font-family: var(--mono); font-size: 12px; line-height: 1.65; }
+.diff-block .del { color: var(--red); }
+.diff-block .add { color: var(--green); }
+.diff-block .ctx { color: var(--text-3); }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / project
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Project · Debugging</div>
+    <h1 class="article-title">How I Debugged 150M Document Download Failures in cs_client.py</h1>
+    <p class="article-subtitle">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it — an honest account of two days of head-scratching with the OpenText REST API.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>March 2026</span>
+      <span>~12 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span><span class="tag">api</span><span class="tag">rag</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>Two days. That's how long it took me to track down two bugs in <code>cs_client.py</code> that were silently causing document download failures when I ran my RAG ingestion pipeline against an OpenText Content Server repository. Not catastrophic failures — the kind that quietly skip documents and leave you wondering why your vector store is half-empty.</p>
+
+    <p>This is the story of those two bugs, how I found them, and what the fixes look like. If you're building anything against the OTCS REST API, these will save you the same two days.</p>
+
+    <div class="callout err">
+      <div class="callout-icon">✗</div>
+      <div><p><strong>Symptom:</strong> RAG pipeline completes without error but vector store contains far fewer documents than expected. Logs show successful crawl but zero content extracted from what should be document nodes.</p></div>
+    </div>
+
+    <h2>Bug 1: The Container Flag</h2>
+
+    <p>The first bug was in how I detected container nodes (folders, workspaces, compound documents) versus leaf document nodes. My original code checked the <code>node_type</code> field directly:</p>
+
+    <div class="diff-block">
+      <div class="del">- # Original — only catches folders (type 0)</div>
+      <div class="del">- def is_container(node):
+-     return node["data"]["properties"]["node_type"] == 0</div>
+      <div class="ctx"></div>
+      <div class="add">+ # Fixed — uses the container boolean flag</div>
+      <div class="add">+ def is_container(node):
++     return node["data"]["properties"].get("container", False)</div>
+    </div>
+
+    <p>Content Server has multiple node types that behave as containers: <code>0</code> (Folder), <code>848</code> (Workspace), <code>136</code> (Compound Document), <code>751</code> (Project), and others. My <code>node_type == 0</code> check was treating workspace nodes (848) as leaf documents — and then trying to download their "content", which of course returned nothing or errored silently.</p>
+
+    <p>The <code>container</code> boolean in the properties object is the correct check. It's maintained by OTCS regardless of the specific type, and it's exactly what the UI uses internally to decide whether to show expand/collapse controls.</p>
+
+    <p>Once I fixed this, the traversal correctly descended into workspace hierarchies that had previously been misidentified as documents.</p>
+
+    <h2>Bug 2: The results vs data Key</h2>
+
+    <p>The second bug was subtler — and frankly, it looks like an inconsistency in the OTCS API itself rather than user error.</p>
+
+    <p>When you call the single-node endpoint <code>GET /api/v2/nodes/{id}</code>, the response is structured as:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Single node response structure</div>
+      <pre>{
+  <span class="str">"data"</span>: {
+    <span class="str">"properties"</span>: { <span class="str">"id"</span>: <span class="num">12345</span>, <span class="str">"name"</span>: <span class="str">"Contract.pdf"</span>, ... }
+  }
+}</pre>
+    </div>
+
+    <p>But when you call the children endpoint <code>GET /api/v2/nodes/{id}/nodes</code>, the response is structured differently:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Children endpoint response structure</div>
+      <pre>{
+  <span class="str">"results"</span>: [              <span class="cmt">// NOT "data"</span>
+    {
+      <span class="str">"data"</span>: {
+        <span class="str">"properties"</span>: { <span class="str">"id"</span>: <span class="num">12346</span>, ... }
+      }
+    },
+    ...
+  ]
+}</pre>
+    </div>
+
+    <p>My original code was doing <code>response.json().get("data", [])</code> on the children response, which returned an empty list every single time. The traversal thought every folder had zero children and stopped immediately.</p>
+
+    <div class="diff-block">
+      <div class="del">- children = resp.json().get("data", [])</div>
+      <div class="add">+ children = resp.json().get("results", [])</div>
+    </div>
+
+    <p>One character difference. Two days of debugging. Such is the life.</p>
+
+    <h2>The Diagnostic Script That Found It</h2>
+
+    <p>What eventually cracked both bugs was writing a targeted diagnostic script rather than staring at the main pipeline code. The key insight was to isolate the API calls completely and print the raw response structure:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">diagnostic.py — Raw API response inspector</div>
+      <pre><span class="kw">import</span> json
+<span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">inspect_node</span>(base_url, ticket, node_id):
+    headers = {<span class="str">"OTCSTicket"</span>: ticket}
+
+    <span class="cmt"># Inspect single node</span>
+    r1 = requests.get(f<span class="str">"{base_url}/api/v2/nodes/{node_id}"</span>, headers=headers, verify=False)
+    print(<span class="str">"=== Single node top-level keys ==="</span>)
+    print(list(r1.json().keys()))
+
+    <span class="cmt"># Inspect children</span>
+    r2 = requests.get(f<span class="str">"{base_url}/api/v2/nodes/{node_id}/nodes"</span>, headers=headers, verify=False)
+    print(<span class="str">"=== Children top-level keys ==="</span>)
+    print(list(r2.json().keys()))
+
+    <span class="cmt"># Print first child structure</span>
+    children_data = r2.json()
+    <span class="kw">for</span> key <span class="kw">in</span> [<span class="str">"results"</span>, <span class="str">"data"</span>]:
+        <span class="kw">if</span> key <span class="kw">in</span> children_data <span class="kw">and</span> children_data[key]:
+            first = children_data[key][<span class="num">0</span>]
+            print(f<span class="str">"\nFirst child via '{key}':"</span>)
+            props = first.get(<span class="str">"data"</span>, {}).get(<span class="str">"properties"</span>, {})
+            print(f<span class="str">"  name: {props.get('name')}"</span>)
+            print(f<span class="str">"  node_type: {props.get('node_type')}"</span>)
+            print(f<span class="str">"  container: {props.get('container')}"</span>)</pre>
+    </div>
+
+    <p>Running this against a known folder node immediately showed me that <code>"data"</code> was at the top level of single-node responses but <code>"results"</code> was the children key — and printing the <code>container</code> property alongside <code>node_type</code> made the workspace misclassification obvious.</p>
+
+    <h2>Why These Bugs Are Easy to Make</h2>
+
+    <p>Neither of these is an obvious mistake if you're working from the OTCS REST API documentation alone. The API reference describes the node types numerically without making it clear that the <code>container</code> flag is the canonical way to test for container behaviour. And the inconsistency between <code>data</code> and <code>results</code> as top-level keys across different endpoints isn't flagged anywhere — you'd only notice it if you read two different endpoint docs side by side and thought to compare them.</p>
+
+    <p>Having spent 13 years with Content Server, I knew the platform well enough to be surprised — which probably made me look in the wrong places first. Sometimes deep familiarity with a system makes you assume things work the way they used to, even when the REST API is a relatively newer layer on top of older behaviour.</p>
+
+    <h2>The Fixed cs_client.py</h2>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cs_client.py — Both fixes applied</div>
+      <pre><span class="kw">def</span> <span class="fn">get_children</span>(self, node_id: int) -> list:
+    resp = self.get(f<span class="str">"/api/v2/nodes/{node_id}/nodes"</span>)
+    resp.raise_for_status()
+    <span class="cmt"># Fix 2: use "results" key, not "data"</span>
+    <span class="kw">return</span> resp.json().get(<span class="str">"results"</span>, [])
+
+<span class="kw">def</span> <span class="fn">is_container</span>(self, node: dict) -> bool:
+    <span class="cmt"># Fix 1: use container flag, not node_type == 0</span>
+    <span class="kw">return</span> node.get(<span class="str">"data"</span>, {}).get(
+        <span class="str">"properties"</span>, {}
+    ).get(<span class="str">"container"</span>, False)
+
+<span class="kw">def</span> <span class="fn">walk_nodes</span>(self, root_id: int):
+    <span class="str">"""Yield all document nodes recursively."""</span>
+    stack = [root_id]
+    <span class="kw">while</span> stack:
+        node_id = stack.pop()
+        children = self.get_children(node_id)
+        <span class="kw">for</span> node <span class="kw">in</span> children:
+            <span class="kw">if</span> self.is_container(node):
+                props = node[<span class="str">"data"</span>][<span class="str">"properties"</span>]
+                stack.append(props[<span class="str">"id"</span>])
+            <span class="kw">else</span>:
+                <span class="kw">yield</span> node</pre>
+    </div>
+
+    <p>With both fixes in place, the ingestion pipeline correctly traversed the full node hierarchy and extracted content from all document nodes. The vector store went from partially populated to complete, and RAG query quality improved substantially.</p>
+
+    <p>If you're hitting similar issues, run the diagnostic script first — five minutes of raw API inspection beats hours of staring at application code.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+</body>
+</html>

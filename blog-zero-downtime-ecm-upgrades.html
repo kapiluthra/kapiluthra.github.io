@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland — Kapil Uthra</title>
+<meta name="description" content="How to plan and execute OpenText Content Server upgrades with minimal outage windows — drawn from 10+ major version upgrades across three continents.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616; --border: #222222; --border-2: #2a2a2a; --text: #e8e6e0; --text-2: #888880; --text-3: #444440; --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08); --mono: 'JetBrains Mono', 'Courier New', monospace; --serif: 'Crimson Pro', Georgia, serif; --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.warn .callout-icon { color: #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.tip .callout-icon { color: var(--green); }
+.timeline { margin: 2rem 0; }
+.timeline-item { display: flex; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.timeline-item:last-child { border-bottom: none; }
+.timeline-step { font-size: 11px; color: var(--amber); min-width: 60px; font-weight: 500; letter-spacing: 0.06em; padding-top: 2px; }
+.timeline-content { flex: 1; }
+.timeline-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 0.3rem; }
+.timeline-desc { font-family: var(--serif); font-size: 0.95rem; color: var(--text-2); }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / deep dive
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Deep Dive · Operations</div>
+    <h1 class="article-title">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</h1>
+    <p class="article-subtitle">Planning and executing OpenText Content Server major version upgrades with minimal outage windows — drawn from 10+ upgrades across three continents, including a 90% outage reduction at SCG USA and a GxP-constrained upgrade at Orion Finland.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>January 2026</span>
+      <span>~13 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">upgrades</span><span class="tag">opentext</span><span class="tag">operations</span><span class="tag">aws</span><span class="tag">enterprise</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>Content Server upgrades have a reputation for being painful. That reputation is earned — but mostly for the wrong reasons. The technical upgrade itself is well-documented and generally reliable. The pain comes from <strong>customization debt</strong>, <strong>integration regression</strong>, and <strong>insufficient pre-upgrade testing</strong>. I've led major version upgrades across 10+ enterprise deployments, and the pattern is consistent: the projects that go smoothly are the ones that invest heavily in preparation, not in hoping the upgrade script works.</p>
+
+    <p>Let me walk through what a well-executed upgrade looks like, with examples from three specific engagements that presented different constraints.</p>
+
+    <h2>The Upgrade Preparation Checklist</h2>
+
+    <p>The single biggest lever on upgrade success is how thoroughly you prepare. A minimum viable preparation for a major version upgrade (e.g., 16.2 → 22.4) should cover:</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-step">T-8 wk</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Customization Inventory</div>
+          <div class="timeline-desc">Enumerate every custom module, web service, workflow, and WebReports script. Document the version compatibility status of each against the target version. This is the work no one wants to do but that determines whether the upgrade is 2 hours or 2 weeks.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-step">T-6 wk</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Integration Regression Plan</div>
+          <div class="timeline-desc">List every system that integrates with OTCS: SAP, Salesforce, archiving systems, Brava/IV viewers, OTDS, Archive Center. Write a test case for each integration. You'll need to execute these on staging before go-live.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-step">T-4 wk</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Staging Environment Upgrade</div>
+          <div class="timeline-desc">Run the full upgrade procedure on a staging environment that mirrors production as closely as possible. This isn't a rehearsal — treat it as the real thing. Document every error and resolution.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-step">T-2 wk</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Rollback Plan + Dry Run</div>
+          <div class="timeline-desc">Define the exact rollback procedure. Test it on staging: upgrade, verify, rollback, verify rollback. If your rollback procedure doesn't work on staging, it won't work at 2am in production.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-step">T-1 wk</div>
+        <div class="timeline-content">
+          <div class="timeline-title">Communication + Runbook</div>
+          <div class="timeline-desc">Publish the maintenance window to all users. Distribute the detailed runbook to the upgrade team with every step, expected duration, and success criteria written out.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>The SABIC Case: Tight Outage Window</h2>
+
+    <p>SABIC (KSA) had a strict constraint: the Content Server upgrade had to complete within a 4-hour outage window, during which chemical plant operations documentation would be inaccessible. They had a complex customization landscape and were upgrading from 10.5 to 16.2 — a significant version jump with multiple intermediate schema changes.</p>
+
+    <p>The approach that worked: <strong>pre-stage everything offline before the maintenance window begins</strong>. We stood up a parallel environment with the new OTCS version pre-installed, all modules pre-loaded, and all customizations pre-tested. During the maintenance window, the only work that happened in production was: (1) stop services, (2) run database schema upgrade scripts, (3) copy the pre-staged CS binaries over the existing installation, (4) update configuration, (5) restart. The 4-hour window became 2.5 hours.</p>
+
+    <p>We partnered directly with OpenText engineering for the schema migration scripts — at 16.2 there were non-trivial schema changes that required OpenText's involvement to execute correctly. That relationship matters: for complex upgrades, escalating early to OpenText support is not admitting failure, it's good risk management.</p>
+
+    <h2>SCG USA: 90% Outage Reduction</h2>
+
+    <p>SCG ran a 30+ server AWS landscape — a distributed Content Server deployment with multiple front-end nodes, separate search/indexing nodes, and an Archive Center integration. Their historical upgrade outages ran 8–12 hours. The goal was to get under 1 hour.</p>
+
+    <p>The key change was upgrading the architecture to support <strong>rolling upgrades</strong>. In a single-server deployment, you can't do rolling upgrades — you take the server down, upgrade it, bring it back up. In a distributed deployment, you can take one front-end node out of the load balancer, upgrade it, verify it, put it back, then move to the next node. Users continue to use the remaining nodes during the process.</p>
+
+    <p>This required solving a version compatibility problem: for the period when nodes are running different versions, the session and cache layers need to be compatible. We isolated session state to a shared Redis cluster (outside the CS nodes), which meant any node could serve any user session regardless of which version it was running.</p>
+
+    <p>Result: 30+ servers upgraded with a total user-facing outage of under 45 minutes (for the database schema upgrade step, which still requires all nodes to be stopped). That's the 90% reduction.</p>
+
+    <h2>Orion Finland: GxP Constraints</h2>
+
+    <p>Pharmaceutical environments under GxP regulations have special upgrade requirements. Every change to a validated system must go through Change Control, have documented impact assessment, require User Acceptance Testing with sign-off, and have an audit trail of the upgrade execution itself.</p>
+
+    <p>The technical upgrade at Orion was straightforward. The GxP overhead was not. Here's what the process required on top of the standard upgrade:</p>
+
+    <ul>
+      <li><strong>Change Control documentation</strong> including risk assessment, impact analysis, and proposed validation approach — submitted and approved 6 weeks in advance.</li>
+      <li><strong>IQ/OQ/PQ protocols</strong> (Installation Qualification, Operational Qualification, Performance Qualification) written, executed, and signed off for the new version.</li>
+      <li><strong>Validation traceability matrix</strong> mapping every test case to a regulatory requirement.</li>
+      <li><strong>Post-upgrade audit trail</strong> showing who performed each upgrade step, at what time, with what result — captured in the system's own audit log where possible.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>GxP tip:</strong> use the Content Server audit log itself as part of your post-upgrade IQ documentation. The first entries after upgrade start should be logins by the validation team executing IQ scripts — this gives you a timestamped record in the validated system's own audit trail.</p></div>
+    </div>
+
+    <p>The Orion upgrade was technically the simplest of the three I've described here. The discipline required for GxP compliance makes it the most time-consuming — but that discipline is the point. In a pharmaceutical environment, the document management system is part of the product quality infrastructure. It should be treated accordingly.</p>
+
+    <h2>Common Failure Modes</h2>
+
+    <p>Across 10+ upgrades, the failures cluster around the same root causes:</p>
+
+    <ul>
+      <li><strong>Undocumented customizations.</strong> Something breaks after upgrade. The fix is a module or script that no one documented and that turns out to be incompatible with the new version. This one is entirely preventable with a proper customization inventory.</li>
+      <li><strong>Database maintenance skipped pre-upgrade.</strong> Index fragmentation and stale statistics cause the schema upgrade scripts to run slower than expected, blowing the maintenance window. Always run a full index rebuild and statistics update 48 hours before the upgrade window.</li>
+      <li><strong>Rollback procedure never tested.</strong> Rollback is needed, the procedure is unclear, hours are lost. Test your rollback on staging.</li>
+      <li><strong>Integration testing done in production.</strong> The first test of the SAP or Salesforce integration after upgrade happens in the production environment. Problems that would have been caught and fixed on staging cause go-live delays.</li>
+    </ul>
+
+    <p>None of these failures are interesting. They're all preventable. The preparation phase is where upgrades succeed or fail — the maintenance window is just execution.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-xecm-sap-patterns.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">xECM for SAP: Architecture Patterns That Actually Work</div>
+        </a>
+        <a href="blog-150m-migration.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Migrating 150M Documents to Kubernetes-Native Content Server</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+</body>
+</html>

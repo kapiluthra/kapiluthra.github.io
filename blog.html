@@ -97,50 +97,71 @@ footer a:hover { color: var(--amber); opacity: 1; }
   <div class="section fade-in">
     <div class="section-title">2026</div>
 
-    <div class="post-item">
+    <div class="post-item" data-cat="tutorials">
       <div class="post-date">Apr 2026</div>
       <div class="post-body">
-        <div class="post-category">Tutorial</div>
-        <div class="post-title"><a href="#">Building a Production RAG Pipeline for OpenText Content Server</a></div>
-        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, chunking strategies, ChromaDB ingestion, and hybrid retrieval with RRF reranking.</div>
-        <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">chromadb</span><span class="tag">python</span></div>
+        <div class="post-category">Tutorial · Deep Dive</div>
+        <div class="post-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
+        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, parent-child chunking, ChromaDB ingestion, and hybrid retrieval with RRF reranking. Written from real production experience.</div>
+        <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">chromadb</span><span class="tag">python</span><span class="tag">ollama</span></div>
       </div>
     </div>
 
-    <div class="post-item">
+    <div class="post-item" data-cat="projects">
       <div class="post-date">Mar 2026</div>
       <div class="post-body">
-        <div class="post-category">Project</div>
-        <div class="post-title"><a href="#">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
-        <div class="post-desc">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it.</div>
-        <div class="post-tags"><span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span></div>
+        <div class="post-category">Project · Debugging</div>
+        <div class="post-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
+        <div class="post-desc">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it. Two days, two bugs, one fix each.</div>
+        <div class="post-tags"><span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span><span class="tag">api</span></div>
       </div>
     </div>
 
-    <div class="post-item">
+    <div class="post-item" data-cat="opinion">
       <div class="post-date">Mar 2026</div>
       <div class="post-body">
-        <div class="post-category">Opinion</div>
-        <div class="post-title"><a href="#">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
-        <div class="post-desc">After 13 years of ECM projects I have opinions. On abstraction layers, on LlamaIndex, on when to build vs buy.</div>
-        <div class="post-tags"><span class="tag">architecture</span><span class="tag">opinion</span><span class="tag">ecm</span></div>
-      </div>
-    </div>
-
-    <div class="post-item">
-      <div class="post-date">Mar 2026</div>
-      <div class="post-body">
-        <div class="post-category">TIL</div>
-        <div class="post-title"><a href="#">TIL: Git Rebase vs Merge — When to Use Which</a></div>
-        <div class="post-desc">Cleaning up a messy commit history before a PR taught me the one rule that matters: never rebase shared branches.</div>
-        <div class="post-tags"><span class="tag">til</span><span class="tag">git</span></div>
+        <div class="post-category">Opinion · Architecture</div>
+        <div class="post-title"><a href="blog-ecm-architecture.html">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
+        <div class="post-desc">After 13 years of ECM projects I have opinions. On abstraction layers, on LlamaIndex, on vendor lock-in, and on when to build vs buy. These are the ones I'd argue for at 11pm before a go-live.</div>
+        <div class="post-tags"><span class="tag">architecture</span><span class="tag">opinion</span><span class="tag">ecm</span><span class="tag">rag</span></div>
       </div>
     </div>
 
   </div>
 
-  <div class="coming-soon">
-    <span>More posts coming.</span> Writing is part of building — this blog grows with every project.
+  <div class="section">
+    <div class="section-title">2025–2026</div>
+
+    <div class="post-item" data-cat="tutorials">
+      <div class="post-date">Feb 2026</div>
+      <div class="post-body">
+        <div class="post-category">Tutorial · Enterprise Architecture</div>
+        <div class="post-title"><a href="blog-xecm-sap-patterns.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
+        <div class="post-desc">After 10+ xECM for SAP engagements — pharma, manufacturing, chemicals — here are the patterns that hold up under production load and the anti-patterns I keep seeing repeated.</div>
+        <div class="post-tags"><span class="tag">xecm</span><span class="tag">sap</span><span class="tag">opentext</span><span class="tag">architecture</span></div>
+      </div>
+    </div>
+
+    <div class="post-item" data-cat="projects">
+      <div class="post-date">Jan 2026</div>
+      <div class="post-body">
+        <div class="post-category">Deep Dive · Operations</div>
+        <div class="post-title"><a href="blog-zero-downtime-ecm-upgrades.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
+        <div class="post-desc">How to plan and execute OpenText Content Server major version upgrades with minimal outage windows — including the 90% outage reduction at SCG USA and GxP-constrained upgrade at Orion Finland.</div>
+        <div class="post-tags"><span class="tag">upgrades</span><span class="tag">opentext</span><span class="tag">operations</span><span class="tag">aws</span></div>
+      </div>
+    </div>
+
+    <div class="post-item" data-cat="projects">
+      <div class="post-date">Dec 2025</div>
+      <div class="post-body">
+        <div class="post-category">Deep Dive · Migration</div>
+        <div class="post-title"><a href="blog-150m-migration.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
+        <div class="post-desc">Architecture, tooling, and hard lessons from the Securex Belgium engagement: moving 150M documents from a legacy ECM system into a cloud-native OTCS deployment, with zero data loss.</div>
+        <div class="post-tags"><span class="tag">migration</span><span class="tag">kubernetes</span><span class="tag">opentext</span><span class="tag">cloud</span></div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -155,6 +176,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
+    const filter = this.textContent.trim().toLowerCase();
+    document.querySelectorAll('.post-item').forEach(post => {
+      if (filter === 'all') {
+        post.style.display = '';
+      } else {
+        const cat = (post.dataset.cat || '').toLowerCase();
+        post.style.display = cat === filter ? '' : 'none';
+      }
+    });
+    // Show/hide section titles based on visible posts
+    document.querySelectorAll('.section').forEach(sec => {
+      const visible = [...sec.querySelectorAll('.post-item')].some(p => p.style.display !== 'none');
+      sec.style.display = visible ? '' : 'none';
+    });
   });
 });
 </script>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clean Architecture in Enterprise ECM: What Actually Works — Kapil Uthra</title>
+<meta name="description" content="13 years of ECM projects have given me opinions. On abstraction layers, on when to use LlamaIndex vs roll your own, on vendor lock-in, and on when to build versus buy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616; --border: #222222; --border-2: #2a2a2a; --text: #e8e6e0; --text-2: #888880; --text-3: #444440; --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08); --mono: 'JetBrains Mono', 'Courier New', monospace; --serif: 'Crimson Pro', Georgia, serif; --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p em { font-style: italic; color: var(--text); }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.pullquote { border-left: 3px solid var(--amber-dim); padding: 1rem 1.5rem; margin: 2.5rem 0; background: var(--bg-2); }
+.pullquote p { font-family: var(--serif); font-size: 1.2rem; color: var(--text); line-height: 1.7; font-style: italic; margin-bottom: 0; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / opinion
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Opinion · Architecture</div>
+    <h1 class="article-title">Clean Architecture in Enterprise ECM: What Actually Works</h1>
+    <p class="article-subtitle">13 years of ECM projects have given me opinions. On abstraction layers, on LlamaIndex, on vendor lock-in, and on when to build versus buy. These are the ones I'd argue for at 11pm before a go-live.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>March 2026</span>
+      <span>~10 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">architecture</span><span class="tag">opinion</span><span class="tag">ecm</span><span class="tag">rag</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>I want to write about architecture principles that I've actually found valuable — not the kind that sound good in a slide deck but evaporate on contact with a real enterprise deployment. These are opinions I've formed by being wrong first, then figuring out why.</p>
+
+    <h2>The Abstraction Layer Problem</h2>
+
+    <p>The most common architectural mistake I see in ECM integrations is <strong>insufficient abstraction over the document repository</strong>. Code reaches directly into OpenText API calls, Documentum API calls, or SharePoint REST calls scattered throughout the application. Then the client says they want to migrate to a different system in three years, and you discover there's no seam to cut at.</p>
+
+    <p>The pattern I use now: <strong>define your own repository interface</strong> — a small set of operations (<code>fetch_document</code>, <code>list_children</code>, <code>get_metadata</code>, <code>download_content</code>) — and write an OTCS adapter that implements it. Your application code only talks to the interface. When you need to switch to a different system, you write a new adapter. This sounds obvious but I've seen it ignored on projects with 100-person teams.</p>
+
+    <p>For my RAG pipeline, the interface boundary is explicit: the <code>CSClient</code> is not imported anywhere in the chunker, embedder, or retriever. Only the ingestion orchestrator touches it. This meant when I needed to test the chunking and embedding logic, I could do so with local files without needing a live OTCS connection.</p>
+
+    <h2>On LlamaIndex and Frameworks</h2>
+
+    <p>LlamaIndex and LangChain both have OTCS connectors. I've evaluated both, and my position is: <em>use them for prototyping, understand what they're doing, then consider whether you need them in production.</em></p>
+
+    <p>The frameworks abstract away the chunking, embedding, and retrieval loops in ways that are genuinely convenient. They also make certain assumptions about your data pipeline that are fine for general use but wrong for enterprise ECM — particularly around ACL enforcement, incremental sync, and the cold/hot store separation I described in the RAG pipeline post. When a framework assumption conflicts with an enterprise requirement, you end up fighting the framework.</p>
+
+    <div class="pullquote">
+      <p>The question isn't "should I use a framework?" but "do I understand this system well enough that the framework is helping me rather than hiding complexity I need to see?"</p>
+    </div>
+
+    <p>For a 500-document RAG demo, use LlamaIndex. For a production system with ACL gates, incremental sync, and enterprise SLAs, know the framework deeply enough to know where to deviate from it.</p>
+
+    <h2>Vendor Lock-in in ECM Is Real, and the Answer Isn't Avoidance</h2>
+
+    <p>Every meaningful ECM deployment is vendor-locked. The metadata model is vendor-specific. The permission model is vendor-specific. The workflow engine is vendor-specific. You can't meaningfully abstract these away — if you try, you end up with either a lowest-common-denominator system that uses none of the platform's actual capabilities, or so many leaky abstractions that you have both the complexity of the abstraction and the complexity of the underlying system.</p>
+
+    <p>The honest architectural answer to vendor lock-in is: <strong>make the lock-in explicit and bounded</strong>. Decide which systems are the platform foundation (OTCS, Oracle DB, OTDS — these you're committed to), and build everything else in a way that doesn't assume them. Your business logic, your workflow rules, your reporting — these should be testable without the vendor platform. Your repository adapter is explicitly coupled to the platform and that's fine.</p>
+
+    <h2>Build vs Buy: The Real Question</h2>
+
+    <p>I've been asked "should we build a custom migration tool or use a third-party?" and "should we build a RAG chatbot or buy OpenText's AI product?" more times than I can count. The framework I use:</p>
+
+    <ul>
+      <li><strong>Buy</strong> when the problem is not differentiated. Migrations, ETL, monitoring, backup. The third-party tool is almost always better than what you'll build, the vendor is invested in keeping it working with new versions, and your engineers' time is worth more than the license cost.</li>
+      <li><strong>Build</strong> when the problem is core to your competitive advantage, when your specific requirements can't be met by available tools, or when the total cost of adapting a tool to your needs exceeds the cost of building.</li>
+      <li><strong>Start with buy, migrate to build</strong> when you need to ship something working now but have specific requirements that the off-the-shelf solution won't satisfy long-term. Use the commercial tool to learn the problem space, then build the right solution.</li>
+    </ul>
+
+    <p>For the RAG pipeline: I looked at OpenText's native AI capabilities, LlamaIndex's OTCS connector, and building from scratch. I built from scratch — not because the tools were bad, but because the specific requirements (ACL gates, parent-child chunking, hybrid RRF reranking, cold store for re-embedding) were specific enough that adapting the frameworks would have taken as long as building and left me with less control. For a simpler use case with standard requirements, I'd use the framework.</p>
+
+    <h2>The Infrastructure is the Product</h2>
+
+    <p>One opinion I hold strongly: in enterprise ECM, the infrastructure decisions are as important as the application decisions, and they deserve the same architectural attention. How the database is sized and maintained, what the backup/recovery strategy is, how the OTCS nodes scale under load — these aren't operational afterthoughts, they're part of the system design.</p>
+
+    <p>The projects that struggle in year three are almost always ones where the infrastructure was stood up quickly to get the application running, then never revisited. Index fragmentation accumulates. Version tables explode. The recovery procedure was never tested. Nobody knows who owns the OTDS configuration.</p>
+
+    <p>Architectural rigor applied to infrastructure looks like: documented sizing decisions and their assumptions, a tested backup/recovery procedure, a database maintenance schedule, and explicit ownership of every component. This is boring work. It's the kind of work that determines whether your ECM deployment is healthy at year five.</p>
+
+    <p>The most reliable ECM architectures I've seen are the most boring ones: standard configurations, conservative customization, clear ownership, documented runbooks. The exciting, innovative ones that push the platform boundaries are the ones I get called in to stabilize.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-xecm-sap-patterns.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">xECM for SAP: Architecture Patterns That Actually Work</div>
+        </a>
+        <a href="blog-150m-migration.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Migrating 150M Documents to Kubernetes-Native Content Server</div>
+        </a>
+        <a href="blog-zero-downtime-ecm-upgrades.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+</body>
+</html>
