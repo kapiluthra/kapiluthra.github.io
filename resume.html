@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume — Kapil Uthra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.page { max-width: 860px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease both; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.page-header h1 { font-size: 1.3rem; font-weight: 500; color: var(--text); }
+.page-header h1::before { content: '> '; color: var(--amber); }
+.page-header-actions { display: flex; gap: 0; }
+.hdr-btn { font-size: 11px; color: var(--text-2); border: 1px solid var(--border); padding: 0.4rem 1rem; border-right: none; transition: all 0.15s; cursor: pointer; background: transparent; font-family: var(--mono); letter-spacing: 0.04em; }
+.hdr-btn:last-child { border-right: 1px solid var(--border); }
+.hdr-btn:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
+
+/* ANCHOR TABS */
+.anchor-tabs { display: flex; margin-bottom: 3rem; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
+.anchor-tabs a { font-size: 12px; color: var(--text-2); padding: 0.5rem 1.25rem; border-right: 1px solid var(--border); letter-spacing: 0.04em; transition: all 0.15s; }
+.anchor-tabs a:last-child { border-right: none; }
+.anchor-tabs a:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
+
+/* SUMMARY BOX */
+.summary-box { border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 3.5rem; background: var(--bg-2); }
+.summary-box p { font-size: 13px; color: var(--text-2); margin-bottom: 1rem; line-height: 1.8; }
+.summary-box p:last-child { margin-bottom: 0; }
+.summary-bullets { list-style: none; }
+.summary-bullets li { font-size: 13px; color: var(--text-2); padding: 0.2rem 0; display: flex; align-items: flex-start; gap: 0.7rem; }
+.summary-bullets li::before { content: '▸'; color: var(--amber); font-size: 10px; margin-top: 4px; flex-shrink: 0; }
+.summary-bullets li strong { color: var(--text); font-weight: 500; }
+
+/* SECTION */
+.section { margin-bottom: 3.5rem; }
+.section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* EXP ITEM */
+.exp-item { margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--border); }
+.exp-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.exp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.2rem; flex-wrap: wrap; }
+.exp-role { font-size: 14px; font-weight: 500; color: var(--text); }
+.exp-period { font-size: 11px; color: var(--text-3); white-space: nowrap; margin-top: 3px; }
+.exp-company { font-size: 12px; color: var(--amber); margin-bottom: 0.75rem; }
+.exp-bullets { list-style: none; }
+.exp-bullets li { font-size: 12px; color: var(--text-2); padding: 0.18rem 0; display: flex; align-items: flex-start; gap: 0.7rem; line-height: 1.6; }
+.exp-bullets li::before { content: '—'; color: var(--text-3); font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+.exp-highlight { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--amber-glow); border: 1px solid var(--amber-dim); padding: 0.3rem 0.75rem; font-size: 11px; color: var(--amber); margin-top: 0.75rem; letter-spacing: 0.04em; }
+
+/* SKILLS GRID */
+.skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.skills-cell { background: var(--bg); padding: 1.25rem 1.5rem; }
+.skills-cell-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.75rem; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: 10px; color: var(--text-2); background: var(--bg-3); border: 1px solid var(--border-2); padding: 2px 8px; letter-spacing: 0.04em; }
+
+/* CERTS */
+.cert-group { margin-bottom: 2rem; }
+.cert-group-title { font-size: 11px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.cert-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.cert-item:last-child { border-bottom: none; }
+.cert-item::before { content: '✓'; color: var(--amber); font-size: 10px; flex-shrink: 0; margin-top: 2px; }
+.cert-name { color: var(--text); flex: 1; }
+.cert-issuer { color: var(--text-3); font-size: 11px; }
+
+/* AWARDS */
+.award-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.award-item:last-child { border-bottom: none; }
+.award-year { font-size: 10px; color: var(--amber); min-width: 80px; letter-spacing: 0.06em; }
+.award-name { color: var(--text); flex: 1; }
+.award-org { color: var(--text-3); font-size: 11px; }
+
+/* EDU */
+.edu-item { margin-bottom: 2rem; }
+.edu-deg { font-size: 14px; font-weight: 500; color: var(--text); }
+.edu-school { font-size: 12px; color: var(--amber); margin: 0.15rem 0; }
+.edu-meta { font-size: 11px; color: var(--text-3); }
+
+/* PRINT */
+@media print {
+  nav, footer, .hdr-btn, .anchor-tabs { display: none; }
+  body { background: #fff; color: #000; }
+  .page { padding: 2rem; }
+  .exp-bullets li, .summary-bullets li { color: #333; }
+  .section-title, .exp-company, .amber { color: #555; }
+}
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .page { padding: 76px 1.25rem 4rem; }
+  .skills-grid { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html" class="active">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <div class="page-header fade-in">
+    <h1>Resume</h1>
+    <div class="page-header-actions">
+      <a href="https://linkedin.com/in/kapiluthra" target="_blank" class="hdr-btn">LinkedIn</a>
+      <a href="https://credly.com/users/kapil-uthra" target="_blank" class="hdr-btn">Credly</a>
+      <button class="hdr-btn" onclick="window.print()">Print / PDF</button>
+    </div>
+  </div>
+
+  <div class="anchor-tabs fade-in">
+    <a href="#summary">Summary</a>
+    <a href="#experience">Experience</a>
+    <a href="#projects">Projects</a>
+    <a href="#skills">Skills</a>
+    <a href="#certifications">Certifications</a>
+    <a href="#awards">Awards</a>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="section fade-in" id="summary">
+    <div class="section-title">Summary</div>
+    <div class="summary-box">
+      <p>Solutions Architect with 13 years of OpenText consulting expertise and extensive global experience in enterprise information management.</p>
+      <ul class="summary-bullets">
+        <li><strong>Lead Architect</strong> @ Turnpikes, Denmark — multi-million-euro ECM pipeline across Europe</li>
+        <li><strong>150M document</strong> migration architecture into Content Server on Kubernetes</li>
+        <li>Building <strong>AI/RAG pipelines</strong> on enterprise content stores — ChromaDB, Ollama, Python</li>
+        <li>Delivered projects across <strong>India, Brazil, UK, KSA, Qatar, Denmark</strong></li>
+        <li><strong>12 certifications</strong> across OpenText, AWS, Azure, ITIL</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <div class="section" id="experience">
+    <div class="section-title">Experience</div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-role">Solutions Architect</div>
+        <div class="exp-period">Jan 2022 — Present</div>
+      </div>
+      <div class="exp-company">Turnpikes — Denmark</div>
+      <ul class="exp-bullets">
+        <li>Led presales and solution design for OpenText ECM and xECM engagements, driving a multi-million-euro pipeline across Europe</li>
+        <li>Designed migration architecture for ingesting 150M documents into Content Server on Kubernetes with high availability</li>
+        <li>Developed partner enablement playbooks and delivered quarterly technical workshops, increasing partner-led opportunities by 40%</li>
+        <li>Acted as Product Manager for Turnpikes Migration Tool, driving continuous development and feature enhancements</li>
+        <li>Championed customer feedback loop with product teams, influencing OpenText roadmap enhancements</li>
+      </ul>
+      <div class="exp-highlight">↑ 40% partner-led growth · 150M document migration</div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-role">Associate Manager</div>
+        <div class="exp-period">Aug — Nov 2021</div>
+      </div>
+      <div class="exp-company">Accenture</div>
+      <ul class="exp-bullets">
+        <li>Directed 8-member technical team in presales and delivery of OpenText EIM and xECM solutions — 95% project success rate</li>
+        <li>Created and led cloud migration training modules for AWS/Azure enabling seamless co-sell engagements</li>
+        <li>Conducted discovery workshops to align solution value propositions with client business objectives</li>
+      </ul>
+      <div class="exp-highlight">95% project success rate</div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-role">Business Manager</div>
+        <div class="exp-period">May — Aug 2021</div>
+      </div>
+      <div class="exp-company">IBM</div>
+      <ul class="exp-bullets">
+        <li>Architected Extended ECM integrations for SAP and Salesforce, improving deployment efficiency by 30%</li>
+        <li>Presented technical roadshows to senior stakeholders, showcasing OpenText compliance, governance, and analytics capabilities</li>
+      </ul>
+      <div class="exp-highlight">↑ 30% deployment efficiency</div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-role">Architect</div>
+        <div class="exp-period">Jan 2016 — May 2021</div>
+      </div>
+      <div class="exp-company">OpenText</div>
+      <ul class="exp-bullets">
+        <li>End-to-end ECM and xECM implementations for clients in KSA, Brazil, and USA; containerised deployments reduced CAPEX/OPEX by 25%</li>
+        <li>Streamlined content indexing and retrieval workflows, enhancing system scalability by 60% and reducing latency under peak loads</li>
+        <li>Managed on-prem to AWS migrations of 65 TB archives with zero data loss and under 2-hour cutover windows</li>
+        <li>Architected xECM integrations for SAP and Salesforce across multiple global engagements</li>
+      </ul>
+      <div class="exp-highlight">65 TB zero-loss migration · ↑ 60% scalability · ↓ 25% CAPEX/OPEX</div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-role">Senior Software Engineer</div>
+        <div class="exp-period">Aug 2011 — Jan 2016</div>
+      </div>
+      <div class="exp-company">Accenture</div>
+      <ul class="exp-bullets">
+        <li>Executed multiple OpenText upgrades (9.7→16.2) and migrations, leading technical architecture, testing, and rollout phases</li>
+        <li>Implemented monitoring and alerting for OpenText landscapes, reducing incident resolution time by 50%</li>
+      </ul>
+      <div class="exp-highlight">↓ 50% incident resolution time</div>
+    </div>
+  </div>
+
+  <!-- KEY PROJECTS -->
+  <div class="section" id="projects">
+    <div class="section-title">Key Projects</div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">Extended ECM for Salesforce</div><div class="exp-period">Securex · Belgium</div></div>
+      <div class="exp-company">Lead Architect</div>
+      <ul class="exp-bullets">
+        <li>Lead architect optimising xECM solution for Salesforce integrations</li>
+        <li>Planned migration of 150M documents into Content Server</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">ECM Upgrade 10.5 → 16.2</div><div class="exp-period">SABIC · KSA</div></div>
+      <div class="exp-company">Lead Architect</div>
+      <ul class="exp-bullets">
+        <li>Complex upgrade under tight outage constraints, partnering with OpenText engineering</li>
+        <li>Executed with minimal downtime on a mission-critical production system</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">xECM for SAP — GxP Compliant</div><div class="exp-period">Orion · Finland</div></div>
+      <div class="exp-company">Lead Architect & Delivery Owner</div>
+      <ul class="exp-bullets">
+        <li>Full implementation, migration, and digital transformation scoping</li>
+        <li>Ensured delivery compliance with GxP pharmaceutical requirements</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">Extended ECM Upgrade — AWS DR</div><div class="exp-period">SCG · USA</div></div>
+      <div class="exp-company">Solution Architect</div>
+      <ul class="exp-bullets">
+        <li>Managed 30+ server AWS landscape with minimal downtime and DR strategies</li>
+        <li>Reduced outage impact by 90%</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">ECM Migration + Performance</div><div class="exp-period">JIO · India</div></div>
+      <div class="exp-company">Lead Architect</div>
+      <ul class="exp-bullets">
+        <li>Designed ECM landscape handling 2M records/day ingestion</li>
+        <li>Completed 65 TB migration from Windows to Linux clusters with zero data loss</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header"><div class="exp-role">xECM for SAP SuccessFactors</div><div class="exp-period">Girteka · Portugal</div></div>
+      <div class="exp-company">Lead Architect & Delivery Owner</div>
+      <ul class="exp-bullets">
+        <li>Led architectural design and delivery management for digital transformation</li>
+        <li>Production support ensuring operational continuity on high-priority issues</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="section" id="skills">
+    <div class="section-title">Skills</div>
+    <div class="skills-grid">
+      <div class="skills-cell">
+        <div class="skills-cell-title">OpenText Platform</div>
+        <div class="tag-row">
+          <span class="tag">Content Server</span><span class="tag">Archive Center</span>
+          <span class="tag">OTDS</span><span class="tag">xECM SAP</span>
+          <span class="tag">xECM SuccessFactors</span><span class="tag">xECM Salesforce</span>
+          <span class="tag">Brava</span><span class="tag">Blazon</span>
+        </div>
+      </div>
+      <div class="skills-cell">
+        <div class="skills-cell-title">Cloud & Infra</div>
+        <div class="tag-row">
+          <span class="tag">AWS EKS</span><span class="tag">AWS EC2</span>
+          <span class="tag">AWS S3</span><span class="tag">AWS Route53</span>
+          <span class="tag">Azure AKS</span><span class="tag">Azure Entra ID</span>
+          <span class="tag">Kubernetes</span><span class="tag">Docker</span>
+          <span class="tag">Terraform</span>
+        </div>
+      </div>
+      <div class="skills-cell">
+        <div class="skills-cell-title">AI & RAG</div>
+        <div class="tag-row">
+          <span class="tag">ChromaDB</span><span class="tag">Ollama</span>
+          <span class="tag">nomic-embed</span><span class="tag">Python</span>
+          <span class="tag">LLM Integration</span><span class="tag">Vector Search</span>
+          <span class="tag">YAKE</span><span class="tag">Parquet</span>
+        </div>
+      </div>
+      <div class="skills-cell">
+        <div class="skills-cell-title">Tools & Methodology</div>
+        <div class="tag-row">
+          <span class="tag">Agile</span><span class="tag">Waterfall</span>
+          <span class="tag">Postman</span><span class="tag">JMeter</span>
+          <span class="tag">JIRA</span><span class="tag">Confluence</span>
+          <span class="tag">Oracle</span><span class="tag">PostgreSQL</span>
+          <span class="tag">SAP HANA</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="section">
+    <div class="section-title">Education</div>
+    <div class="edu-item">
+      <div class="edu-deg">Bachelor of Electrical Engineering</div>
+      <div class="edu-school">M.I.T.S — R.G.P.V., Bhopal, India</div>
+      <div class="edu-meta">2007 – 2011 · GPA: A</div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATIONS -->
+  <div class="section" id="certifications">
+    <div class="section-title">Certifications</div>
+
+    <div class="cert-group">
+      <div class="cert-group-title">OpenText</div>
+      <div class="cert-item"><div class="cert-name">Content Server Administrator</div><div class="cert-issuer">OpenText</div></div>
+      <div class="cert-item"><div class="cert-name">Content Server Business Consultant</div><div class="cert-issuer">OpenText</div></div>
+      <div class="cert-item"><div class="cert-name">Content Server Developer</div><div class="cert-issuer">OpenText</div></div>
+      <div class="cert-item"><div class="cert-name">Archive Center Administrator</div><div class="cert-issuer">OpenText</div></div>
+      <div class="cert-item"><div class="cert-name">Extended ECM for SAP — Foundation & Advanced</div><div class="cert-issuer">OpenText</div></div>
+      <div class="cert-item"><div class="cert-name">Extended ECM for SuccessFactors</div><div class="cert-issuer">OpenText</div></div>
+    </div>
+
+    <div class="cert-group">
+      <div class="cert-group-title">AWS</div>
+      <div class="cert-item"><div class="cert-name">Solutions Architect — Associate</div><div class="cert-issuer">Amazon Web Services</div></div>
+      <div class="cert-item"><div class="cert-name">Developer — Associate</div><div class="cert-issuer">Amazon Web Services</div></div>
+      <div class="cert-item"><div class="cert-name">SysOps Administrator — Associate</div><div class="cert-issuer">Amazon Web Services</div></div>
+    </div>
+
+    <div class="cert-group">
+      <div class="cert-group-title">Azure & ITIL</div>
+      <div class="cert-item"><div class="cert-name">Azure Fundamentals (AZ-900)</div><div class="cert-issuer">Microsoft</div></div>
+      <div class="cert-item"><div class="cert-name">Azure Data Fundamentals (DP-900)</div><div class="cert-issuer">Microsoft</div></div>
+      <div class="cert-item"><div class="cert-name">ITIL 4 Foundation</div><div class="cert-issuer">AXELOS</div></div>
+    </div>
+  </div>
+
+  <!-- AWARDS -->
+  <div class="section" id="awards">
+    <div class="section-title">Awards</div>
+    <div class="award-item"><div class="award-year">2018 / 2019</div><div class="award-name">Champions Award</div><div class="award-org">OpenText</div></div>
+    <div class="award-item"><div class="award-year">2017</div><div class="award-name">CEO Excellence Award</div><div class="award-org">OpenText</div></div>
+    <div class="award-item"><div class="award-year">2016</div><div class="award-name">Champions Award</div><div class="award-org">OpenText</div></div>
+    <div class="award-item"><div class="award-year">2014 / 2015</div><div class="award-name">Voice of the Customer</div><div class="award-org">Accenture</div></div>
+    <div class="award-item"><div class="award-year">2013</div><div class="award-name">Employee of the Year</div><div class="award-org">Accenture</div></div>
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://credly.com/users/kapil-uthra" target="_blank">credly</a></span>
+</footer>
+
+</body>
+</html>

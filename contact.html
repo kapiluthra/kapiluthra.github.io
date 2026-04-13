@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Kapil Uthra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616; --border: #222222; --border-2: #2a2a2a; --text: #e8e6e0; --text-2: #888880; --text-3: #444440; --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08); --mono: 'JetBrains Mono', 'Courier New', monospace; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.page { max-width: 860px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.page-header { margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 1.3rem; font-weight: 500; }
+.page-header h1::before { content: '> '; color: var(--amber); }
+.page-header p { margin-top: 0.4rem; font-size: 13px; color: var(--text-2); }
+.section { margin-bottom: 3.5rem; }
+.section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease both; }
+
+/* CONTACT LINKS */
+.contact-list { list-style: none; }
+.contact-row {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 1rem 0; border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.contact-row:last-child { border-bottom: none; }
+.contact-row:hover { background: var(--bg-2); margin: 0 -1.5rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+.contact-icon { font-size: 16px; width: 28px; flex-shrink: 0; }
+.contact-label { font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; min-width: 80px; }
+.contact-value { font-size: 13px; color: var(--text); flex: 1; }
+.contact-value a { color: var(--text); }
+.contact-value a:hover { color: var(--amber); opacity: 1; }
+
+.avail-box { border: 1px solid var(--border); padding: 1.5rem; background: var(--bg-2); }
+.avail-status { display: flex; align-items: center; gap: 0.75rem; font-size: 13px; margin-bottom: 0.75rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #4a9e6e; flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.avail-desc { font-size: 12px; color: var(--text-2); line-height: 1.65; }
+
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .page { padding: 76px 1.25rem 4rem; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html">blog</a></li>
+    <li><a href="contact.html" class="active">contact</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <div class="page-header fade-in">
+    <h1>Contact</h1>
+    <p>Open to consulting engagements, architecture conversations, and good ideas.</p>
+  </div>
+
+  <div class="section fade-in">
+    <div class="section-title">Availability</div>
+    <div class="avail-box">
+      <div class="avail-status">
+        <div class="dot"></div>
+        <span>Available for consulting & collaborations</span>
+      </div>
+      <p class="avail-desc">
+        Currently based in Denmark. Open to remote consulting on OpenText ECM architecture,
+        cloud migration strategy, and AI/RAG pipeline design. Response time: usually within 24 hours.
+      </p>
+    </div>
+  </div>
+
+  <div class="section fade-in">
+    <div class="section-title">Get in Touch</div>
+    <ul class="contact-list">
+      <li class="contact-row">
+        <div class="contact-icon">✉</div>
+        <div class="contact-label">Email</div>
+        <div class="contact-value"><a href="mailto:kapiluthra@gmail.com">kapiluthra@gmail.com</a></div>
+      </li>
+      <li class="contact-row">
+        <div class="contact-icon">in</div>
+        <div class="contact-label">LinkedIn</div>
+        <div class="contact-value"><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin.com/in/kapiluthra</a></div>
+      </li>
+      <li class="contact-row">
+        <div class="contact-icon">✦</div>
+        <div class="contact-label">Credly</div>
+        <div class="contact-value"><a href="https://credly.com/users/kapil-uthra" target="_blank">credly.com/users/kapil-uthra</a></div>
+      </li>
+      <li class="contact-row">
+        <div class="contact-icon">✍</div>
+        <div class="contact-label">Writing</div>
+        <div class="contact-value"><a href="https://dev.to" target="_blank">dev.to</a> · <a href="https://linkedin.com/in/kapiluthra" target="_blank">LinkedIn Articles</a></div>
+      </li>
+      <li class="contact-row">
+        <div class="contact-icon">◈</div>
+        <div class="contact-label">Location</div>
+        <div class="contact-value">Denmark 🇩🇰 — CET timezone</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section fade-in">
+    <div class="section-title">Good Topics to Reach Out About</div>
+    <ul style="list-style:none;">
+      <li style="padding:0.4rem 0; font-size:13px; color:var(--text-2); display:flex; gap:0.75rem; border-bottom:1px solid var(--border);">
+        <span style="color:var(--amber);">▸</span> OpenText ECM architecture, migrations, or xECM integrations
+      </li>
+      <li style="padding:0.4rem 0; font-size:13px; color:var(--text-2); display:flex; gap:0.75rem; border-bottom:1px solid var(--border);">
+        <span style="color:var(--amber);">▸</span> RAG pipeline design for enterprise document repositories
+      </li>
+      <li style="padding:0.4rem 0; font-size:13px; color:var(--text-2); display:flex; gap:0.75rem; border-bottom:1px solid var(--border);">
+        <span style="color:var(--amber);">▸</span> Cloud migration strategy — AWS or Azure at scale
+      </li>
+      <li style="padding:0.4rem 0; font-size:13px; color:var(--text-2); display:flex; gap:0.75rem; border-bottom:1px solid var(--border);">
+        <span style="color:var(--amber);">▸</span> Kubernetes-native ECM deployment patterns
+      </li>
+      <li style="padding:0.4rem 0; font-size:13px; color:var(--text-2); display:flex; gap:0.75rem;">
+        <span style="color:var(--amber);">▸</span> Anything at the intersection of AI and enterprise content
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="mailto:kapiluthra@gmail.com">email</a></span>
+</footer>
+
+</body>
+</html>

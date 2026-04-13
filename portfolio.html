@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Kapil Uthra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.page { max-width: 860px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.page-header { margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 1.3rem; font-weight: 500; color: var(--text); }
+.page-header h1::before { content: '> '; color: var(--amber); }
+.page-header p { margin-top: 0.4rem; font-size: 13px; color: var(--text-2); }
+.anchor-tabs { display: flex; margin-bottom: 3rem; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
+.anchor-tabs a { font-size: 12px; color: var(--text-2); padding: 0.5rem 1.25rem; border-right: 1px solid var(--border); letter-spacing: 0.04em; transition: all 0.15s; }
+.anchor-tabs a:last-child { border-right: none; }
+.anchor-tabs a:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
+.section { margin-bottom: 4rem; }
+.section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-desc { font-size: 12px; color: var(--text-3); margin-bottom: 2rem; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease both; }
+
+/* PROJECT CARDS */
+.project-card {
+  border: 1px solid var(--border);
+  margin-bottom: 1px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.project-card:hover { border-color: var(--border-2); background: var(--bg-2); }
+.project-card.wip { opacity: 0.6; }
+
+.project-inner { padding: 1.5rem; }
+.project-path { font-size: 11px; color: var(--amber); letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.project-path .wip-badge { font-size: 9px; background: var(--amber-glow); border: 1px solid var(--amber-dim); color: var(--amber); padding: 1px 6px; letter-spacing: 0.1em; text-transform: uppercase; }
+.project-path .retired-badge { font-size: 9px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-2); color: var(--text-3); padding: 1px 6px; letter-spacing: 0.1em; text-transform: uppercase; }
+.project-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
+.project-desc { font-size: 12px; color: var(--text-2); line-height: 1.65; margin-bottom: 1rem; }
+.project-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem; }
+.tag { font-size: 10px; color: var(--text-2); background: var(--bg-3); border: 1px solid var(--border-2); padding: 2px 8px; letter-spacing: 0.04em; }
+.tag.highlight { color: var(--amber); border-color: var(--amber-dim); background: var(--amber-glow); }
+.project-links { display: flex; gap: 0; }
+.proj-link { font-size: 11px; color: var(--text-3); border: 1px solid var(--border); padding: 0.3rem 0.9rem; border-right: none; letter-spacing: 0.06em; transition: all 0.15s; }
+.proj-link:last-child { border-right: 1px solid var(--border); }
+.proj-link:hover { color: var(--amber); background: var(--amber-glow); opacity: 1; }
+
+/* ARTICLES */
+.article-item { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.article-item:last-child { border-bottom: none; }
+.article-num { font-size: 11px; color: var(--text-3); min-width: 28px; margin-top: 2px; }
+.article-body { flex: 1; }
+.article-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 0.2rem; }
+.article-title a { color: var(--text); }
+.article-title a:hover { color: var(--amber); opacity: 1; }
+.article-meta { font-size: 11px; color: var(--text-3); }
+
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .page { padding: 76px 1.25rem 4rem; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html" class="active">portfolio</a></li>
+    <li><a href="blog.html">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <div class="page-header fade-in">
+    <h1>Portfolio</h1>
+    <p>Things I've built, architectured, and written about.</p>
+  </div>
+
+  <div class="anchor-tabs fade-in">
+    <a href="#projects">Projects</a>
+    <a href="#articles">Articles</a>
+    <a href="#enterprise">Enterprise Work</a>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="section fade-in" id="projects">
+    <div class="section-title">Things I've Built</div>
+    <div class="section-desc">Personal projects — to learn, experiment, and push enterprise tech further.</div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/projects/otcs-rag-pipeline</div>
+        <div class="project-title">OpenText Content Server RAG Pipeline</div>
+        <div class="project-desc">Production-grade RAG pipeline for OpenText Content Server targeting 500+ documents. Dual-storage pattern with Parquet cold store and ChromaDB vector hot store. Implements parent-child chunking, ACL-enforced security gates, incremental sync via OTModifyDate, and hybrid BM25+vector retrieval with RRF reranking.</div>
+        <div class="project-tags">
+          <span class="tag highlight">Python</span>
+          <span class="tag highlight">ChromaDB</span>
+          <span class="tag highlight">Ollama</span>
+          <span class="tag">OpenText CS</span>
+          <span class="tag">RAG</span>
+          <span class="tag">Vector Search</span>
+          <span class="tag">Parquet</span>
+          <span class="tag">YAKE</span>
+        </div>
+        <div class="project-links">
+          <span class="proj-link">Private — Enterprise</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/projects/ecm-migration-toolkit</div>
+        <div class="project-title">ECM Migration Toolkit</div>
+        <div class="project-desc">Contributed to and product-managed the Turnpikes Migration Tool — enabling large-scale document migrations into OpenText Content Server. Designed for high-volume scenarios (100M+ documents) with configurable transformation pipelines, metadata mapping, and audit logging.</div>
+        <div class="project-tags">
+          <span class="tag">Migration</span>
+          <span class="tag">OpenText</span>
+          <span class="tag">Kubernetes</span>
+          <span class="tag">Product Management</span>
+        </div>
+        <div class="project-links">
+          <span class="proj-link">Turnpikes IP</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-card wip">
+      <div class="project-inner">
+        <div class="project-path">~/projects/ecm-query-agent <span class="wip-badge">WIP</span></div>
+        <div class="project-title">ECM Query Agent</div>
+        <div class="project-desc">Agentic interface over OpenText Content Server — natural language querying across enterprise document repositories using tool-calling LLMs, with ACL-aware retrieval and citation-grounded responses. Built on top of the OTCS RAG pipeline.</div>
+        <div class="project-tags">
+          <span class="tag highlight">LLM</span>
+          <span class="tag highlight">Agents</span>
+          <span class="tag">Streamlit</span>
+          <span class="tag">Python</span>
+          <span class="tag">OpenText</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ARTICLES -->
+  <div class="section" id="articles">
+    <div class="section-title">Articles I've Written</div>
+    <div class="section-desc">Technical writing on ECM, cloud architecture, and AI/RAG — published on dev.to and LinkedIn.</div>
+
+    <div class="article-item">
+      <div class="article-num">01</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
+        <div class="article-meta">dev.to · 2026</div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">02</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
+        <div class="article-meta">LinkedIn · 2025</div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">03</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
+        <div class="article-meta">dev.to · 2025</div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">04</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
+        <div class="article-meta">LinkedIn · 2024</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENTERPRISE WORK -->
+  <div class="section" id="enterprise">
+    <div class="section-title">Enterprise Work</div>
+    <div class="section-desc">Selected delivery highlights across 13 years and 6 countries.</div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/enterprise/securex-belgium</div>
+        <div class="project-title">150M Document Migration — xECM for Salesforce</div>
+        <div class="project-desc">Lead architect for Securex Belgium. Designed and executed migration of 150M documents into Content Server while optimising the Extended ECM integration for Salesforce CRM workflows.</div>
+        <div class="project-tags"><span class="tag">xECM</span><span class="tag">Salesforce</span><span class="tag">Migration</span><span class="tag">Belgium</span></div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/enterprise/orion-finland</div>
+        <div class="project-title">GxP-Compliant xECM for SAP</div>
+        <div class="project-desc">Lead Architect and Delivery Owner for Orion, a pharmaceutical company in Finland. Full implementation ensuring GxP regulatory compliance — a first for the engagement team.</div>
+        <div class="project-tags"><span class="tag">xECM SAP</span><span class="tag">GxP</span><span class="tag">Pharma</span><span class="tag">Finland</span></div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/enterprise/jio-india</div>
+        <div class="project-title">65 TB Archive Migration — 2M Records/Day Ingestion</div>
+        <div class="project-desc">Designed ECM landscape for JIO India handling 2M records/day. Completed 65 TB migration transitioning from Windows to Linux clusters with zero data loss and identified/remediated all infrastructure performance issues.</div>
+        <div class="project-tags"><span class="tag">Migration</span><span class="tag">Performance</span><span class="tag">Linux</span><span class="tag">India</span></div>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-inner">
+        <div class="project-path">~/enterprise/scg-usa</div>
+        <div class="project-title">30-Server AWS Landscape — 90% Outage Reduction</div>
+        <div class="project-desc">Managed a 30+ server AWS landscape for SCG USA. Designed minimal-downtime upgrade strategy and disaster recovery architecture that reduced outage impact by 90%.</div>
+        <div class="project-tags"><span class="tag">AWS</span><span class="tag">DR Strategy</span><span class="tag">ECM</span><span class="tag">USA</span></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://credly.com/users/kapil-uthra" target="_blank">credly</a></span>
+</footer>
+
+</body>
+</html>

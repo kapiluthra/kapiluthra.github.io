@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog — Kapil Uthra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616; --border: #222222; --border-2: #2a2a2a; --text: #e8e6e0; --text-2: #888880; --text-3: #444440; --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08); --mono: 'JetBrains Mono', 'Courier New', monospace; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.page { max-width: 860px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.page-header { margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 1.3rem; font-weight: 500; color: var(--text); }
+.page-header h1::before { content: '> '; color: var(--amber); }
+.page-header p { margin-top: 0.4rem; font-size: 13px; color: var(--text-2); }
+.section { margin-bottom: 3.5rem; }
+.section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease both; }
+
+/* BLOG */
+.filter-row { display: flex; gap: 0; margin-bottom: 2.5rem; border: 1px solid var(--border); width: fit-content; flex-wrap: wrap; }
+.filter-btn { font-size: 11px; color: var(--text-2); padding: 0.4rem 1rem; border-right: 1px solid var(--border); cursor: pointer; background: transparent; font-family: var(--mono); letter-spacing: 0.06em; transition: all 0.15s; }
+.filter-btn:last-child { border-right: none; }
+.filter-btn:hover, .filter-btn.active { color: var(--amber); background: var(--amber-glow); }
+
+.post-item { display: flex; gap: 2rem; align-items: flex-start; padding: 1.25rem 0; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.post-item:last-child { border-bottom: none; }
+.post-item:hover { background: var(--bg-2); margin: 0 -1.5rem; padding-left: 1.5rem; padding-right: 1.5rem; }
+.post-date { font-size: 11px; color: var(--text-3); min-width: 90px; margin-top: 2px; white-space: nowrap; }
+.post-body { flex: 1; }
+.post-category { font-size: 10px; color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.25rem; }
+.post-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 0.3rem; line-height: 1.4; }
+.post-title a { color: var(--text); }
+.post-title a:hover { color: var(--amber); opacity: 1; }
+.post-desc { font-size: 12px; color: var(--text-2); line-height: 1.55; }
+.post-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 1px 7px; }
+
+.coming-soon { border: 1px dashed var(--border-2); padding: 2rem; text-align: center; color: var(--text-3); font-size: 12px; }
+.coming-soon span { color: var(--amber); }
+
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .page { padding: 76px 1.25rem 4rem; }
+  .post-item { flex-direction: column; gap: 0.25rem; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <div class="page-header fade-in">
+    <h1>Blog</h1>
+    <p>Technical writing on ECM, cloud, and AI/RAG. Updated as I build and learn.</p>
+  </div>
+
+  <div class="filter-row fade-in">
+    <button class="filter-btn active">all</button>
+    <button class="filter-btn">tutorials</button>
+    <button class="filter-btn">projects</button>
+    <button class="filter-btn">opinion</button>
+    <button class="filter-btn">til</button>
+  </div>
+
+  <div class="section fade-in">
+    <div class="section-title">2026</div>
+
+    <div class="post-item">
+      <div class="post-date">Apr 2026</div>
+      <div class="post-body">
+        <div class="post-category">Tutorial</div>
+        <div class="post-title"><a href="#">Building a Production RAG Pipeline for OpenText Content Server</a></div>
+        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, chunking strategies, ChromaDB ingestion, and hybrid retrieval with RRF reranking.</div>
+        <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">chromadb</span><span class="tag">python</span></div>
+      </div>
+    </div>
+
+    <div class="post-item">
+      <div class="post-date">Mar 2026</div>
+      <div class="post-body">
+        <div class="post-category">Project</div>
+        <div class="post-title"><a href="#">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
+        <div class="post-desc">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it.</div>
+        <div class="post-tags"><span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span></div>
+      </div>
+    </div>
+
+    <div class="post-item">
+      <div class="post-date">Mar 2026</div>
+      <div class="post-body">
+        <div class="post-category">Opinion</div>
+        <div class="post-title"><a href="#">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
+        <div class="post-desc">After 13 years of ECM projects I have opinions. On abstraction layers, on LlamaIndex, on when to build vs buy.</div>
+        <div class="post-tags"><span class="tag">architecture</span><span class="tag">opinion</span><span class="tag">ecm</span></div>
+      </div>
+    </div>
+
+    <div class="post-item">
+      <div class="post-date">Mar 2026</div>
+      <div class="post-body">
+        <div class="post-category">TIL</div>
+        <div class="post-title"><a href="#">TIL: Git Rebase vs Merge — When to Use Which</a></div>
+        <div class="post-desc">Cleaning up a messy commit history before a PR taught me the one rule that matters: never rebase shared branches.</div>
+        <div class="post-tags"><span class="tag">til</span><span class="tag">git</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="coming-soon">
+    <span>More posts coming.</span> Writing is part of building — this blog grows with every project.
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://dev.to" target="_blank">dev.to</a> · <a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a></span>
+</footer>
+
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
