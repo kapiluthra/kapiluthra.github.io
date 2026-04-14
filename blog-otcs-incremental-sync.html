@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync — Kapil Uthra</title>
+<meta name="description" content="How to use OTModifyDate, checkpointing, and a dual-store pattern to keep a RAG knowledge base current without re-crawling your entire OpenText Content Server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
+  --border: #222222; --border-2: #2a2a2a;
+  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
+  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.tip .callout-icon { color: var(--green); }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.warn .callout-icon { color: #e5a020; }
+.callout.info { border-left: 3px solid var(--blue); }
+.callout.info .callout-icon { color: var(--blue); }
+.flow-diagram { border: 1px solid var(--border); padding: 1.5rem; margin: 2rem 0; background: var(--bg-2); font-size: 11px; }
+.flow-diagram-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+.flow-steps { display: flex; flex-direction: column; gap: 0; }
+.flow-step { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.flow-step:last-child { border-bottom: none; }
+.flow-num { color: var(--amber); font-weight: 700; min-width: 24px; margin-top: 1px; }
+.flow-name { color: var(--text); font-weight: 500; min-width: 160px; }
+.flow-desc { color: var(--text-2); font-family: var(--serif); font-size: 0.95rem; line-height: 1.5; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .article-wrap { padding: 76px 1.25rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+</nav>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / tutorial
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">Tutorial · RAG Infrastructure</div>
+    <h1 class="article-title">Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync with OTModifyDate</h1>
+    <p class="article-subtitle">A full crawl of 500+ documents takes time. Running it daily to catch updates is wasteful. Here's the pattern I use to detect and re-ingest only changed documents — using the field the OTCS API already exposes.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>April 2026</span>
+      <span>~10 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">opentext</span>
+      <span class="tag">incremental sync</span>
+      <span class="tag">python</span>
+      <span class="tag">chromadb</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>The first version of most RAG pipelines is a batch job: crawl everything, embed everything, store everything. It works fine for demos. In production, you hit the problem that makes it unsustainable: <strong>your knowledge base goes stale the moment you finish building it</strong>.</p>
+
+    <p>In an enterprise ECM environment, documents are updated constantly — contracts get amended, policies get revised, project documents accumulate new versions. A RAG system that doesn't track these changes starts giving confidently wrong answers, which is worse than giving no answer at all.</p>
+
+    <p>The fix is incremental sync. And OpenText Content Server gives you exactly the field you need to implement it: <code>modify_date</code>.</p>
+
+    <h2>The Core Idea</h2>
+
+    <p>Every node in Content Server exposes a <code>modify_date</code> timestamp — updated whenever the document content or metadata changes. The incremental sync strategy is simple:</p>
+
+    <ol>
+      <li>Record the timestamp when your last successful sync completed</li>
+      <li>On the next sync run, walk the node tree as normal</li>
+      <li>For each document, compare its <code>modify_date</code> to your last sync timestamp</li>
+      <li>Only re-process documents where <code>modify_date &gt; last_sync</code></li>
+      <li>For changed documents: delete existing chunks, re-extract, re-chunk, re-ingest</li>
+      <li>Update the sync timestamp to now</li>
+    </ol>
+
+    <p>This means each sync run processes only the documents that actually changed. On a corpus of 500 documents where 10–20 change per day, you go from processing 500 documents per run to processing 10–20. The time saving compounds quickly.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p><strong>Important:</strong> The <code>modify_date</code> field reflects the last modification to either the document content <em>or</em> its metadata (categories, permissions, name). A permission change on a document will trigger re-ingestion — which is correct behaviour if you're enforcing ACL gates in your retriever.</p></div>
+    </div>
+
+    <h2>Sync State Management</h2>
+
+    <p>The sync state needs to survive between runs. I use a simple JSON file — one field, the ISO 8601 timestamp of the last successful sync. For production deployments you'd move this to a database, but the JSON approach is fine for single-process pipelines.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">sync_state.py — Persistent sync timestamp</div>
+      <pre><span class="kw">import</span> json
+<span class="kw">import</span> pathlib
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+SYNC_STATE_FILE = pathlib.Path(<span class="str">"sync_state.json"</span>)
+
+<span class="kw">def</span> <span class="fn">get_last_sync</span>() -> str:
+    <span class="str">"""Return ISO 8601 timestamp of last successful sync.
+    
+    Returns epoch start if no sync has been run yet — triggers a full
+    initial crawl on first run.
+    """</span>
+    <span class="kw">if</span> SYNC_STATE_FILE.exists():
+        data = json.loads(SYNC_STATE_FILE.read_text())
+        <span class="kw">return</span> data.get(<span class="str">"last_sync"</span>, <span class="str">"2000-01-01T00:00:00Z"</span>)
+    <span class="kw">return</span> <span class="str">"2000-01-01T00:00:00Z"</span>  <span class="cmt"># first run = full crawl</span>
+
+<span class="kw">def</span> <span class="fn">save_sync_time</span>(timestamp: str = None) -> None:
+    <span class="str">"""Persist sync completion time. Call ONLY after successful sync."""</span>
+    ts = timestamp <span class="kw">or</span> datetime.now(timezone.utc).isoformat()
+    SYNC_STATE_FILE.write_text(json.dumps({
+        <span class="str">"last_sync"</span>: ts,
+        <span class="str">"last_sync_human"</span>: ts  <span class="cmt"># readable copy for debugging</span>
+    }, indent=<span class="num">2</span>))
+
+<span class="kw">def</span> <span class="fn">needs_update</span>(node: dict, last_sync: str) -> bool:
+    <span class="str">"""Return True if this node was modified after last_sync."""</span>
+    modify_date = (
+        node.get(<span class="str">"data"</span>, {})
+            .get(<span class="str">"properties"</span>, {})
+            .get(<span class="str">"modify_date"</span>, <span class="str">""</span>)
+    )
+    <span class="kw">if not</span> modify_date:
+        <span class="kw">return</span> True  <span class="cmt"># no date = assume changed (safe default)</span>
+    <span class="kw">return</span> modify_date > last_sync</pre>
+    </div>
+
+    <p>The string comparison in <code>needs_update</code> works because OTCS returns <code>modify_date</code> in ISO 8601 format (<code>2026-04-10T14:23:01Z</code>), which sorts correctly as a string. No datetime parsing needed.</p>
+
+    <h2>The Incremental Sync Loop</h2>
+
+    <div class="codeblock">
+      <div class="codeblock-title">sync.py — Main incremental sync orchestrator</div>
+      <pre><span class="kw">import</span> logging
+<span class="kw">from</span> cs_client <span class="kw">import</span> CSClient
+<span class="kw">from</span> extractor <span class="kw">import</span> extract_text
+<span class="kw">from</span> chunker <span class="kw">import</span> chunk_document
+<span class="kw">from</span> ingester <span class="kw">import</span> ingest_chunks, delete_doc_chunks
+<span class="kw">from</span> sync_state <span class="kw">import</span> get_last_sync, save_sync_time, needs_update
+
+logger = logging.getLogger(__name__)
+
+<span class="kw">def</span> <span class="fn">run_sync</span>(client: CSClient, root_node_id: int) -> dict:
+    <span class="str">"""Run an incremental sync of the OTCS repository.
+    
+    Returns stats dict with counts of processed/skipped/failed documents.
+    """</span>
+    last_sync = get_last_sync()
+    logger.info(<span class="str">"Starting sync. Last sync: %s"</span>, last_sync)
+
+    stats = {<span class="str">"processed"</span>: <span class="num">0</span>, <span class="str">"skipped"</span>: <span class="num">0</span>, <span class="str">"failed"</span>: <span class="num">0</span>, <span class="str">"deleted"</span>: <span class="num">0</span>}
+
+    <span class="kw">for</span> node <span class="kw">in</span> client.walk_nodes(root_node_id):
+        props = node[<span class="str">"data"</span>][<span class="str">"properties"</span>]
+        doc_id = str(props[<span class="str">"id"</span>])
+        doc_name = props.get(<span class="str">"name"</span>, <span class="str">"unknown"</span>)
+
+        <span class="kw">if not</span> needs_update(node, last_sync):
+            stats[<span class="str">"skipped"</span>] += <span class="num">1</span>
+            <span class="kw">continue</span>
+
+        logger.info(<span class="str">"Processing: %s (%s)"</span>, doc_name, doc_id)
+
+        <span class="kw">try</span>:
+            <span class="cmt"># 1. Download content</span>
+            content, mime_type = client.download_content(int(doc_id))
+            <span class="kw">if not</span> content:
+                stats[<span class="str">"skipped"</span>] += <span class="num">1</span>
+                <span class="kw">continue</span>
+
+            <span class="cmt"># 2. Extract text</span>
+            text = extract_text(content, mime_type)
+            <span class="kw">if not</span> text.strip():
+                stats[<span class="str">"skipped"</span>] += <span class="num">1</span>
+                <span class="kw">continue</span>
+
+            <span class="cmt"># 3. Delete existing chunks (upsert semantics)</span>
+            delete_doc_chunks(doc_id)
+            stats[<span class="str">"deleted"</span>] += <span class="num">1</span>
+
+            <span class="cmt"># 4. Re-chunk and re-ingest</span>
+            chunks = chunk_document(
+                text=text,
+                doc_id=doc_id,
+                doc_name=doc_name,
+                modify_date=props.get(<span class="str">"modify_date"</span>, <span class="str">""</span>),
+                mime_type=mime_type,
+            )
+            ingest_chunks(chunks)
+            stats[<span class="str">"processed"</span>] += <span class="num">1</span>
+
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            logger.error(<span class="str">"Failed: %s (%s): %s"</span>, doc_name, doc_id, e)
+            stats[<span class="str">"failed"</span>] += <span class="num">1</span>
+
+    <span class="cmt"># Save sync time ONLY if no failures — safe-fail approach</span>
+    <span class="kw">if</span> stats[<span class="str">"failed"</span>] == <span class="num">0</span>:
+        save_sync_time()
+        logger.info(<span class="str">"Sync complete: %s"</span>, stats)
+    <span class="kw">else</span>:
+        logger.warning(
+            <span class="str">"Sync had %d failures — not advancing sync timestamp. "</span>
+            <span class="str">"Failed docs will be retried next run."</span>,
+            stats[<span class="str">"failed"</span>]
+        )
+
+    <span class="kw">return</span> stats</pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Critical detail:</strong> only advance the sync timestamp if the run completed without failures. If you save the timestamp after a partial run, the failed documents will never be retried — they fall before the new timestamp and the next sync skips them. Failed documents must stay behind the watermark.</p></div>
+    </div>
+
+    <h2>Handling Deletions</h2>
+
+    <p>The sync loop above handles new and modified documents. But what about <strong>deleted documents</strong>? If a document is deleted from OTCS, <code>walk_nodes</code> won't yield it — so its stale chunks stay in ChromaDB forever, available to the retriever.</p>
+
+    <p>The clean solution is a periodic reconciliation pass — run less frequently than the incremental sync (weekly rather than daily):</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">reconcile.py — Remove stale chunks for deleted documents</div>
+      <pre><span class="kw">from</span> ingester <span class="kw">import</span> _get_collection
+
+<span class="kw">def</span> <span class="fn">reconcile_deletions</span>(client: CSClient, root_node_id: int) -> int:
+    <span class="str">"""Remove ChromaDB chunks for documents that no longer exist in OTCS."""</span>
+    <span class="cmt"># Build set of current OTCS doc IDs</span>
+    live_ids = {
+        str(client.get_properties(node)[<span class="str">"id"</span>])
+        <span class="kw">for</span> node <span class="kw">in</span> client.walk_nodes(root_node_id)
+    }
+
+    <span class="cmt"># Get all doc IDs in ChromaDB</span>
+    collection = _get_collection()
+    all_meta = collection.get(include=[<span class="str">"metadatas"</span>])
+    indexed_ids = {m[<span class="str">"doc_id"</span>] <span class="kw">for</span> m <span class="kw">in</span> all_meta[<span class="str">"metadatas"</span>]}
+
+    <span class="cmt"># Delete chunks for docs that are in ChromaDB but not in OTCS</span>
+    stale_ids = indexed_ids - live_ids
+    deleted_count = <span class="num">0</span>
+    <span class="kw">for</span> doc_id <span class="kw">in</span> stale_ids:
+        delete_doc_chunks(doc_id)
+        deleted_count += <span class="num">1</span>
+
+    <span class="kw">return</span> deleted_count</pre>
+    </div>
+
+    <h2>Why the Parquet Cold Store Pays Off Here</h2>
+
+    <p>When you delete and re-ingest a modified document, you're re-embedding it — which costs compute time. If you later decide to switch embedding models (say, from <code>nomic-embed-text</code> to a newer model), you'd need to re-embed <em>everything</em>.</p>
+
+    <p>Without the Parquet cold store, that means re-crawling all of OTCS — all the API calls, all the downloads, all the text extraction. With the cold store, re-embedding is just reading the Parquet file locally and sending text to the embedding API. The cold store pays for itself the first time you change models.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Re-embedding from cold store:</strong> read all rows from Parquet, call the new embedding model on each <code>child_text</code>, upsert into ChromaDB with the new vectors. No OTCS API calls required. For 500 documents this takes minutes rather than hours.</p></div>
+    </div>
+
+    <h2>Scheduling the Sync</h2>
+
+    <p>The incremental sync is lightweight enough to run frequently. The pattern I use:</p>
+
+    <div class="flow-diagram">
+      <div class="flow-diagram-title">Sync Schedule</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-num">1×</div>
+          <div class="flow-name">Initial full crawl</div>
+          <div class="flow-desc">Run once to bootstrap the knowledge base. Takes longest — all documents processed.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4× daily</div>
+          <div class="flow-name">Incremental sync</div>
+          <div class="flow-desc">Runs every 6 hours via cron or Kubernetes CronJob. Only processes documents modified since last run — typically 5–30 documents on an active repository.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">1× weekly</div>
+          <div class="flow-name">Deletion reconciliation</div>
+          <div class="flow-desc">Full walk to find and remove chunks for deleted documents. Keeps ChromaDB consistent with the live repository.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">As needed</div>
+          <div class="flow-name">Model migration</div>
+          <div class="flow-desc">When switching embedding models: re-embed all docs from Parquet cold store. No OTCS API calls. Typically 15–45 minutes for 500 documents.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Edge Cases Worth Knowing</h2>
+
+    <ul>
+      <li><strong>New documents:</strong> handled automatically. A new document has a <code>modify_date</code> after your last sync timestamp, so it gets processed on the next run.</li>
+      <li><strong>Version-only updates:</strong> Content Server updates <code>modify_date</code> when a new version is added. This correctly triggers re-ingestion of the new version's content.</li>
+      <li><strong>Metadata-only changes:</strong> renaming a document or changing its category also updates <code>modify_date</code>. The document gets re-ingested with updated metadata — correct if your chunks store document name and category.</li>
+      <li><strong>Permission changes:</strong> if you're using ACL security gates in your retriever (you should be), permission changes also correctly trigger re-ingestion, ensuring the metadata the retriever uses for access checks stays current.</li>
+      <li><strong>Clock skew:</strong> if your OTCS server and your sync process are on different machines with unsynchronised clocks, you can get missed updates. Add a small overlap window — save <code>last_sync</code> as 5 minutes before the actual sync start time to catch anything that falls in the gap.</li>
+    </ul>
+
+    <div class="codeblock">
+      <div class="codeblock-title">sync_state.py — Clock skew buffer</div>
+      <pre><span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone, timedelta
+
+<span class="kw">def</span> <span class="fn">save_sync_time_with_buffer</span>(buffer_minutes: int = <span class="num">5</span>) -> None:
+    <span class="str">"""Save sync time with a small lookback buffer for clock skew safety."""</span>
+    buffered = datetime.now(timezone.utc) - timedelta(minutes=buffer_minutes)
+    SYNC_STATE_FILE.write_text(json.dumps({
+        <span class="str">"last_sync"</span>: buffered.isoformat()
+    }, indent=<span class="num">2</span>))</pre>
+    </div>
+
+    <p>The 5-minute buffer means a small number of unchanged documents get re-checked on each run (those modified in the last 5 minutes of the previous window), but you'll never miss an update due to clock skew. On a 500-document corpus, the false-positive rate is negligible.</p>
+
+    <p>This whole sync pattern — <code>modify_date</code> watermark, safe-fail timestamp advancement, cold store re-embedding, deletion reconciliation — is what separates a RAG demo from a RAG system you can actually depend on in production. The code is in the <a href="https://github.com/kapiluthra/otcs-rag-demo" target="_blank">demo repo</a> if you want to start from a working scaffold.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-cs-client-debugging.html" class="related-post">
+          <div class="related-post-cat">Debugging</div>
+          <div class="related-post-title">How I Debugged 150M Document Download Failures in cs_client.py</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+        <a href="blog-150m-migration.html" class="related-post">
+          <div class="related-post-cat">Deep Dive</div>
+          <div class="related-post-title">Migrating 150M Documents to Kubernetes-Native Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span>
+    <a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> ·
+    <a href="https://github.com/kapiluthra" target="_blank">github</a> ·
+    <a href="https://dev.to" target="_blank">dev.to</a>
+  </span>
+</footer>
+
+</body>
+</html>

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resume — Kapil Uthra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -140,6 +141,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <h1>Resume</h1>
     <div class="page-header-actions">
       <a href="https://linkedin.com/in/kapiluthra" target="_blank" class="hdr-btn">LinkedIn</a>
+      <a href="https://github.com/kapiluthra" target="_blank" class="hdr-btn">GitHub</a>
       <a href="https://credly.com/users/kapil-uthra" target="_blank" class="hdr-btn">Credly</a>
       <button class="hdr-btn" onclick="window.print()">Print / PDF</button>
     </div>
@@ -307,43 +309,54 @@ footer a:hover { color: var(--amber); opacity: 1; }
   <!-- SKILLS -->
   <div class="section" id="skills">
     <div class="section-title">Skills</div>
+
+    <div class="exp-highlight" style="margin-bottom:1.5rem">
+      ↗ Open source: <a href="https://github.com/kapiluthra/otcs-rag-demo" target="_blank" style="color:var(--amber)">github.com/kapiluthra/otcs-rag-demo</a> — OTCS RAG pipeline demo scaffold
+    </div>
+
     <div class="skills-grid">
+      <div class="skills-cell">
+        <div class="skills-cell-title">AI / RAG Stack</div>
+        <div class="tag-row">
+          <span class="tag">ChromaDB</span><span class="tag">Ollama</span>
+          <span class="tag">nomic-embed-text</span><span class="tag">BM25 + RRF</span>
+          <span class="tag">LangChain</span><span class="tag">Streamlit</span>
+          <span class="tag">Parent-Child Chunking</span><span class="tag">Vector Search</span>
+          <span class="tag">Hybrid Retrieval</span><span class="tag">Parquet</span>
+          <span class="tag">Python</span><span class="tag">pandas</span>
+        </div>
+      </div>
       <div class="skills-cell">
         <div class="skills-cell-title">OpenText Platform</div>
         <div class="tag-row">
-          <span class="tag">Content Server</span><span class="tag">Archive Center</span>
+          <span class="tag">Content Server</span><span class="tag">OTCS REST API v2</span>
+          <span class="tag">OTCSTicket Auth</span><span class="tag">Categories & Attributes</span>
+          <span class="tag">ACL / Permissions</span><span class="tag">Archive Center</span>
           <span class="tag">OTDS</span><span class="tag">xECM SAP</span>
           <span class="tag">xECM SuccessFactors</span><span class="tag">xECM Salesforce</span>
           <span class="tag">Brava</span><span class="tag">Blazon</span>
         </div>
       </div>
       <div class="skills-cell">
-        <div class="skills-cell-title">Cloud & Infra</div>
+        <div class="skills-cell-title">Cloud & Infrastructure</div>
         <div class="tag-row">
           <span class="tag">AWS EKS</span><span class="tag">AWS EC2</span>
-          <span class="tag">AWS S3</span><span class="tag">AWS Route53</span>
+          <span class="tag">AWS S3</span><span class="tag">AWS ALB/NLB</span>
+          <span class="tag">AWS Route53</span><span class="tag">CloudWatch</span>
           <span class="tag">Azure AKS</span><span class="tag">Azure Entra ID</span>
           <span class="tag">Kubernetes</span><span class="tag">Docker</span>
-          <span class="tag">Terraform</span>
+          <span class="tag">Terraform</span><span class="tag">Redis</span>
         </div>
       </div>
       <div class="skills-cell">
-        <div class="skills-cell-title">AI & RAG</div>
+        <div class="skills-cell-title">Tools & Databases</div>
         <div class="tag-row">
-          <span class="tag">ChromaDB</span><span class="tag">Ollama</span>
-          <span class="tag">nomic-embed</span><span class="tag">Python</span>
-          <span class="tag">LLM Integration</span><span class="tag">Vector Search</span>
-          <span class="tag">YAKE</span><span class="tag">Parquet</span>
-        </div>
-      </div>
-      <div class="skills-cell">
-        <div class="skills-cell-title">Tools & Methodology</div>
-        <div class="tag-row">
-          <span class="tag">Agile</span><span class="tag">Waterfall</span>
+          <span class="tag">Oracle</span><span class="tag">PostgreSQL</span>
+          <span class="tag">SQL Server</span><span class="tag">SAP HANA</span>
           <span class="tag">Postman</span><span class="tag">JMeter</span>
           <span class="tag">JIRA</span><span class="tag">Confluence</span>
-          <span class="tag">Oracle</span><span class="tag">PostgreSQL</span>
-          <span class="tag">SAP HANA</span>
+          <span class="tag">Agile</span><span class="tag">Waterfall</span>
+          <span class="tag">GxP Validation</span><span class="tag">IQ/OQ/PQ</span>
         </div>
       </div>
     </div>

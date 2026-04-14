@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>About — Kapil Uthra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,6 +47,21 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .geo-flag { font-size: 20px; margin-bottom: 0.3rem; }
 .geo-name { font-size: 11px; color: var(--text-2); }
 .geo-role { font-size: 10px; color: var(--text-3); }
+
+/* NOW GRID */
+.now-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.now-card { background: var(--bg-2); padding: 1.25rem; }
+.now-status { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.now-status.active { color: #4ec97b; }
+.now-status.learning { color: var(--amber); }
+.now-status.reading { color: var(--text-3); }
+.now-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.now-desc { font-family: var(--serif); font-size: 0.95rem; color: var(--text-2); line-height: 1.65; margin-bottom: 0.6rem; }
+.now-link { font-size: 11px; }
+
+/* PHILOSOPHY */
+.philosophy-block { }
+.phil-line { font-family: var(--serif); font-size: 1.15rem; color: var(--text); line-height: 1.6; margin-bottom: 0.5rem; border-left: 3px solid var(--amber-dim); padding-left: 1.25rem; }
 
 @media (max-width: 640px) {
   nav { padding: 0 1rem; }
@@ -104,13 +120,46 @@ footer a:hover { color: var(--amber); opacity: 1; }
     </div>
 
     <div class="section">
-      <div class="section-title">Currently Exploring</div>
-      <ul class="about-bullets">
-        <li><strong>RAG evaluation harnesses</strong> — RAGAS and similar frameworks for measuring retrieval quality in production</li>
-        <li><strong>Cross-encoder reranking</strong> — building the missing layer in enterprise search pipelines</li>
-        <li><strong>Agentic architectures</strong> — tool-calling LLMs over structured enterprise content stores</li>
-        <li><strong>Hugo + GitHub Pages</strong> — this very site. Documenting the whole journey on the blog.</li>
-      </ul>
+      <div class="section-title">What I'm Building Now</div>
+      <div class="now-grid">
+        <div class="now-card">
+          <div class="now-status active">● active</div>
+          <div class="now-title">ECM Query Agent</div>
+          <div class="now-desc">Agentic natural language interface over OpenText Content Server. Tool-calling LLM with ACL-aware retrieval and cited answers. Built on top of the OTCS RAG pipeline.</div>
+          <div class="now-link"><a href="portfolio.html#projects">→ see in portfolio</a></div>
+        </div>
+        <div class="now-card">
+          <div class="now-status learning">◎ learning</div>
+          <div class="now-title">Cross-Encoder Reranking</div>
+          <div class="now-desc">Bi-encoder retrieval (what I use now) is fast but approximate. Cross-encoders score query+document pairs directly — much better precision for enterprise search. Evaluating with BEIR benchmarks.</div>
+          <div class="now-link"><a href="blog.html">→ upcoming post</a></div>
+        </div>
+        <div class="now-card">
+          <div class="now-status learning">◎ learning</div>
+          <div class="now-title">RAG Evaluation with RAGAS</div>
+          <div class="now-desc">You can't improve what you don't measure. Building an evaluation harness for the OTCS RAG pipeline using RAGAS metrics: faithfulness, answer relevancy, context recall.</div>
+          <div class="now-link"><a href="blog.html">→ upcoming post</a></div>
+        </div>
+        <div class="now-card">
+          <div class="now-status reading">○ reading</div>
+          <div class="now-title">Attention Is All You Need → forward</div>
+          <div class="now-desc">Working through the transformer literature properly — not to become an ML researcher, but to understand the systems I'm building on well enough to reason about their failure modes.</div>
+          <div class="now-link"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Philosophy</div>
+      <div class="philosophy-block">
+        <p class="phil-line">"<strong>I specialize in making enterprise content findable, queryable, and trustworthy at scale.</strong>"</p>
+        <ul class="about-bullets" style="margin-top:1.5rem">
+          <li>Good architecture is mostly about <strong>knowing where to draw boundaries</strong> — what to abstract, what to couple, and what to leave explicit. The projects that age well are the ones with clear ownership and boring technology choices.</li>
+          <li>The best migrations I've run are the ones where we <strong>verified everything twice</strong> and moved fast as a result. The worst ones skipped the preparation and paid for it in production at 2am.</li>
+          <li>Writing forces precision. If I can't explain an architectural decision in plain text, I probably don't understand it well enough. That's why this blog exists.</li>
+          <li>I'm more interested in <strong>what RAG gets wrong</strong> than what it gets right — hallucination modes, retrieval failures, ACL gaps. Enterprise deployments fail at the edges, not the happy path.</li>
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -119,7 +168,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
 <footer>
   <span>$ © 2026 Kapil Uthra</span>
-  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="mailto:kapiluthra@gmail.com">email</a></span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="mailto:kapiluthra@gmail.com">email</a></span>
 </footer>
 
 </body>

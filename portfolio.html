@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio — Kapil Uthra</title>
+<meta name="description" content="Projects, case studies, and technical writing from Kapil Uthra — Solutions Architect specialising in Enterprise ECM and AI/RAG infrastructure.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -13,7 +15,9 @@
   --border: #222222; --border-2: #2a2a2a;
   --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
   --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --green: #4ec97b; --green-dim: rgba(78,201,123,0.08);
   --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
 }
 html { scroll-behavior: smooth; }
 body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
@@ -26,7 +30,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1
 .nav-links { display: flex; list-style: none; }
 .nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
 .nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
-.page { max-width: 860px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.page { max-width: 900px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
 .page-header { margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
 .page-header h1 { font-size: 1.3rem; font-weight: 500; color: var(--text); }
 .page-header h1::before { content: '> '; color: var(--amber); }
@@ -35,54 +39,85 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1
 .anchor-tabs a { font-size: 12px; color: var(--text-2); padding: 0.5rem 1.25rem; border-right: 1px solid var(--border); letter-spacing: 0.04em; transition: all 0.15s; }
 .anchor-tabs a:last-child { border-right: none; }
 .anchor-tabs a:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
-.section { margin-bottom: 4rem; }
+.section { margin-bottom: 5rem; }
 .section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .section-desc { font-size: 12px; color: var(--text-3); margin-bottom: 2rem; }
-footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
-footer a { color: var(--text-3); }
-footer a:hover { color: var(--amber); opacity: 1; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn 0.5s ease both; }
 
 /* PROJECT CARDS */
-.project-card {
-  border: 1px solid var(--border);
-  margin-bottom: 1px;
-  transition: border-color 0.15s, background 0.15s;
-}
+.project-card { border: 1px solid var(--border); margin-bottom: 1px; transition: border-color 0.15s, background 0.15s; }
 .project-card:hover { border-color: var(--border-2); background: var(--bg-2); }
-.project-card.wip { opacity: 0.6; }
-
 .project-inner { padding: 1.5rem; }
-.project-path { font-size: 11px; color: var(--amber); letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-.project-path .wip-badge { font-size: 9px; background: var(--amber-glow); border: 1px solid var(--amber-dim); color: var(--amber); padding: 1px 6px; letter-spacing: 0.1em; text-transform: uppercase; }
-.project-path .retired-badge { font-size: 9px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-2); color: var(--text-3); padding: 1px 6px; letter-spacing: 0.1em; text-transform: uppercase; }
+.project-path { font-size: 11px; color: var(--amber); letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.project-path .note { color: var(--text-3); font-size: 10px; }
 .project-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
 .project-desc { font-size: 12px; color: var(--text-2); line-height: 1.65; margin-bottom: 1rem; }
 .project-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem; }
 .tag { font-size: 10px; color: var(--text-2); background: var(--bg-3); border: 1px solid var(--border-2); padding: 2px 8px; letter-spacing: 0.04em; }
 .tag.highlight { color: var(--amber); border-color: var(--amber-dim); background: var(--amber-glow); }
-.project-links { display: flex; gap: 0; }
-.proj-link { font-size: 11px; color: var(--text-3); border: 1px solid var(--border); padding: 0.3rem 0.9rem; border-right: none; letter-spacing: 0.06em; transition: all 0.15s; }
+.project-links { display: flex; gap: 0; flex-wrap: wrap; }
+.proj-link { font-size: 11px; color: var(--text-3); border: 1px solid var(--border); padding: 0.3rem 0.9rem; border-right: none; letter-spacing: 0.06em; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.4rem; }
 .proj-link:last-child { border-right: 1px solid var(--border); }
 .proj-link:hover { color: var(--amber); background: var(--amber-glow); opacity: 1; }
+.proj-link.gh:hover { color: var(--green); background: var(--green-dim); border-color: rgba(78,201,123,0.3); }
+
+/* CURRENTLY BUILDING */
+.building-card { border: 1px dashed var(--amber-dim); padding: 1.5rem; background: var(--amber-glow); margin-bottom: 1px; }
+.building-label { font-size: 9px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+.building-label::before { content: ''; width: 6px; height: 6px; background: var(--amber); border-radius: 50%; animation: pulse 2s ease infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.building-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 0.3rem; }
+.building-desc { font-size: 12px; color: var(--text-2); }
+
+/* CASE STUDIES */
+.case-study { border: 1px solid var(--border); margin-bottom: 2px; }
+.cs-header { padding: 1.5rem 1.75rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; cursor: pointer; user-select: none; transition: background 0.15s; }
+.cs-header:hover { background: var(--bg-2); }
+.cs-header-left { flex: 1; }
+.cs-path { font-size: 10px; color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.35rem; }
+.cs-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.35; margin-bottom: 0.4rem; }
+.cs-meta { font-size: 11px; color: var(--text-3); display: flex; gap: 1rem; flex-wrap: wrap; }
+.cs-meta .result { color: var(--green); }
+.cs-toggle { font-size: 20px; color: var(--text-3); flex-shrink: 0; line-height: 1; transition: transform 0.2s; margin-top: 2px; }
+.case-study.open .cs-toggle { transform: rotate(45deg); color: var(--amber); }
+.cs-body { display: none; padding: 1.75rem; border-top: 1px solid var(--border); background: var(--bg-2); }
+.case-study.open .cs-body { display: block; }
+.cs-metrics { display: flex; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2rem; }
+.cs-metric { flex: 1; background: var(--bg-3); padding: 1rem; text-align: center; }
+.cs-metric-num { font-size: 1.3rem; font-weight: 700; color: var(--amber); line-height: 1; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+.cs-metric-label { font-size: 9px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; }
+.cs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem; }
+.cs-block-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.cs-block-content { font-family: var(--serif); font-size: 1rem; color: var(--text-2); line-height: 1.75; }
+.cs-block-content strong { color: var(--text); font-weight: 600; }
+.cs-stack { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1.5rem; }
+.cs-read-more { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 11px; color: var(--amber); border: 1px solid var(--amber-dim); padding: 0.4rem 1rem; transition: background 0.15s; letter-spacing: 0.06em; }
+.cs-read-more:hover { background: var(--amber-glow); opacity: 1; }
 
 /* ARTICLES */
 .article-item { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .article-item:last-child { border-bottom: none; }
 .article-num { font-size: 11px; color: var(--text-3); min-width: 28px; margin-top: 2px; }
 .article-body { flex: 1; }
-.article-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 0.2rem; }
+.article-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 0.25rem; }
 .article-title a { color: var(--text); }
 .article-title a:hover { color: var(--amber); opacity: 1; }
-.article-meta { font-size: 11px; color: var(--text-3); }
+.article-meta { font-size: 11px; color: var(--text-3); display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-@media (max-width: 640px) {
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.5s ease both; }
+
+@media (max-width: 660px) {
   nav { padding: 0 1rem; }
-  .nav-links a { padding: 0 0.6rem; font-size: 11px; }
+  .nav-links a { padding: 0 0.5rem; font-size: 11px; }
   .page { padding: 76px 1.25rem 4rem; }
-  footer { padding: 1.5rem; }
+  .cs-grid { grid-template-columns: 1fr; }
+  .cs-metrics { flex-wrap: wrap; }
+  .cs-metric { min-width: calc(50% - 1px); }
+  footer { padding: 1.5rem; flex-direction: column; gap: 0.4rem; }
 }
 </style>
 </head>
@@ -104,173 +139,362 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
   <div class="page-header fade-in">
     <h1>Portfolio</h1>
-    <p>Things I've built, architectured, and written about.</p>
+    <p>Projects built, architectures designed, and lessons written down.</p>
   </div>
 
   <div class="anchor-tabs fade-in">
     <a href="#projects">Projects</a>
+    <a href="#case-studies">Case Studies</a>
     <a href="#articles">Articles</a>
-    <a href="#enterprise">Enterprise Work</a>
   </div>
 
-  <!-- PROJECTS -->
-  <div class="section fade-in" id="projects">
-    <div class="section-title">Things I've Built</div>
-    <div class="section-desc">Personal projects — to learn, experiment, and push enterprise tech further.</div>
 
+  <!-- ══ PROJECTS ══ -->
+  <div class="section fade-in" id="projects">
+    <div class="section-title">Personal Projects</div>
+    <div class="section-desc">Things I build to learn, experiment, and push enterprise tech forward.</div>
+
+    <!-- Currently building -->
+    <div class="building-card">
+      <div class="building-label">Active — in progress</div>
+      <div class="building-title">ECM Query Agent — Agentic Natural Language Interface over OpenText CS</div>
+      <div class="building-desc">Tool-calling LLM layer on top of the OTCS RAG pipeline. Users query in plain English; the agent decides which OTCS nodes to search, retrieves chunks with ACL enforcement, and returns cited answers. Stack: Streamlit + LangChain tool-calling + ChromaDB.</div>
+    </div>
+
+    <!-- RAG Pipeline -->
     <div class="project-card">
       <div class="project-inner">
-        <div class="project-path">~/projects/otcs-rag-pipeline</div>
+        <div class="project-path">
+          ~/projects/otcs-rag-pipeline
+          <span class="note">— sanitised demo scaffold on GitHub</span>
+        </div>
         <div class="project-title">OpenText Content Server RAG Pipeline</div>
-        <div class="project-desc">Production-grade RAG pipeline for OpenText Content Server targeting 500+ documents. Dual-storage pattern with Parquet cold store and ChromaDB vector hot store. Implements parent-child chunking, ACL-enforced security gates, incremental sync via OTModifyDate, and hybrid BM25+vector retrieval with RRF reranking.</div>
+        <div class="project-desc">
+          Production-grade RAG pipeline for OpenText Content Server. Dual-storage pattern: <strong>Parquet cold store</strong> for re-embedding resilience + <strong>ChromaDB vector hot store</strong> for retrieval. Parent-child chunking (400-token child / 1500-token parent), ACL-enforced security gates, incremental sync via OTModifyDate, hybrid BM25+vector retrieval with RRF reranking, and Streamlit chatbot UI.<br><br>
+          Full production version is private (enterprise). A sanitised demo scaffold — cs_client pattern, chunker, ingester skeleton, Streamlit UI — is open-source on GitHub.
+        </div>
         <div class="project-tags">
           <span class="tag highlight">Python</span>
           <span class="tag highlight">ChromaDB</span>
           <span class="tag highlight">Ollama</span>
-          <span class="tag">OpenText CS</span>
+          <span class="tag highlight">nomic-embed-text</span>
+          <span class="tag">OpenText CS REST API</span>
           <span class="tag">RAG</span>
-          <span class="tag">Vector Search</span>
           <span class="tag">Parquet</span>
-          <span class="tag">YAKE</span>
+          <span class="tag">BM25 + RRF</span>
+          <span class="tag">Streamlit</span>
+          <span class="tag">ACL Security</span>
         </div>
         <div class="project-links">
-          <span class="proj-link">Private — Enterprise</span>
+          <a href="https://github.com/kapiluthra/otcs-rag-demo" target="_blank" class="proj-link gh">⌥ GitHub — demo scaffold</a>
+          <a href="blog-rag-opentext-pipeline.html" class="proj-link">→ Pipeline writeup</a>
+          <a href="blog-cs-client-debugging.html" class="proj-link">→ Debugging post</a>
         </div>
       </div>
     </div>
 
+    <!-- Migration Toolkit -->
     <div class="project-card">
       <div class="project-inner">
-        <div class="project-path">~/projects/ecm-migration-toolkit</div>
-        <div class="project-title">ECM Migration Toolkit</div>
-        <div class="project-desc">Contributed to and product-managed the Turnpikes Migration Tool — enabling large-scale document migrations into OpenText Content Server. Designed for high-volume scenarios (100M+ documents) with configurable transformation pipelines, metadata mapping, and audit logging.</div>
+        <div class="project-path">~/projects/ecm-migration-toolkit <span class="note">— Turnpikes IP</span></div>
+        <div class="project-title">ECM Migration Toolkit — Product Manager + Architect</div>
+        <div class="project-desc">
+          Product-managed and architected the Turnpikes Migration Tool — the engine behind 100M+ document migrations into OpenText Content Server. Core capabilities: configurable metadata transformation pipelines, parallel stream processing with per-document PostgreSQL checkpointing, SHA-256 checksum verification, schema-agnostic source connectors. Used in production at Securex Belgium (150M docs).
+        </div>
         <div class="project-tags">
-          <span class="tag">Migration</span>
-          <span class="tag">OpenText</span>
-          <span class="tag">Kubernetes</span>
+          <span class="tag">Migration Engine</span>
+          <span class="tag">OpenText CS</span>
+          <span class="tag">Kubernetes Jobs</span>
+          <span class="tag">Parallel Streams</span>
+          <span class="tag">Checkpointing</span>
           <span class="tag">Product Management</span>
         </div>
         <div class="project-links">
-          <span class="proj-link">Turnpikes IP</span>
+          <span class="proj-link" style="cursor:default;opacity:0.5">Turnpikes IP — private</span>
+          <a href="blog-150m-migration.html" class="proj-link">→ Migration case study</a>
         </div>
       </div>
     </div>
 
-    <div class="project-card wip">
+    <!-- This site -->
+    <div class="project-card">
       <div class="project-inner">
-        <div class="project-path">~/projects/ecm-query-agent <span class="wip-badge">WIP</span></div>
-        <div class="project-title">ECM Query Agent</div>
-        <div class="project-desc">Agentic interface over OpenText Content Server — natural language querying across enterprise document repositories using tool-calling LLMs, with ACL-aware retrieval and citation-grounded responses. Built on top of the OTCS RAG pipeline.</div>
+        <div class="project-path">~/projects/kapiluthra.github.io</div>
+        <div class="project-title">This Portfolio — Static Site + Technical Blog</div>
+        <div class="project-desc">
+          Hand-coded static site (zero frameworks) hosted on GitHub Pages. Terminal aesthetic with JetBrains Mono + Crimson Pro. All article pages are self-contained HTML with custom syntax highlighting, architecture diagrams, and callout components built in plain CSS.
+        </div>
         <div class="project-tags">
-          <span class="tag highlight">LLM</span>
-          <span class="tag highlight">Agents</span>
-          <span class="tag">Streamlit</span>
-          <span class="tag">Python</span>
-          <span class="tag">OpenText</span>
+          <span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">GitHub Pages</span><span class="tag">No frameworks</span>
+        </div>
+        <div class="project-links">
+          <a href="https://github.com/kapiluthra/kapiluthra.github.io" target="_blank" class="proj-link gh">⌥ View source</a>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- ARTICLES -->
+
+  <!-- ══ CASE STUDIES ══ -->
+  <div class="section" id="case-studies">
+    <div class="section-title">Case Studies</div>
+    <div class="section-desc">Selected enterprise engagements — challenge, approach, results, what I'd do differently. Click to expand.</div>
+
+    <!-- ── CS 1: Securex Belgium ── -->
+    <div class="case-study open" id="cs-securex">
+      <div class="cs-header" onclick="toggle('cs-securex')">
+        <div class="cs-header-left">
+          <div class="cs-path">Securex · Belgium · 2024</div>
+          <div class="cs-title">150M Document Migration into Kubernetes-Native Content Server + xECM for Salesforce</div>
+          <div class="cs-meta">
+            <span>Lead Architect</span>
+            <span>Migration · Cloud · Integration</span>
+            <span class="result">✓ Zero data loss · On schedule</span>
+          </div>
+        </div>
+        <div class="cs-toggle">+</div>
+      </div>
+      <div class="cs-body">
+        <div class="cs-metrics">
+          <div class="cs-metric"><div class="cs-metric-num">150M</div><div class="cs-metric-label">Docs migrated</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">0</div><div class="cs-metric-label">Data loss</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">6 wk</div><div class="cs-metric-label">Migration window</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">20</div><div class="cs-metric-label">Parallel streams</div></div>
+        </div>
+        <div class="cs-grid">
+          <div class="cs-block">
+            <div class="cs-block-title">The Challenge</div>
+            <div class="cs-block-content">Securex Belgium needed to exit a legacy ECM at end-of-life, landing <strong>150 million documents</strong> in a Kubernetes-native OTCS deployment — simultaneously integrating with Salesforce CRM via xECM. Hard deadline, zero data loss tolerance, flat source metadata that needed mapping to a structured OTCS Category model.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">Architecture Decisions</div>
+            <div class="cs-block-content"><strong>Hybrid injection</strong>: metadata via OTCS REST API; binary content injected directly to S3 with post-injection SHA-256 verification. This cut migration time from ~180 days (API-only) to 6 weeks. <strong>20 parallel Kubernetes Jobs</strong> by document category, each with per-document PostgreSQL checkpointing. xECM for Salesforce workspace type configured before migration — critical for correct linkage.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">What Surprised Us</div>
+            <div class="cs-block-content">SHA-256 verification caught <strong>147 corrupted files out of 150M</strong> (0.0001%) — a character encoding edge case in filenames with special characters. All 147 re-migrated successfully. Without checksum verification this would have been silent data corruption.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">What I'd Do Differently</div>
+            <div class="cs-block-content">Start with per-document checkpointing in design (we added it mid-development). Run the 1M-doc dry run on production infrastructure, not staging — storage I/O differences caused initial rate underestimates. Communicate the post-migration full-text indexing window to users on day one.</div>
+          </div>
+        </div>
+        <div class="cs-block-title">Stack</div>
+        <div class="cs-stack">
+          <span class="tag highlight">Kubernetes</span><span class="tag highlight">AWS S3</span><span class="tag">OpenText CS 23.4</span><span class="tag">xECM for Salesforce</span><span class="tag">PostgreSQL</span><span class="tag">Python</span><span class="tag">SHA-256 Verification</span><span class="tag">OTDS</span>
+        </div>
+        <a href="blog-150m-migration.html" class="cs-read-more">Full writeup: Migrating 150M Documents →</a>
+      </div>
+    </div>
+
+    <!-- ── CS 2: Orion Finland ── -->
+    <div class="case-study" id="cs-orion">
+      <div class="cs-header" onclick="toggle('cs-orion')">
+        <div class="cs-header-left">
+          <div class="cs-path">Orion Pharma · Finland · 2023–2024</div>
+          <div class="cs-title">GxP-Validated xECM for SAP — Pharmaceutical Manufacturing</div>
+          <div class="cs-meta">
+            <span>Lead Architect + Delivery Owner</span>
+            <span>xECM SAP · GxP · Regulated</span>
+            <span class="result">✓ Full IQ/OQ/PQ passed · Zero regulatory findings</span>
+          </div>
+        </div>
+        <div class="cs-toggle">+</div>
+      </div>
+      <div class="cs-body">
+        <div class="cs-metrics">
+          <div class="cs-metric"><div class="cs-metric-num">GxP</div><div class="cs-metric-label">Compliant delivery</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">IQ/OQ/PQ</div><div class="cs-metric-label">All protocols passed</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">MM+PM+QM</div><div class="cs-metric-label">SAP modules covered</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">0</div><div class="cs-metric-label">Regulatory findings</div></div>
+        </div>
+        <div class="cs-grid">
+          <div class="cs-block">
+            <div class="cs-block-title">The Challenge</div>
+            <div class="cs-block-content">Orion is a Finnish pharma manufacturer under EU GxP / <strong>21 CFR Part 11</strong> requirements. Their document management system is part of the validated environment — every configuration change requires documented evidence. Standard xECM implementation timelines don't account for validation overhead.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">GxP Overhead (What Others Skip)</div>
+            <div class="cs-block-content">Change Control submitted <strong>6 weeks pre-implementation</strong>. IQ/OQ/PQ protocols written with full traceability matrix. Post-go-live audit trail captured in OTCS audit log itself — used as primary IQ evidence. This overhead roughly <strong>doubled project timeline</strong> vs non-regulated xECM. Worth every day.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">Key Lesson</div>
+            <div class="cs-block-content">In GxP environments, the ECM system is part of the <strong>product quality infrastructure</strong>, not an IT tool. Treat validation as a first-class deliverable from day one — retrofitting evidence after implementation is significantly more expensive.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">OTDS Config Note</div>
+            <div class="cs-block-content">OTDS was configured on a dedicated VM (not co-located with OTCS) — separate memory/CPU profiles prevent the contention that causes intermittent auth failures under load. This became a standard practice across all engagements after this project.</div>
+          </div>
+        </div>
+        <div class="cs-block-title">Stack</div>
+        <div class="cs-stack">
+          <span class="tag highlight">xECM for SAP</span><span class="tag">OpenText CS</span><span class="tag">OTDS</span><span class="tag">SAP ECC</span><span class="tag">AWS</span><span class="tag">GxP Validation</span><span class="tag">IQ/OQ/PQ</span><span class="tag">21 CFR Part 11</span>
+        </div>
+        <a href="blog-xecm-sap-patterns.html" class="cs-read-more">xECM SAP architecture patterns post →</a>
+      </div>
+    </div>
+
+    <!-- ── CS 3: SCG USA ── -->
+    <div class="case-study" id="cs-scg">
+      <div class="cs-header" onclick="toggle('cs-scg')">
+        <div class="cs-header-left">
+          <div class="cs-path">SCG · USA · 2022–2023</div>
+          <div class="cs-title">30-Server AWS Landscape — 90% Upgrade Outage Reduction via Rolling Deployment</div>
+          <div class="cs-meta">
+            <span>Lead Architect</span>
+            <span>AWS · Distributed ECM · DR</span>
+            <span class="result">✓ 8–12 hr outage window → 45 min</span>
+          </div>
+        </div>
+        <div class="cs-toggle">+</div>
+      </div>
+      <div class="cs-body">
+        <div class="cs-metrics">
+          <div class="cs-metric"><div class="cs-metric-num">90%</div><div class="cs-metric-label">Outage reduction</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">30+</div><div class="cs-metric-label">AWS servers</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">45 min</div><div class="cs-metric-label">Remaining window</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">Redis</div><div class="cs-metric-label">Session externalisation</div></div>
+        </div>
+        <div class="cs-grid">
+          <div class="cs-block">
+            <div class="cs-block-title">The Problem</div>
+            <div class="cs-block-content">SCG's 30+ server Content Server landscape on AWS required <strong>8–12 hour outage windows</strong> for major version upgrades. Significant business disruption and compliance risk around change management. All nodes had to stop simultaneously because session state was node-local.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">The Solution</div>
+            <div class="cs-block-content">Moved all CS session state to an <strong>external Redis cluster</strong> — making any node able to serve any session regardless of version. This enabled true rolling upgrades: each front-end node is pulled from the ALB, upgraded, verified, and returned, while users continue on remaining nodes. Only the database schema step (unavoidable) requires a brief full outage.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">DR Architecture</div>
+            <div class="cs-block-content">Alongside the upgrade redesign: cross-AZ standby, automated ALB failover via Route53 health checks, documented RTO/RPO targets. The previous single-region setup couldn't meet SCG's business continuity requirements — this engagement addressed both upgrade pain and DR gap in a single architecture revision.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">Transferable Pattern</div>
+            <div class="cs-block-content">Session externalisation is now a standard recommendation for any multi-node OTCS deployment — it improves HA beyond just enabling rolling upgrades. Any node failure becomes transparent to users rather than requiring a session re-login.</div>
+          </div>
+        </div>
+        <div class="cs-block-title">Stack</div>
+        <div class="cs-stack">
+          <span class="tag highlight">AWS EC2</span><span class="tag highlight">AWS ALB</span><span class="tag highlight">Redis</span><span class="tag">Route53 Health Checks</span><span class="tag">OpenText CS</span><span class="tag">Archive Center</span><span class="tag">Rolling Deployment</span><span class="tag">DR Architecture</span>
+        </div>
+        <a href="blog-zero-downtime-ecm-upgrades.html" class="cs-read-more">Full upgrade strategy post →</a>
+      </div>
+    </div>
+
+    <!-- ── CS 4: JIO India ── -->
+    <div class="case-study" id="cs-jio">
+      <div class="cs-header" onclick="toggle('cs-jio')">
+        <div class="cs-header-left">
+          <div class="cs-path">JIO · India · 2014–2015</div>
+          <div class="cs-title">65 TB Archive Migration — 2M Records/Day Ingestion at Telco Scale</div>
+          <div class="cs-meta">
+            <span>Architect + Lead Engineer</span>
+            <span>Migration · Performance · Scale</span>
+            <span class="result">✓ Zero data loss · Windows → Linux</span>
+          </div>
+        </div>
+        <div class="cs-toggle">+</div>
+      </div>
+      <div class="cs-body">
+        <div class="cs-metrics">
+          <div class="cs-metric"><div class="cs-metric-num">65 TB</div><div class="cs-metric-label">Archive migrated</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">2M</div><div class="cs-metric-label">Records/day sustained</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">0</div><div class="cs-metric-label">Data loss</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">Win→Linux</div><div class="cs-metric-label">Platform re-host</div></div>
+        </div>
+        <div class="cs-grid">
+          <div class="cs-block">
+            <div class="cs-block-title">The Challenge</div>
+            <div class="cs-block-content">JIO India's ECM needed to sustain <strong>2 million document ingestions per day</strong> from billing, contract, and customer management workflows. The existing Windows-based deployment was degrading under this load. A 65 TB archive migration and platform transition (Windows → Linux) were required simultaneously.</div>
+          </div>
+          <div class="cs-block">
+            <div class="cs-block-title">Performance Remediation</div>
+            <div class="cs-block-content">Root causes: severe DTree/DAuditNew index fragmentation from years of deferred maintenance, undersized DB connection pool for the ingestion concurrency, and I/O contention between the full-text indexer and document ingestion on the same storage. Resolved by separating the indexer to a dedicated node and implementing a proper maintenance schedule.</div>
+          </div>
+        </div>
+        <div class="cs-block-title">Stack</div>
+        <div class="cs-stack">
+          <span class="tag">OpenText CS</span><span class="tag">Oracle DB</span><span class="tag">RHEL Linux</span><span class="tag">Migration</span><span class="tag">Database Performance Tuning</span><span class="tag">Index Optimisation</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══ ARTICLES ══ -->
   <div class="section" id="articles">
-    <div class="section-title">Articles I've Written</div>
-    <div class="section-desc">Technical writing on ECM, cloud architecture, and AI/RAG — published on dev.to and LinkedIn.</div>
+    <div class="section-title">Articles Written</div>
+    <div class="section-desc">Technical writing on ECM internals, cloud architecture, and AI/RAG.</div>
 
     <div class="article-item">
       <div class="article-num">01</div>
       <div class="article-body">
-        <div class="article-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
-        <div class="article-meta">kapiluthra.github.io · Apr 2026 · Tutorial</div>
+        <div class="article-title"><a href="blog-otcs-incremental-sync.html">Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync with OTModifyDate</a></div>
+        <div class="article-meta"><span>Apr 2026</span><span>Tutorial · RAG</span><span>~10 min</span></div>
       </div>
     </div>
     <div class="article-item">
       <div class="article-num">02</div>
       <div class="article-body">
-        <div class="article-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
-        <div class="article-meta">kapiluthra.github.io · Mar 2026 · Debugging</div>
+        <div class="article-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
+        <div class="article-meta"><span>Apr 2026</span><span>Tutorial · Deep Dive</span><span>~18 min</span></div>
       </div>
     </div>
     <div class="article-item">
       <div class="article-num">03</div>
       <div class="article-body">
-        <div class="article-title"><a href="blog-ecm-architecture.html">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
-        <div class="article-meta">kapiluthra.github.io · Mar 2026 · Opinion</div>
+        <div class="article-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
+        <div class="article-meta"><span>Mar 2026</span><span>Debugging</span><span>~12 min</span></div>
       </div>
     </div>
     <div class="article-item">
       <div class="article-num">04</div>
       <div class="article-body">
-        <div class="article-title"><a href="blog-xecm-sap-patterns.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
-        <div class="article-meta">kapiluthra.github.io · Feb 2026 · Tutorial</div>
+        <div class="article-title"><a href="blog-ecm-architecture.html">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
+        <div class="article-meta"><span>Mar 2026</span><span>Opinion</span><span>~10 min</span></div>
       </div>
     </div>
     <div class="article-item">
       <div class="article-num">05</div>
       <div class="article-body">
-        <div class="article-title"><a href="blog-zero-downtime-ecm-upgrades.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
-        <div class="article-meta">kapiluthra.github.io · Jan 2026 · Deep Dive</div>
+        <div class="article-title"><a href="blog-xecm-sap-patterns.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
+        <div class="article-meta"><span>Feb 2026</span><span>Tutorial · Enterprise</span><span>~14 min</span></div>
       </div>
     </div>
     <div class="article-item">
       <div class="article-num">06</div>
       <div class="article-body">
+        <div class="article-title"><a href="blog-zero-downtime-ecm-upgrades.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
+        <div class="article-meta"><span>Jan 2026</span><span>Deep Dive · Ops</span><span>~13 min</span></div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">07</div>
+      <div class="article-body">
         <div class="article-title"><a href="blog-150m-migration.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
-        <div class="article-meta">kapiluthra.github.io · Dec 2025 · Deep Dive</div>
+        <div class="article-meta"><span>Dec 2025</span><span>Deep Dive · Migration</span><span>~16 min</span></div>
       </div>
     </div>
-  </div>
-
-  <!-- ENTERPRISE WORK -->
-  <div class="section" id="enterprise">
-    <div class="section-title">Enterprise Work</div>
-    <div class="section-desc">Selected delivery highlights across 13 years and 6 countries.</div>
-
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-path">~/enterprise/securex-belgium</div>
-        <div class="project-title">150M Document Migration — xECM for Salesforce</div>
-        <div class="project-desc">Lead architect for Securex Belgium. Designed and executed migration of 150M documents into Content Server while optimising the Extended ECM integration for Salesforce CRM workflows.</div>
-        <div class="project-tags"><span class="tag">xECM</span><span class="tag">Salesforce</span><span class="tag">Migration</span><span class="tag">Belgium</span></div>
-      </div>
-    </div>
-
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-path">~/enterprise/orion-finland</div>
-        <div class="project-title">GxP-Compliant xECM for SAP</div>
-        <div class="project-desc">Lead Architect and Delivery Owner for Orion, a pharmaceutical company in Finland. Full implementation ensuring GxP regulatory compliance — a first for the engagement team.</div>
-        <div class="project-tags"><span class="tag">xECM SAP</span><span class="tag">GxP</span><span class="tag">Pharma</span><span class="tag">Finland</span></div>
-      </div>
-    </div>
-
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-path">~/enterprise/jio-india</div>
-        <div class="project-title">65 TB Archive Migration — 2M Records/Day Ingestion</div>
-        <div class="project-desc">Designed ECM landscape for JIO India handling 2M records/day. Completed 65 TB migration transitioning from Windows to Linux clusters with zero data loss and identified/remediated all infrastructure performance issues.</div>
-        <div class="project-tags"><span class="tag">Migration</span><span class="tag">Performance</span><span class="tag">Linux</span><span class="tag">India</span></div>
-      </div>
-    </div>
-
-    <div class="project-card">
-      <div class="project-inner">
-        <div class="project-path">~/enterprise/scg-usa</div>
-        <div class="project-title">30-Server AWS Landscape — 90% Outage Reduction</div>
-        <div class="project-desc">Managed a 30+ server AWS landscape for SCG USA. Designed minimal-downtime upgrade strategy and disaster recovery architecture that reduced outage impact by 90%.</div>
-        <div class="project-tags"><span class="tag">AWS</span><span class="tag">DR Strategy</span><span class="tag">ECM</span><span class="tag">USA</span></div>
-      </div>
-    </div>
-
   </div>
 
 </div>
 
 <footer>
   <span>$ © 2026 Kapil Uthra</span>
-  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://credly.com/users/kapil-uthra" target="_blank">credly</a></span>
+  <span>
+    <a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> ·
+    <a href="https://github.com/kapiluthra" target="_blank">github</a> ·
+    <a href="https://credly.com/users/kapil-uthra" target="_blank">credly</a>
+  </span>
 </footer>
+
+<script>
+function toggle(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+</script>
 
 </body>
 </html>
