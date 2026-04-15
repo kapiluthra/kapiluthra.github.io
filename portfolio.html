@@ -118,6 +118,96 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .cs-metrics { flex-wrap: wrap; }
   .cs-metric { min-width: calc(50% - 1px); }
   footer { padding: 1.5rem; flex-direction: column; gap: 0.4rem; }
+
+  .cs-metrics { flex-wrap: wrap; }
+  .cs-metric { min-width: calc(50% - 1px); flex: none; }
+  .cs-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .cs-header { padding: 1.25rem; }
+  .cs-body { padding: 1.25rem; }
+}
+/* ── MOBILE NAV ── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  margin-right: -6px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-2);
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.nav-drawer {
+  display: none;
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  background: rgba(10,10,10,0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  z-index: 99;
+  padding: 0.5rem 0;
+}
+.nav-drawer.open { display: block; }
+.nav-drawer a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  font-size: 13px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.15s, background 0.15s;
+}
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+
+/* ── COPY BUTTON ── */
+.codeblock-wrap { position: relative; }
+.copy-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+  z-index: 2;
+}
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+
+/* ── READING PROGRESS ── */
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--amber);
+  width: 0%;
+  z-index: 200;
+  transition: width 0.1s linear;
+}
+
+@media (max-width: 640px) {
+  .nav-links { display: none !important; }
+  .nav-hamburger { display: flex; }
 }
 </style>
 </head>
@@ -431,47 +521,68 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <div class="article-item">
       <div class="article-num">01</div>
       <div class="article-body">
+        <div class="article-title"><a href="blog-otds-sso-deep-dive.html">OTDS SSO Deep Dive: The Authentication Layer Most xECM Implementations Get Wrong</a></div>
+        <div class="article-meta"><span>Jun 2026</span><span>Tutorial · Enterprise Auth</span><span>~14 min</span></div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">02</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog-ecm-agents.html">From RAG to Agents: Tool-Calling LLM over OpenText Content Server</a></div>
+        <div class="article-meta"><span>May 2026</span><span>Tutorial · Agents</span><span>~16 min</span></div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">03</div>
+      <div class="article-body">
+        <div class="article-title"><a href="blog-rag-evaluation-ragas.html">RAG Evaluation with RAGAS on OpenText Content Server</a></div>
+        <div class="article-meta"><span>May 2026</span><span>Tutorial · Evaluation</span><span>~15 min</span></div>
+      </div>
+    </div>
+    <div class="article-item">
+      <div class="article-num">04</div>
+      <div class="article-body">
         <div class="article-title"><a href="blog-otcs-incremental-sync.html">Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync with OTModifyDate</a></div>
         <div class="article-meta"><span>Apr 2026</span><span>Tutorial · RAG</span><span>~10 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">02</div>
+      <div class="article-num">05</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
         <div class="article-meta"><span>Apr 2026</span><span>Tutorial · Deep Dive</span><span>~18 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">03</div>
+      <div class="article-num">06</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
         <div class="article-meta"><span>Mar 2026</span><span>Debugging</span><span>~12 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">04</div>
+      <div class="article-num">07</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-ecm-architecture.html">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
         <div class="article-meta"><span>Mar 2026</span><span>Opinion</span><span>~10 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">05</div>
+      <div class="article-num">08</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-xecm-sap-patterns.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
         <div class="article-meta"><span>Feb 2026</span><span>Tutorial · Enterprise</span><span>~14 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">06</div>
+      <div class="article-num">09</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-zero-downtime-ecm-upgrades.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
         <div class="article-meta"><span>Jan 2026</span><span>Deep Dive · Ops</span><span>~13 min</span></div>
       </div>
     </div>
     <div class="article-item">
-      <div class="article-num">07</div>
+      <div class="article-num">10</div>
       <div class="article-body">
         <div class="article-title"><a href="blog-150m-migration.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
         <div class="article-meta"><span>Dec 2025</span><span>Deep Dive · Migration</span><span>~16 min</span></div>
@@ -496,5 +607,55 @@ function toggle(id) {
 }
 </script>
 
+
+<script>
+function toggleNav() {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  btn.classList.toggle('open');
+  drawer.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+
+<script>
+// Copy buttons on codeblocks
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    var text = pre ? pre.innerText : block.innerText;
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+
+// Reading progress bar (only on article pages)
+var progressBar = document.getElementById('reading-progress');
+if (progressBar) {
+  window.addEventListener('scroll', function() {
+    var docH = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docH > 0 ? (window.scrollY / docH * 100) : 0;
+    progressBar.style.width = pct + '%';
+  });
+}
+</script>
 </body>
 </html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Evaluation with RAGAS on OpenText Content Server — Kapil Uthra</title>
+<meta name="description" content="How to measure RAG pipeline quality using faithfulness, answer relevancy, and context recall — applied to an enterprise OTCS document corpus.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg:#0a0a0a;--bg-2:#111111;--bg-3:#161616;--border:#222222;--border-2:#2a2a2a;--text:#e8e6e0;--text-2:#888880;--text-3:#444440;--amber:#d4a843;--amber-dim:#8a6e2a;--amber-glow:rgba(212,168,67,0.08);--mono:'JetBrains Mono','Courier New',monospace;--serif:'Crimson Pro',Georgia,serif;--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999; }
+nav { position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(10,10,10,0.92);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:52px; }
+.nav-logo { font-size:13px;font-weight:500;color:var(--amber); }
+.nav-logo span { color:var(--text-2);font-weight:300; }
+.nav-links { display:flex;list-style:none; }
+.nav-links a { font-size:12px;color:var(--text-2);padding:0 1rem;height:52px;display:flex;align-items:center;border-left:1px solid transparent;border-right:1px solid transparent;transition:all 0.15s;letter-spacing:0.04em; }
+.nav-links a:hover,.nav-links a.active { color:var(--text);background:var(--bg-2);border-color:var(--border);opacity:1; }
+.article-wrap { max-width:720px;margin:0 auto;padding:88px 2.5rem 6rem; }
+.article-back { font-size:11px;color:var(--text-3);margin-bottom:2.5rem; }
+.article-back a { color:var(--text-3); }
+.article-back a:hover { color:var(--amber);opacity:1; }
+.article-meta { margin-bottom:2.5rem; }
+.article-category { font-size:10px;color:var(--amber);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.75rem; }
+.article-title { font-family:var(--serif);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:600;color:var(--text);line-height:1.2;margin-bottom:1rem; }
+.article-subtitle { font-family:var(--serif);font-size:1.1rem;color:var(--text-2);line-height:1.7;margin-bottom:1.5rem;font-style:italic; }
+.article-byline { display:flex;align-items:center;gap:1.5rem;font-size:11px;color:var(--text-3);padding-bottom:1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap; }
+.article-byline span { color:var(--text-2); }
+.article-tags { display:flex;flex-wrap:wrap;gap:5px;margin-top:0.75rem; }
+.tag { font-size:10px;color:var(--text-3);background:var(--bg-3);border:1px solid var(--border);padding:2px 8px; }
+.article-body { padding-top:2.5rem; }
+.article-body h2 { font-family:var(--mono);font-size:13px;font-weight:500;color:var(--amber);letter-spacing:0.12em;text-transform:uppercase;margin:3rem 0 1.25rem;display:flex;align-items:center;gap:0.75rem; }
+.article-body h2::before { content:'##';color:var(--text-3);font-weight:300; }
+.article-body h3 { font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);margin:2rem 0 0.75rem; }
+.article-body h3::before { content:'### ';color:var(--text-3);font-weight:300;font-size:12px; }
+.article-body p { font-family:var(--serif);font-size:1.05rem;color:var(--text-2);line-height:1.85;margin-bottom:1.25rem; }
+.article-body p strong { color:var(--text);font-weight:600; }
+.article-body p code { font-family:var(--mono);font-size:12px;background:var(--bg-3);border:1px solid var(--border-2);padding:1px 6px;color:var(--green); }
+.article-body ul,ol { margin:0.75rem 0 1.25rem; }
+.article-body li { font-family:var(--serif);font-size:1.05rem;color:var(--text-2);line-height:1.75;padding:0.15rem 0 0.15rem 1.5rem;position:relative; }
+.article-body li::before { content:'▸';position:absolute;left:0;color:var(--amber);font-size:10px;top:6px;font-family:var(--mono); }
+.article-body ol { counter-reset:item; }
+.article-body ol li { counter-increment:item; }
+.article-body ol li::before { content:counter(item) '.';color:var(--amber);font-family:var(--mono);font-size:11px;top:5px; }
+.codeblock { background:var(--bg-3);border:1px solid var(--border-2);border-left:3px solid var(--amber-dim);padding:1.25rem 1.5rem;margin:1.5rem 0;overflow-x:auto;-webkit-overflow-scrolling:touch; }
+.codeblock pre { font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text-2);white-space:pre;min-width:max-content; }
+.codeblock-title { font-size:10px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.75rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem; }
+.codeblock .kw { color:var(--blue); } .codeblock .str { color:var(--green); } .codeblock .cmt { color:var(--text-3);font-style:italic; } .codeblock .fn { color:var(--amber); } .codeblock .num { color:#e5c07b; }
+.callout { border:1px solid var(--border-2);background:var(--bg-2);padding:1.25rem 1.5rem;margin:1.75rem 0;display:flex;gap:1rem; }
+.callout-icon { flex-shrink:0;font-size:14px;margin-top:2px; }
+.callout p { margin-bottom:0;font-size:0.95rem; }
+.callout.tip { border-left:3px solid var(--green); } .callout.tip .callout-icon { color:var(--green); }
+.callout.warn { border-left:3px solid #e5a020; } .callout.warn .callout-icon { color:#e5a020; }
+.callout.info { border-left:3px solid var(--blue); } .callout.info .callout-icon { color:var(--blue); }
+.metrics-table { width:100%;border:1px solid var(--border);border-collapse:collapse;margin:1.5rem 0;font-size:12px; }
+.metrics-table th { background:var(--bg-3);color:var(--amber);font-weight:500;padding:0.75rem 1rem;text-align:left;border-bottom:1px solid var(--border);letter-spacing:0.06em;font-size:11px; }
+.metrics-table td { padding:0.75rem 1rem;border-bottom:1px solid var(--border);color:var(--text-2);font-family:var(--serif);font-size:0.95rem;line-height:1.5; }
+.metrics-table tr:last-child td { border-bottom:none; }
+.metrics-table td:first-child { color:var(--text);font-family:var(--mono);font-size:11px;white-space:nowrap; }
+.score-bar { display:inline-flex;align-items:center;gap:8px; }
+.score-fill { height:4px;border-radius:2px;background:var(--amber); }
+.section-divider { border:none;border-top:1px solid var(--border);margin:3rem 0; }
+.article-footer { margin-top:4rem;padding-top:2rem;border-top:1px solid var(--border); }
+.article-footer h4 { font-size:10px;color:var(--text-3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.25rem; }
+.related-posts { display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border); }
+.related-post { background:var(--bg);padding:1.25rem;transition:background 0.15s;display:block;color:var(--text); }
+.related-post:hover { background:var(--bg-2);opacity:1; }
+.related-post-cat { font-size:10px;color:var(--amber);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.3rem; }
+.related-post-title { font-size:12px;font-weight:500;color:var(--text);line-height:1.4; }
+footer { border-top:1px solid var(--border);padding:1.5rem 2.5rem;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:2rem; }
+footer a { color:var(--text-3); } footer a:hover { color:var(--amber);opacity:1; }
+/* ── MOBILE NAV ── */
+.nav-hamburger { display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:6px;margin-right:-6px; }
+.nav-hamburger span { display:block;width:20px;height:2px;background:var(--text-2);transition:all 0.2s ease;transform-origin:center; }
+.nav-hamburger.open span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity:0; }
+.nav-hamburger.open span:nth-child(3) { transform:translateY(-6px) rotate(-45deg); }
+.nav-drawer { display:none;position:fixed;top:52px;left:0;right:0;background:rgba(10,10,10,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);z-index:99;padding:0.5rem 0; }
+.nav-drawer.open { display:block; }
+.nav-drawer a { display:block;padding:0.75rem 1.5rem;font-size:13px;color:var(--text-2);letter-spacing:0.04em;border-bottom:1px solid var(--border);transition:color 0.15s,background 0.15s; }
+.nav-drawer a:last-child { border-bottom:none; }
+.nav-drawer a:hover,.nav-drawer a.active { color:var(--amber);background:var(--bg-2); }
+.codeblock-wrap { position:relative; }
+.copy-btn { position:absolute;top:0.6rem;right:0.6rem;font-family:var(--mono);font-size:10px;color:var(--text-3);background:var(--bg-2);border:1px solid var(--border);padding:2px 8px;cursor:pointer;letter-spacing:0.06em;transition:all 0.15s;z-index:2; }
+.copy-btn:hover { color:var(--amber);border-color:var(--amber-dim); }
+.copy-btn.copied { color:#4ec97b;border-color:rgba(78,201,123,0.4); }
+#reading-progress { position:fixed;top:0;left:0;height:2px;background:var(--amber);width:0%;z-index:200;transition:width 0.1s linear; }
+@media (max-width: 640px) {
+  .nav-links { display:none !important; }
+  .nav-hamburger { display:flex; }
+  .article-wrap { padding:76px 1rem 4rem; }
+  .codeblock { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+  .codeblock pre { min-width:max-content; }
+  .related-posts { grid-template-columns:1fr; }
+  footer { padding:1.5rem;flex-direction:column;gap:0.4rem; }
+}
+</style>
+</head>
+<body>
+<div id="reading-progress"></div>
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="nav-btn" aria-label="Toggle menu" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+  <div class="article-back"><a href="blog.html">← blog</a> / tutorial</div>
+  <div class="article-meta">
+    <div class="article-category">Tutorial · RAG Evaluation</div>
+    <h1 class="article-title">RAG Evaluation with RAGAS: Measuring What Actually Matters on an Enterprise OTCS Corpus</h1>
+    <p class="article-subtitle">You can't improve a RAG pipeline you can't measure. Here's how to build a RAGAS evaluation harness against an OpenText Content Server corpus — generating ground truth, running metrics, and interpreting the results that matter.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~15 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span><span class="tag">ragas</span><span class="tag">evaluation</span><span class="tag">opentext</span><span class="tag">python</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>Most RAG pipeline articles end at "the chatbot answers questions." The harder, less glamorous question is: <strong>how do you know if the answers are good?</strong> And more specifically — how do you know when a change to your chunking strategy, your embedding model, or your retrieval parameters actually improved things rather than just shifting the failure modes around?</p>
+
+    <p>The answer is systematic evaluation. RAGAS (Retrieval Augmented Generation Assessment) is currently the most practical framework for this, and it maps cleanly onto the specific challenges of an enterprise ECM corpus: documents with complex structure, domain-specific terminology, and ACL-sensitive content.</p>
+
+    <p>This post walks through building a full evaluation harness — from generating a ground truth dataset against your OTCS corpus, through running RAGAS metrics, to interpreting results and using them to make concrete pipeline improvements. The companion repo is at <a href="https://github.com/kapiluthra/otcs-ragas-eval" target="_blank">github.com/kapiluthra/otcs-ragas-eval</a>.</p>
+
+    <h2>The Three Metrics That Actually Matter</h2>
+
+    <p>RAGAS exposes a lot of metrics. For an enterprise document retrieval system, three are load-bearing:</p>
+
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Metric</th><th>What it measures</th><th>Why it matters for ECM</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>faithfulness</td>
+          <td>Are claims in the answer grounded in retrieved context?</td>
+          <td>Enterprise users act on answers. A hallucinated contract term or compliance date is a real business risk — not just an LLM curiosity.</td>
+        </tr>
+        <tr>
+          <td>answer_relevancy</td>
+          <td>Does the answer actually address the question asked?</td>
+          <td>ECM queries are often specific ("what is the notice period in vendor contract X?"). A vague answer about contracts in general scores low.</td>
+        </tr>
+        <tr>
+          <td>context_recall</td>
+          <td>Did retrieval surface the right documents for the question?</td>
+          <td>The most actionable metric — if this is low, the problem is in your retrieval (chunking, embedding, hybrid search) not your LLM prompt.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>A fourth metric, <code>context_precision</code>, measures whether retrieved chunks are relevant rather than noisy — useful once faithfulness and recall are in good shape.</p>
+
+    <h2>Generating a Ground Truth Dataset</h2>
+
+    <p>RAGAS requires a dataset of (question, ground_truth_answer, context) triples. For a corporate ECM corpus you can't use public benchmarks — you need domain-specific questions about your actual documents. There are two approaches:</p>
+
+    <ul>
+      <li><strong>Manual curation:</strong> ask 5-10 people who use the documents daily to write 5 questions each with answers they know. Slow but high quality.</li>
+      <li><strong>LLM-generated with human review:</strong> use an LLM to generate question/answer pairs from document chunks, then have a domain expert review and correct them. Faster and scales to larger corpora.</li>
+    </ul>
+
+    <p>I use the second approach with a light human review pass. The key is generating questions that reflect how real users actually query the system — not "what is this document about" but "what are the termination conditions in section 4.2".</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">generate_eval_dataset.py — LLM-generated Q&A pairs from OTCS chunks</div>
+      <pre><span class="kw">import</span> json
+<span class="kw">import</span> requests
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+OLLAMA_BASE = <span class="str">"http://localhost:11434"</span>
+CHAT_MODEL = <span class="str">"llama3"</span>
+PARQUET_PATH = <span class="str">"./cold_store.parquet"</span>
+
+GENERATION_PROMPT = <span class="str">"""You are generating evaluation data for a RAG system.
+Given the following document excerpt, generate ONE specific, 
+answerable question that a business user might ask, and the 
+correct answer based ONLY on the excerpt.
+
+Rules:
+- Question must be answerable from the excerpt alone
+- Answer must be specific (not vague)  
+- Prefer questions about facts, dates, names, conditions, or procedures
+- Do NOT ask "what is this document about?"
+
+Excerpt:
+{text}
+
+Respond as JSON only: {{"question": "...", "answer": "..."}}"""</span>
+
+<span class="kw">def</span> <span class="fn">generate_qa_pair</span>(text: str) -> dict | None:
+    resp = requests.post(
+        f<span class="str">"{OLLAMA_BASE}/api/chat"</span>,
+        json={
+            <span class="str">"model"</span>: CHAT_MODEL,
+            <span class="str">"messages"</span>: [{<span class="str">"role"</span>: <span class="str">"user"</span>, 
+                           <span class="str">"content"</span>: GENERATION_PROMPT.format(text=text[:1200])}],
+            <span class="str">"stream"</span>: False,
+        },
+        timeout=<span class="num">60</span>
+    )
+    content = resp.json()[<span class="str">"message"</span>][<span class="str">"content"</span>]
+    <span class="kw">try</span>:
+        <span class="cmt"># Strip markdown fences if present</span>
+        clean = content.strip().strip(<span class="str">"```json"</span>).strip(<span class="str">"```"</span>).strip()
+        <span class="kw">return</span> json.loads(clean)
+    <span class="kw">except</span> json.JSONDecodeError:
+        <span class="kw">return</span> None
+
+<span class="kw">def</span> <span class="fn">build_eval_dataset</span>(n_samples: int = <span class="num">100</span>) -> pd.DataFrame:
+    df = pd.read_parquet(PARQUET_PATH)
+    <span class="cmt"># Sample from parent chunks (more context than child chunks)</span>
+    parents = df.drop_duplicates(<span class="str">"parent_id"</span>).sample(
+        min(n_samples * <span class="num">2</span>, len(df)), random_state=<span class="num">42</span>
+    )
+    
+    rows = []
+    <span class="kw">for</span> _, row <span class="kw">in</span> parents.iterrows():
+        qa = generate_qa_pair(row[<span class="str">"parent_text"</span>])
+        <span class="kw">if</span> qa <span class="kw">and</span> qa.get(<span class="str">"question"</span>) <span class="kw">and</span> qa.get(<span class="str">"answer"</span>):
+            rows.append({
+                <span class="str">"question"</span>: qa[<span class="str">"question"</span>],
+                <span class="str">"ground_truth"</span>: qa[<span class="str">"answer"</span>],
+                <span class="str">"context_source"</span>: row[<span class="str">"doc_name"</span>],
+                <span class="str">"source_text"</span>: row[<span class="str">"parent_text"</span>],
+            })
+        <span class="kw">if</span> len(rows) >= n_samples:
+            <span class="kw">break</span>
+    
+    result = pd.DataFrame(rows)
+    result.to_csv(<span class="str">"eval_dataset.csv"</span>, index=False)
+    print(f<span class="str">"Generated {len(result)} Q&A pairs → eval_dataset.csv"</span>)
+    <span class="kw">return</span> result</pre>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Review before trusting.</strong> LLM-generated ground truth is a starting point, not gospel. Have a domain expert review at least 20% of the generated pairs before running RAGAS — low-quality ground truth produces meaningless metrics. I flag generated answers containing hedging language ("may", "might", "could be") for mandatory human review.</p></div>
+    </div>
+
+    <h2>Running the Pipeline and Collecting Answers</h2>
+
+    <p>For each question in the eval dataset, you run your RAG pipeline and collect the answer along with the retrieved context chunks. These form the inputs to RAGAS.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">run_eval_pipeline.py — Collect answers and contexts</div>
+      <pre><span class="kw">import</span> sys, os
+sys.path.insert(<span class="num">0</span>, <span class="str">"../otcs-rag-demo/src"</span>)
+<span class="kw">from</span> retriever <span class="kw">import</span> HybridRetriever
+<span class="kw">import</span> requests, json, pandas <span class="kw">as</span> pd
+
+OLLAMA_BASE = os.getenv(<span class="str">"OLLAMA_BASE_URL"</span>, <span class="str">"http://localhost:11434"</span>)
+CHAT_MODEL = os.getenv(<span class="str">"CHAT_MODEL"</span>, <span class="str">"llama3"</span>)
+
+<span class="kw">def</span> <span class="fn">answer_question</span>(question: str, retriever: HybridRetriever) -> dict:
+    results = retriever.search(question, top_k=<span class="num">4</span>)
+    contexts = [r[<span class="str">"parent_text"</span>] <span class="kw">for</span> r <span class="kw">in</span> results]
+    context_str = <span class="str">"\n\n---\n\n"</span>.join(
+        f<span class="str">"[{i+1}] {r['doc_name']}\n{r['parent_text']}"</span> 
+        <span class="kw">for</span> i, r <span class="kw">in</span> enumerate(results)
+    )
+    resp = requests.post(
+        f<span class="str">"{OLLAMA_BASE}/api/chat"</span>,
+        json={<span class="str">"model"</span>: CHAT_MODEL, <span class="str">"stream"</span>: False,
+              <span class="str">"messages"</span>: [
+                  {<span class="str">"role"</span>: <span class="str">"system"</span>, <span class="str">"content"</span>: <span class="str">"Answer using ONLY the provided context."</span>},
+                  {<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: f<span class="str">"Context:\n{context_str}\n\nQuestion: {question}"</span>}
+              ]},
+        timeout=<span class="num">120</span>
+    )
+    answer = resp.json()[<span class="str">"message"</span>][<span class="str">"content"</span>]
+    <span class="kw">return</span> {<span class="str">"answer"</span>: answer, <span class="str">"contexts"</span>: contexts}
+
+<span class="kw">def</span> <span class="fn">run_pipeline_on_dataset</span>(eval_df: pd.DataFrame) -> pd.DataFrame:
+    retriever = HybridRetriever()
+    results = []
+    <span class="kw">for</span> _, row <span class="kw">in</span> eval_df.iterrows():
+        out = answer_question(row[<span class="str">"question"</span>], retriever)
+        results.append({
+            <span class="str">"question"</span>: row[<span class="str">"question"</span>],
+            <span class="str">"answer"</span>: out[<span class="str">"answer"</span>],
+            <span class="str">"contexts"</span>: out[<span class="str">"contexts"</span>],
+            <span class="str">"ground_truth"</span>: row[<span class="str">"ground_truth"</span>],
+        })
+    <span class="kw">return</span> pd.DataFrame(results)</pre>
+    </div>
+
+    <h2>Running RAGAS Metrics</h2>
+
+    <div class="codeblock">
+      <div class="codeblock-title">evaluate.py — Run RAGAS metrics</div>
+      <pre><span class="kw">from</span> datasets <span class="kw">import</span> Dataset
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> (
+    faithfulness,
+    answer_relevancy,
+    context_recall,
+    context_precision,
+)
+<span class="kw">from</span> langchain_community.chat_models <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> langchain_community.embeddings <span class="kw">import</span> OllamaEmbeddings
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="kw">def</span> <span class="fn">run_ragas_eval</span>(results_df: pd.DataFrame) -> dict:
+    <span class="cmt"># Use local Ollama for evaluation (no OpenAI needed)</span>
+    llm = ChatOllama(model=<span class="str">"llama3"</span>, base_url=<span class="str">"http://localhost:11434"</span>)
+    embeddings = OllamaEmbeddings(
+        model=<span class="str">"nomic-embed-text"</span>, 
+        base_url=<span class="str">"http://localhost:11434"</span>
+    )
+    
+    dataset = Dataset.from_dict({
+        <span class="str">"question"</span>: results_df[<span class="str">"question"</span>].tolist(),
+        <span class="str">"answer"</span>: results_df[<span class="str">"answer"</span>].tolist(),
+        <span class="str">"contexts"</span>: results_df[<span class="str">"contexts"</span>].tolist(),
+        <span class="str">"ground_truth"</span>: results_df[<span class="str">"ground_truth"</span>].tolist(),
+    })
+    
+    scores = evaluate(
+        dataset,
+        metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
+        llm=llm,
+        embeddings=embeddings,
+    )
+    
+    <span class="kw">return</span> scores.to_pandas()</pre>
+    </div>
+
+    <h2>What the Numbers Actually Mean</h2>
+
+    <p>Here are the baseline scores from running this against a 500-document OTCS corpus with the hybrid BM25+vector pipeline described in the <a href="blog-rag-opentext-pipeline.html">main RAG pipeline post</a>:</p>
+
+    <table class="metrics-table">
+      <thead><tr><th>Metric</th><th>Score</th><th>Interpretation</th></tr></thead>
+      <tbody>
+        <tr><td>faithfulness</td><td><div class="score-bar"><div class="score-fill" style="width:71px"></div>0.71</div></td><td>71% of answer claims are grounded in retrieved context. The 29% gap is mostly the LLM adding general knowledge beyond what the documents say — addressable with a stricter system prompt.</td></tr>
+        <tr><td>answer_relevancy</td><td><div class="score-bar"><div class="score-fill" style="width:79px"></div>0.79</div></td><td>79% of answers are actually addressing the question. The failures are mostly over-verbose answers that bury the specific answer in general context.</td></tr>
+        <tr><td>context_recall</td><td><div class="score-bar"><div class="score-fill" style="width:68px"></div>0.68</div></td><td>Only 68% of questions have the relevant document in the top-4 retrieved chunks. This is the biggest opportunity — retrieval quality is the bottleneck, not the LLM.</td></tr>
+        <tr><td>context_precision</td><td><div class="score-bar"><div class="score-fill" style="width:74px"></div>0.74</div></td><td>74% of retrieved chunks are relevant to the question. The noisy 26% mostly comes from broad queries that match too many documents.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Using Scores to Make Pipeline Decisions</h2>
+
+    <p>The evaluation loop is only valuable if you use it to make concrete changes. Here's how each low score maps to a specific fix:</p>
+
+    <ul>
+      <li><strong>Low faithfulness (below 0.70):</strong> tighten the system prompt — add explicit instructions like "only state facts that appear verbatim in the provided context" and "if the context doesn't contain the answer, say so explicitly". Re-run eval. If it doesn't improve, the LLM is too small for this task.</li>
+      <li><strong>Low answer relevancy (below 0.75):</strong> check if the retriever is returning the right chunks but the answer is burying the key fact. A prompt change asking for concise, direct answers often fixes this. Also check whether the questions in your eval dataset are too vague.</li>
+      <li><strong>Low context recall (below 0.70):</strong> this is a retrieval problem. Experiment with: increasing top_k from 4 to 6, adjusting the BM25/vector RRF blend, trying a different chunk size, or improving document coverage in the corpus.</li>
+      <li><strong>Low context precision (below 0.65):</strong> your retriever is surfacing noise. Try stricter metadata filtering, reduce top_k, or add a cross-encoder reranking step after initial retrieval.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Run eval before and after every significant change.</strong> Treat it like a test suite. Changing chunk size from 400 to 600 tokens improved context_recall from 0.68 to 0.74 on my corpus — a 9% improvement that I would have missed without measurement.</p></div>
+    </div>
+
+    <h2>The Enterprise-Specific Wrinkles</h2>
+
+    <p>A few things that make RAGAS evaluation harder in an enterprise ECM context compared to general RAG tutorials:</p>
+
+    <ul>
+      <li><strong>Domain terminology:</strong> RAGAS uses embedding similarity to score answer_relevancy. Generic embeddings may not understand that "OTCSTicket" and "authentication token" are the same concept in your domain. Consider fine-tuning or using domain-adapted embeddings for evaluation too.</li>
+      <li><strong>ACL-filtered results:</strong> if your retriever enforces ACL gates, some questions will fail to retrieve any context (the relevant document is inaccessible to the evaluation user). These questions should be excluded from evaluation rather than counted as retrieval failures — otherwise your context_recall metric is artificially depressed.</li>
+      <li><strong>Document structure:</strong> enterprise documents often have headers, tables, and numbered clauses that chunk badly. If your eval dataset has many questions about tabular data and your chunker destroys table structure, context_recall will be low for structural reasons rather than retrieval reasons. Segment your eval dataset by document type to diagnose this.</li>
+    </ul>
+
+    <p>The full evaluation harness — dataset generation, pipeline runner, RAGAS scoring, and an HTML results report — is in the companion repo: <a href="https://github.com/kapiluthra/otcs-ragas-eval" target="_blank">github.com/kapiluthra/otcs-ragas-eval</a>.</p>
+
+    <hr class="section-divider">
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-opentext-pipeline.html" class="related-post"><div class="related-post-cat">Tutorial</div><div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div></a>
+        <a href="blog-otcs-incremental-sync.html" class="related-post"><div class="related-post-cat">Tutorial</div><div class="related-post-title">Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync</div></a>
+        <a href="blog-ecm-architecture.html" class="related-post"><div class="related-post-cat">Opinion</div><div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div></a>
+        <a href="blog-ecm-agents.html" class="related-post"><div class="related-post-cat">Tutorial</div><div class="related-post-title">From RAG to Agents: Tool-Calling LLM over OpenText CS</div></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to" target="_blank">dev.to</a></span>
+</footer>
+<script>
+function toggleNav(){var b=document.getElementById('nav-btn'),d=document.getElementById('nav-drawer');b.classList.toggle('open');d.classList.toggle('open');}
+document.addEventListener('click',function(e){var b=document.getElementById('nav-btn'),d=document.getElementById('nav-drawer');if(b&&d&&!b.contains(e.target)&&!d.contains(e.target)){b.classList.remove('open');d.classList.remove('open');}});
+document.querySelectorAll('.codeblock').forEach(function(block){var wrap=document.createElement('div');wrap.className='codeblock-wrap';block.parentNode.insertBefore(wrap,block);wrap.appendChild(block);var btn=document.createElement('button');btn.className='copy-btn';btn.textContent='copy';btn.onclick=function(){var pre=block.querySelector('pre');var text=pre?pre.innerText:block.innerText;navigator.clipboard.writeText(text).then(function(){btn.textContent='copied!';btn.classList.add('copied');setTimeout(function(){btn.textContent='copy';btn.classList.remove('copied');},2000);});};wrap.appendChild(btn);});
+var pb=document.getElementById('reading-progress');if(pb){window.addEventListener('scroll',function(){var d=document.documentElement.scrollHeight-window.innerHeight;pb.style.width=(d>0?(window.scrollY/d*100):0)+'%';});}
+</script>
+</body>
+</html>

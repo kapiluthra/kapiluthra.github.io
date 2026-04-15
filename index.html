@@ -164,6 +164,90 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .quick-grid { grid-template-columns: 1fr; }
   footer { padding: 1.5rem; }
 }
+/* ── MOBILE NAV ── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  margin-right: -6px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-2);
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.nav-drawer {
+  display: none;
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  background: rgba(10,10,10,0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  z-index: 99;
+  padding: 0.5rem 0;
+}
+.nav-drawer.open { display: block; }
+.nav-drawer a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  font-size: 13px;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.15s, background 0.15s;
+}
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+
+/* ── COPY BUTTON ── */
+.codeblock-wrap { position: relative; }
+.copy-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+  z-index: 2;
+}
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+
+/* ── READING PROGRESS ── */
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--amber);
+  width: 0%;
+  z-index: 200;
+  transition: width 0.1s linear;
+}
+
+@media (max-width: 640px) {
+  .nav-links { display: none !important; }
+  .nav-hamburger { display: flex; }
+}
 </style>
 </head>
 <body>
@@ -261,5 +345,55 @@ footer a:hover { color: var(--amber); opacity: 1; }
   </span>
 </footer>
 
+
+<script>
+function toggleNav() {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  btn.classList.toggle('open');
+  drawer.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+
+<script>
+// Copy buttons on codeblocks
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    var text = pre ? pre.innerText : block.innerText;
+    navigator.clipboard.writeText(text).then(function() {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+
+// Reading progress bar (only on article pages)
+var progressBar = document.getElementById('reading-progress');
+if (progressBar) {
+  window.addEventListener('scroll', function() {
+    var docH = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docH > 0 ? (window.scrollY / docH * 100) : 0;
+    progressBar.style.width = pct + '%';
+  });
+}
+</script>
 </body>
 </html>
