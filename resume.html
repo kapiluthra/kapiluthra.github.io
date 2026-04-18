@@ -59,7 +59,10 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .anchor-tabs a:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
 
 /* SUMMARY BOX */
-.summary-box { border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 3.5rem; background: var(--bg-2); }
+.summary-box { border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 3.5rem; background: var(--bg-2); display: flex; gap: 1.75rem; align-items: flex-start; }
+.summary-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; object-position: center top; border: 2px solid var(--amber-dim); box-shadow: 0 0 0 3px rgba(226,179,72,0.10); flex-shrink: 0; }
+.summary-content { flex: 1; min-width: 0; }
+@media (max-width: 480px) { .summary-box { flex-direction: column; } .summary-photo { width: 64px; height: 64px; } }
 .summary-box p { font-size: 13px; color: var(--text-2); margin-bottom: 1rem; line-height: 1.8; }
 .summary-box p:last-child { margin-bottom: 0; }
 .summary-bullets { list-style: none; }
@@ -262,6 +265,8 @@ footer a:hover { color: var(--amber); opacity: 1; }
   <div class="section fade-in" id="summary">
     <div class="section-title">Summary</div>
     <div class="summary-box">
+      <img src="kapil.jpg" alt="Kapil Uthra" class="summary-photo">
+      <div class="summary-content">
       <p>Solutions Architect specialising in the intersection of <strong>Enterprise Content Management</strong> and <strong>AI/RAG infrastructure</strong>. 13 years of OpenText ECM expertise — from production migrations to Kubernetes-native deployments — now applied to building intelligent retrieval systems on top of enterprise content repositories.</p>
       <ul class="summary-bullets">
         <li><strong>RAG Pipeline Architect:</strong> Built production RAG pipeline on OpenText Content Server — ChromaDB vector store, Ollama/nomic-embed-text embeddings, hybrid BM25+vector retrieval with RRF reranking, ACL-enforced security gates, and Streamlit chatbot UI</li>
@@ -270,6 +275,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <li><strong>Cloud Architect:</strong> AWS (EKS, S3, ALB, Route53, CloudWatch) and Azure (AKS, Virtual WAN, Entra ID) — cloud-native ECM deployments and on-prem migrations</li>
         <li><strong>Global Delivery:</strong> Projects across India, UK, Brazil, KSA, Qatar, Finland, Sweden, Belgium, Denmark — 12 certifications across OpenText, AWS, Azure, ITIL</li>
       </ul>
+      </div>
     </div>
   </div>
 
