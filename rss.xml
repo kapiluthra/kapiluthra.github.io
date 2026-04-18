@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kapil Uthra — Blog</title>
+    <link>https://kapiluthra.github.io/blog.html</link>
+    <description>Technical writing on OpenText ECM, AI/RAG pipelines, cloud migrations, and enterprise architecture.</description>
+    <language>en-gb</language>
+    <managingEditor>kapiluthra@gmail.com (Kapil Uthra)</managingEditor>
+    <atom:link href="https://kapiluthra.github.io/rss.xml" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://kapiluthra.github.io/og-image.svg</url>
+      <title>Kapil Uthra — Blog</title>
+      <link>https://kapiluthra.github.io/blog.html</link>
+    </image>
+
+    <item>
+      <title>OTDS SSO Deep Dive: The Authentication Layer Most xECM Implementations Get Wrong</title>
+      <link>https://kapiluthra.github.io/blog-otds-sso-deep-dive.html</link>
+      <description>OTCSTicket vs OTDS federation, user partition pitfalls, the login-attribute mapping trap, and why co-locating OTDS with Content Server causes intermittent auth failures under load.</description>
+      <pubDate>Sun, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-otds-sso-deep-dive.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>From RAG to Agents: Building a Tool-Calling LLM over OpenText Content Server</title>
+      <link>https://kapiluthra.github.io/blog-ecm-agents.html</link>
+      <description>How to wrap OTCS operations as LangChain tools, build a ReAct agent that decides what to search, and handle the ACL enforcement and prompt injection risks that make enterprise agents different from demos.</description>
+      <pubDate>Thu, 01 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-ecm-agents.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>RAG Evaluation with RAGAS: Measuring What Actually Matters on an Enterprise OTCS Corpus</title>
+      <link>https://kapiluthra.github.io/blog-rag-evaluation-ragas.html</link>
+      <description>How to generate ground truth, run faithfulness/relevancy/recall metrics, and use scores to make concrete pipeline improvements — with baseline numbers from a real 500-document OTCS corpus.</description>
+      <pubDate>Thu, 01 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-rag-evaluation-ragas.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync with OTModifyDate</title>
+      <link>https://kapiluthra.github.io/blog-otcs-incremental-sync.html</link>
+      <description>How to detect and re-ingest only changed documents using the modify_date field — with safe-fail timestamp management, deletion reconciliation, and clock-skew buffers.</description>
+      <pubDate>Wed, 01 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-otcs-incremental-sync.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>Building a Production RAG Pipeline for OpenText Content Server</title>
+      <link>https://kapiluthra.github.io/blog-rag-opentext-pipeline.html</link>
+      <description>End-to-end walkthrough: OTCSTicket auth, document discovery, parent-child chunking, ChromaDB ingestion, and hybrid retrieval with RRF reranking. Written from real production experience.</description>
+      <pubDate>Wed, 01 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-rag-opentext-pipeline.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>How I Debugged 150M Document Download Failures in cs_client.py</title>
+      <link>https://kapiluthra.github.io/blog-cs-client-debugging.html</link>
+      <description>The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it. Two days, two bugs, one fix each.</description>
+      <pubDate>Sat, 01 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-cs-client-debugging.html</guid>
+      <category>projects</category>
+    </item>
+
+    <item>
+      <title>Clean Architecture in Enterprise ECM: What Actually Works</title>
+      <link>https://kapiluthra.github.io/blog-ecm-architecture.html</link>
+      <description>After 13 years of ECM projects, opinions on abstraction layers, LlamaIndex vs roll-your-own, vendor lock-in, and when to build vs buy.</description>
+      <pubDate>Sat, 01 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-ecm-architecture.html</guid>
+      <category>opinion</category>
+    </item>
+
+    <item>
+      <title>xECM for SAP: Architecture Patterns That Actually Work</title>
+      <link>https://kapiluthra.github.io/blog-xecm-sap-patterns.html</link>
+      <description>After 10+ xECM for SAP engagements — pharma, manufacturing, chemicals — here are the patterns that hold up and the anti-patterns I keep seeing repeated.</description>
+      <pubDate>Sun, 01 Feb 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-xecm-sap-patterns.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</title>
+      <link>https://kapiluthra.github.io/blog-zero-downtime-ecm-upgrades.html</link>
+      <description>How to plan and execute OpenText Content Server major version upgrades with minimal outage windows — including the 90% outage reduction at SCG USA.</description>
+      <pubDate>Thu, 01 Jan 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-zero-downtime-ecm-upgrades.html</guid>
+      <category>projects</category>
+    </item>
+
+    <item>
+      <title>Migrating 150M Documents to Kubernetes-Native Content Server</title>
+      <link>https://kapiluthra.github.io/blog-150m-migration.html</link>
+      <description>Architecture, tooling, and hard lessons from the Securex Belgium engagement: moving 150M documents from a legacy ECM system into a cloud-native OTCS deployment, with zero data loss.</description>
+      <pubDate>Mon, 01 Dec 2025 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-150m-migration.html</guid>
+      <category>projects</category>
+    </item>
+
+  </channel>
+</rss>

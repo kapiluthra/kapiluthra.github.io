@@ -5,6 +5,15 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>About — Kapil Uthra</title>
+<meta name="description" content="13 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark, building the intersection of OpenText and modern AI.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kapiluthra.github.io/about.html">
+<meta property="og:title" content="About — Kapil Uthra">
+<meta property="og:description" content="13 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="About — Kapil Uthra">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -168,7 +177,16 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <li><a href="blog.html">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
 </nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html" class="active">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html">blog</a>
+  <a href="contact.html">contact</a>
+</div>
 
 <div class="page">
 
@@ -222,7 +240,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
           <div class="now-status learning">◎ learning</div>
           <div class="now-title">RAG Evaluation with RAGAS</div>
           <div class="now-desc">You can't improve what you don't measure. Building an evaluation harness for the OTCS RAG pipeline using RAGAS metrics: faithfulness, answer relevancy, context recall.</div>
-          <div class="now-link"><a href="blog.html">→ upcoming post</a></div>
+          <div class="now-link"><a href="blog-rag-evaluation-ragas.html">→ read the post</a></div>
         </div>
         <div class="now-card">
           <div class="now-status reading">○ reading</div>

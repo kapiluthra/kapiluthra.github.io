@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kapil Uthra — Solutions Architect</title>
 <meta name="description" content="Solutions Architect with 13 years of OpenText ECM expertise. Building AI/RAG pipelines for enterprise content systems.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kapiluthra.github.io/">
+<meta property="og:title" content="Kapil Uthra — Solutions Architect">
+<meta property="og:description" content="Solutions Architect with 13 years of OpenText ECM expertise. Building AI/RAG pipelines for enterprise content systems.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kapil Uthra — Solutions Architect">
+<meta name="twitter:description" content="Solutions Architect with 13 years of OpenText ECM expertise. Building AI/RAG pipelines for enterprise content systems.">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="alternate" type="application/rss+xml" title="Kapil Uthra Blog" href="https://kapiluthra.github.io/rss.xml">
+<link rel="sitemap" type="application/xml" href="https://kapiluthra.github.io/sitemap.xml">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
@@ -134,6 +145,8 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .stat-cell:last-child { border-right: none; }
 .stat-num { font-size: 1.6rem; font-weight: 700; color: var(--amber); line-height: 1; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
 .stat-label { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; }
+a.stat-cell:hover { background: var(--bg-2); opacity: 1; }
+a.stat-cell:hover .stat-num { color: var(--text); }
 
 /* QUICK NAV GRID */
 .quick-grid {
@@ -262,7 +275,16 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <li><a href="blog.html">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
 </nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html" class="active">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html">blog</a>
+  <a href="contact.html">contact</a>
+</div>
 
 <div class="home-wrap">
   <div class="home-inner">
@@ -291,22 +313,22 @@ footer a:hover { color: var(--amber); opacity: 1; }
     </div>
 
     <div class="stats-row fade-in-5">
-      <div class="stat-cell">
+      <a href="resume.html#experience" class="stat-cell" style="text-decoration:none;">
         <div class="stat-num">13</div>
         <div class="stat-label">Years</div>
-      </div>
-      <div class="stat-cell">
+      </a>
+      <a href="portfolio.html#case-studies" class="stat-cell" style="text-decoration:none;">
         <div class="stat-num">150M</div>
         <div class="stat-label">Docs migrated</div>
-      </div>
-      <div class="stat-cell">
+      </a>
+      <a href="resume.html#experience" class="stat-cell" style="text-decoration:none;">
         <div class="stat-num">6</div>
         <div class="stat-label">Countries</div>
-      </div>
-      <div class="stat-cell">
+      </a>
+      <a href="portfolio.html#case-studies" class="stat-cell" style="text-decoration:none;">
         <div class="stat-num">95%</div>
         <div class="stat-label">Project success</div>
-      </div>
+      </a>
     </div>
 
     <div class="quick-grid fade-in-5">
@@ -341,7 +363,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> ·
     <a href="https://github.com/kapiluthra" target="_blank">github</a> ·
     <a href="https://credly.com/users/kapil-uthra" target="_blank">credly</a> ·
-    <a href="https://dev.to" target="_blank">dev.to</a>
+    <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a>
   </span>
 </footer>
 

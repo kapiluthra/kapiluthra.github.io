@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://kapiluthra.github.io/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://kapiluthra.github.io/about.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kapiluthra.github.io/resume.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kapiluthra.github.io/portfolio.html</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog.html</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://kapiluthra.github.io/contact.html</loc><changefreq>yearly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-otds-sso-deep-dive.html</loc><lastmod>2026-06-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-ecm-agents.html</loc><lastmod>2026-05-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-rag-evaluation-ragas.html</loc><lastmod>2026-05-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-otcs-incremental-sync.html</loc><lastmod>2026-04-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-rag-opentext-pipeline.html</loc><lastmod>2026-04-01</lastmod><changefreq>yearly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-cs-client-debugging.html</loc><lastmod>2026-03-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-ecm-architecture.html</loc><lastmod>2026-03-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-xecm-sap-patterns.html</loc><lastmod>2026-02-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-zero-downtime-ecm-upgrades.html</loc><lastmod>2026-01-01</lastmod><changefreq>yearly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://kapiluthra.github.io/blog-150m-migration.html</loc><lastmod>2025-12-01</lastmod><changefreq>yearly</changefreq><priority>0.8</priority></url>
+</urlset>
