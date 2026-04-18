@@ -19,21 +19,21 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #0a0a0a; --bg-2: #111111; --bg-3: #161616;
-  --border: #222222; --border-2: #2a2a2a;
-  --text: #e8e6e0; --text-2: #888880; --text-3: #444440;
-  --amber: #d4a843; --amber-dim: #8a6e2a; --amber-glow: rgba(212,168,67,0.08);
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
   --mono: 'JetBrains Mono', 'Courier New', monospace;
   --serif: 'Crimson Pro', Georgia, serif;
   --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
 }
 html { scroll-behavior: smooth; }
-body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
 a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
 a:hover { opacity: 0.75; }
 body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
 
-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(10,10,10,0.92); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
 .nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
 .nav-logo span { color: var(--text-2); font-weight: 300; }
 .nav-links { display: flex; list-style: none; }
@@ -150,7 +150,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
   top: 52px;
   left: 0;
   right: 0;
-  background: rgba(10,10,10,0.97);
+  background: rgba(9,12,18,0.98);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
   z-index: 99;
