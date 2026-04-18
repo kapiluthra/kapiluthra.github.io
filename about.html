@@ -5,11 +5,11 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>About — Kapil Uthra</title>
-<meta name="description" content="13 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark, building the intersection of OpenText and modern AI.">
+<meta name="description" content="14 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark, building the intersection of OpenText and modern AI.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kapiluthra.github.io/about.html">
 <meta property="og:title" content="About — Kapil Uthra">
-<meta property="og:description" content="13 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark.">
+<meta property="og:description" content="14 years bridging Enterprise ECM and AI/RAG infrastructure. Solutions Architect based in Denmark.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="About — Kapil Uthra">
@@ -229,7 +229,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <div class="section">
       <div class="section-title">Who I Am</div>
       <ul class="about-bullets">
-        <li>I've spent <strong>13 years</strong> in the trenches of enterprise content management — from junior engineer to solutions architect, across three continents and some of the world's most complex IT environments.</li>
+        <li>I've spent <strong>14 years</strong> in the trenches of enterprise content management — from junior engineer to solutions architect, across three continents and some of the world's most complex IT environments.</li>
         <li>I'm deeply passionate about the <strong>intersection of AI and enterprise infrastructure</strong>. Most people building RAG pipelines don't understand ECM. Most ECM architects don't understand RAG. I'm trying to be the bridge.</li>
         <li>I believe in <strong>building in public</strong> — writing about what I learn, publishing the messy parts, and treating every project as a chance to teach someone something useful.</li>
         <li>I have a strong <strong>bias towards ownership</strong>. When a migration goes sideways at 2am, I'm the one on the call. That instinct shaped how I architect — defensively, with fallbacks, and with clear runbooks.</li>
@@ -244,42 +244,30 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <svg class="world-map" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" aria-label="World map showing countries Kapil Uthra has worked in">
           <defs>
             <style>
-              @keyframes mapPulse {
-                0%, 100% { opacity: 1; r: 5; }
-                50% { opacity: 0.4; r: 8; }
-              }
-              @keyframes mapRing {
-                0% { r: 6; opacity: 0.6; }
-                100% { r: 18; opacity: 0; }
-              }
-              .country-dot { animation: mapPulse 2.5s ease-in-out infinite; }
-              .country-ring { animation: mapRing 2.5s ease-out infinite; }
-              .uk-dot { animation-delay: 0s; }
-              .dk-dot { animation-delay: 0.4s; }
-              .in-dot { animation-delay: 0.8s; }
-              .sa-dot { animation-delay: 1.2s; }
-              .qa-dot { animation-delay: 1.4s; }
-              .br-dot { animation-delay: 1.6s; }
-              .uk-ring { animation-delay: 0s; }
-              .dk-ring { animation-delay: 0.4s; }
-              .in-ring { animation-delay: 0.8s; }
-              .sa-ring { animation-delay: 1.2s; }
-              .qa-ring { animation-delay: 1.4s; }
-              .br-ring { animation-delay: 1.6s; }
+              @keyframes mapPulse { 0%,100%{opacity:1;r:5} 50%{opacity:0.5;r:7} }
+              @keyframes mapRing  { 0%{r:7;opacity:0.7} 100%{r:20;opacity:0} }
+              .cdot { animation: mapPulse 2.8s ease-in-out infinite; }
+              .cring { animation: mapRing 2.8s ease-out infinite; }
+              .d0{animation-delay:0s}   .d1{animation-delay:0.5s} .d2{animation-delay:1s}
+              .d3{animation-delay:1.4s} .d4{animation-delay:1.7s} .d5{animation-delay:2s}
             </style>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
 
-          <!-- Ocean background -->
-          <rect width="800" height="400" fill="#0d0d0d"/>
+          <!-- Ocean -->
+          <rect width="800" height="400" fill="#0b0e15"/>
 
-          <!-- Graticule grid lines (30° intervals) -->
-          <g stroke="#141414" stroke-width="0.5" fill="none">
-            <!-- Meridians -->
-            <line x1="89" y1="0" x2="89" y2="400"/>
+          <!-- Grid lines -->
+          <g stroke="#13171f" stroke-width="0.6" fill="none">
+            <line x1="0" y1="67" x2="800" y2="67"/>
+            <line x1="0" y1="133" x2="800" y2="133"/>
+            <line x1="0" y1="200" x2="800" y2="200"/>
+            <line x1="0" y1="267" x2="800" y2="267"/>
+            <line x1="0" y1="333" x2="800" y2="333"/>
+            <line x1="89"  y1="0" x2="89"  y2="400"/>
             <line x1="178" y1="0" x2="178" y2="400"/>
             <line x1="267" y1="0" x2="267" y2="400"/>
             <line x1="356" y1="0" x2="356" y2="400"/>
@@ -287,123 +275,165 @@ footer a:hover { color: var(--amber); opacity: 1; }
             <line x1="533" y1="0" x2="533" y2="400"/>
             <line x1="622" y1="0" x2="622" y2="400"/>
             <line x1="711" y1="0" x2="711" y2="400"/>
-            <!-- Parallels -->
-            <line x1="0" y1="67" x2="800" y2="67"/>
-            <line x1="0" y1="133" x2="800" y2="133"/>
-            <line x1="0" y1="200" x2="800" y2="200"/>
-            <line x1="0" y1="267" x2="800" y2="267"/>
-            <line x1="0" y1="333" x2="800" y2="333"/>
           </g>
+          <line x1="0" y1="200" x2="800" y2="200" stroke="#1a1f28" stroke-width="1"/>
 
-          <!-- Equator highlight -->
-          <line x1="0" y1="200" x2="800" y2="200" stroke="#1a1a1a" stroke-width="1"/>
-
-          <!-- ── CONTINENT FILLS ── -->
-          <!-- North America -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            33,67 22,49 56,40 89,44 133,40 178,38 200,27 222,27 233,40 256,53
-            278,89 256,93 244,107 229,122 222,144 207,168 200,178 211,182 195,175
-            167,151 156,144 133,122 122,100 111,80 71,67
+          <!-- ── NORTH AMERICA ──
+               x=(lon+180)*800/360  y=(90-lat)*400/180 -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            27,80  33,67  56,67  88,67  88,44  100,33  133,22  167,18  211,18
+            256,18  278,22  289,44  278,67  282,96  251,100  244,107  233,122
+            222,144  233,167  229,182  216,178  200,164  167,156  140,129
+            133,124  122,91  111,80  88,80
           "/>
-
           <!-- Greenland -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            233,16 267,11 289,18 278,31 267,40 256,44 240,49 222,44 222,31
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            300,67  307,29  329,18  344,18  356,29  340,40  320,44  307,56
+          "/>
+          <!-- Central America peninsula -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            216,178  211,178  204,164  200,164  207,182  216,186  222,182
           "/>
 
-          <!-- South America -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            233,173 256,178 267,178 289,189 322,189 322,218 316,229 304,251
-            289,267 271,271 256,311 251,322 240,307 244,244 229,211 222,200
-            229,189
+          <!-- ── SOUTH AMERICA ── -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            229,182  244,178  260,178  278,189  289,196  322,211  322,222
+            316,236  307,249  302,262  289,267  284,276  284,307  271,322
+            256,333  247,316  251,289  244,276  240,289  233,267  222,211
+            222,200  227,189
           "/>
 
-          <!-- Europe (western) -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            380,118 400,116 413,109 429,107 444,111 458,116 462,118
-            467,107 480,104 484,93 473,78 462,47 456,40 444,42 433,44
-            416,71 420,78 409,82 404,87 396,87 389,71 378,84 389,93 380,118
+          <!-- ── EUROPE ── -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            378,120  389,120  400,120  413,118  422,118  436,116  447,113
+            456,111  462,116  467,107  462,100  453,93  444,87  440,80
+            436,76  427,76  422,76  418,78  413,80  409,84  404,87
+            400,87  396,87  391,91  389,102  380,107  378,107
+          "/>
+          <!-- Scandinavian peninsula -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            413,80  418,78  427,76  433,73  440,73  447,67  456,56  462,44
+            451,44  440,51  436,60  427,67  422,76  418,78
+          "/>
+          <!-- Finland/Norway extension -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            456,56  462,44  467,44  471,51  462,62  456,67
           "/>
 
-          <!-- Africa -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            371,120 389,120 422,118 456,116 478,131 482,140 513,173
-            489,209 489,222 480,240 473,256 440,278 438,278 418,260
-            400,240 389,211 369,176 362,167 371,138
+          <!-- ── AFRICA ── -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            371,120  389,120  413,118  436,116  453,113  467,107  480,116
+            489,129  493,144  498,156  498,178  493,196  493,218
+            489,229  484,240  476,256  467,267  456,276  444,278
+            436,278  427,267  418,258  409,240  400,222  396,211
+            389,196  382,182  376,167  369,156  362,144  362,129
+          "/>
+          <!-- Horn of Africa -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            493,178  498,178  507,173  511,182  502,189  493,196
           "/>
 
-          <!-- Asia (main) -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            467,107 480,104 493,107 511,100 533,84 578,71 622,67
-            645,40 667,47 711,42 747,44 756,60 733,80 711,98
-            711,113 700,122 680,144 660,151 640,160 627,196 622,211
-            614,189 578,182 560,160 544,151 527,151 516,173 513,173
-            504,147 493,116 467,118
+          <!-- ── ASIA (mainland) ── -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            467,107  467,44  489,40  511,38  533,38  556,40  578,40
+            600,40  622,44  644,44  667,47  689,44  711,44  733,51
+            756,56  773,67  787,80  800,89  800,111  787,120  773,122
+            756,129  744,138  733,151  722,156  711,160  700,167
+            689,173  678,178  667,182  656,189  644,196  640,204
+            627,196  622,211  614,196  600,193  589,196  578,182
+            567,182  556,173  544,156  538,151  529,151  520,156
+            511,156  504,147  498,156  493,167  489,178  498,178
+            489,156  480,144  476,131  471,120  467,116
+          "/>
+          <!-- Indian subcontinent -->
+          <polygon fill="#202530" stroke="#252b35" stroke-width="0.7" points="
+            567,147  578,144  589,151  589,160  578,182  567,182
+            560,173  556,160  560,151
+          "/>
+          <!-- Arabian Peninsula -->
+          <polygon fill="#1e222a" stroke="#252b35" stroke-width="0.7" points="
+            480,116  489,129  498,144  504,144  516,144  520,147
+            516,156  511,156  504,156  496,167  489,178  484,173
+            480,160  476,144  476,131
+          "/>
+          <!-- Southeast Asia peninsula (Indochina) -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            622,178  627,167  633,160  640,156  644,167  640,178
+            633,189  627,196  622,196  618,189
+          "/>
+          <!-- Malay Peninsula -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            627,196  633,196  636,204  633,211  627,207  622,211  620,204
           "/>
 
-          <!-- Indian Subcontinent (extra detail) -->
-          <polygon fill="#1c1c1c" stroke="#252525" stroke-width="0.8" points="
-            560,160 573,136 578,182 560,200 553,178
+          <!-- ── AUSTRALIA ── -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            651,249  660,236  671,229  682,224  696,227  711,233
+            724,236  736,249  740,262  736,280  727,289  716,289
+            707,284  696,278  684,276  671,276  658,271  649,262
+          "/>
+          <!-- Tasmania -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            718,298  724,293  729,300  724,307  718,304
+          "/>
+          <!-- New Zealand (simplified) -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            762,287  767,276  773,280  769,291  762,293
           "/>
 
-          <!-- Australia -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            640,276 644,258 662,236 678,227 711,233 724,258 722,287
-            711,284 713,293 706,296 689,289 666,284 644,276
+          <!-- Japan -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            733,93  738,87  747,91  747,100  740,104  733,100
+          "/>
+          <!-- Korean peninsula -->
+          <polygon fill="#1c1f26" stroke="#252b35" stroke-width="0.7" points="
+            716,107  720,100  727,100  727,111  720,116  713,113
           "/>
 
-          <!-- Japan (simplified) -->
-          <polygon fill="#1a1a1a" stroke="#252525" stroke-width="0.8" points="
-            711,89 718,84 724,93 720,100 713,96
-          "/>
+          <!-- ── WORKED COUNTRY HIGHLIGHT DOTS (accurate positions) ──
+               UK:  lon=-2,lat=52  → x=395, y=84
+               DK:  lon=10,lat=56  → x=422, y=75
+               IN:  lon=79,lat=22  → x=576, y=151
+               SA:  lon=45,lat=24  → x=500, y=147
+               QA:  lon=51,lat=25  → x=513, y=144
+               BR:  lon=-52,lat=-15→ x=284, y=233  -->
 
-          <!-- UK (slightly enlarged for visibility) -->
-          <polygon fill="#1e1e1e" stroke="#2a2a2a" stroke-width="0.8" points="
-            389,71 396,69 404,78 407,84 400,89 393,87 389,80
-          "/>
-
-          <!-- ── CONNECTION LINES between worked countries ── -->
-          <g stroke="#8a6e2a" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.4" fill="none">
-            <line x1="400" y1="86" x2="428" y2="76"/>
-            <line x1="400" y1="86" x2="294" y2="235"/>
-            <line x1="428" y1="76" x2="504" y2="144"/>
-            <line x1="504" y1="144" x2="514" y2="144"/>
-            <line x1="504" y1="144" x2="573" y2="136"/>
+          <!-- Connection arcs (dashed) -->
+          <g stroke="#9b7735" stroke-width="0.7" stroke-dasharray="3,5" opacity="0.45" fill="none">
+            <path d="M395,84 Q408,60 422,75"/>
+            <path d="M422,75 Q462,100 500,147"/>
+            <path d="M500,147 Q506,145 513,144"/>
+            <path d="M500,147 Q538,148 576,151"/>
+            <path d="M395,84 Q340,150 284,233"/>
           </g>
 
-          <!-- ── COUNTRY DOTS ── -->
           <!-- UK -->
-          <circle class="country-ring uk-ring" cx="400" cy="86" r="6" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot uk-dot" cx="400" cy="86" r="5" fill="#d4a843" filter="url(#glow)"/>
-
+          <circle class="cring d0" cx="395" cy="84" r="7" fill="none" stroke="#e2b348" stroke-width="1.2" opacity="0"/>
+          <circle class="cdot d0" cx="395" cy="84" r="5" fill="#e2b348" filter="url(#glow)"/>
           <!-- Denmark -->
-          <circle class="country-ring dk-ring" cx="428" cy="76" r="6" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot dk-dot" cx="428" cy="76" r="5" fill="#d4a843" filter="url(#glow)"/>
-
+          <circle class="cring d1" cx="422" cy="75" r="7" fill="none" stroke="#e2b348" stroke-width="1.2" opacity="0"/>
+          <circle class="cdot d1" cx="422" cy="75" r="5" fill="#e2b348" filter="url(#glow)"/>
           <!-- India -->
-          <circle class="country-ring in-ring" cx="573" cy="136" r="6" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot in-dot" cx="573" cy="136" r="5" fill="#d4a843" filter="url(#glow)"/>
-
+          <circle class="cring d2" cx="576" cy="151" r="7" fill="none" stroke="#e2b348" stroke-width="1.2" opacity="0"/>
+          <circle class="cdot d2" cx="576" cy="151" r="5" fill="#e2b348" filter="url(#glow)"/>
           <!-- Saudi Arabia -->
-          <circle class="country-ring sa-ring" cx="504" cy="144" r="6" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot sa-dot" cx="504" cy="144" r="5" fill="#d4a843" filter="url(#glow)"/>
-
-          <!-- Qatar (small dot, nearby KSA) -->
-          <circle class="country-ring qa-ring" cx="520" cy="147" r="4" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot qa-dot" cx="520" cy="147" r="4" fill="#d4a843" filter="url(#glow)"/>
-
+          <circle class="cring d3" cx="500" cy="147" r="7" fill="none" stroke="#e2b348" stroke-width="1.2" opacity="0"/>
+          <circle class="cdot d3" cx="500" cy="147" r="5" fill="#e2b348" filter="url(#glow)"/>
+          <!-- Qatar -->
+          <circle class="cring d4" cx="513" cy="144" r="5" fill="none" stroke="#e2b348" stroke-width="1" opacity="0"/>
+          <circle class="cdot d4" cx="513" cy="144" r="3.5" fill="#e2b348" filter="url(#glow)"/>
           <!-- Brazil -->
-          <circle class="country-ring br-ring" cx="294" cy="235" r="6" fill="none" stroke="#d4a843" stroke-width="1" opacity="0"/>
-          <circle class="country-dot br-dot" cx="294" cy="235" r="5" fill="#d4a843" filter="url(#glow)"/>
+          <circle class="cring d5" cx="284" cy="233" r="7" fill="none" stroke="#e2b348" stroke-width="1.2" opacity="0"/>
+          <circle class="cdot d5" cx="284" cy="233" r="5" fill="#e2b348" filter="url(#glow)"/>
 
-          <!-- ── LABELS ── -->
-          <g font-family="'JetBrains Mono','Courier New',monospace" font-size="9" fill="#888880" letter-spacing="0.05em">
-            <text x="378" y="72">UK</text>
-            <text x="432" y="72">DK</text>
-            <text x="578" y="132">IN</text>
-            <text x="481" y="157">SA</text>
-            <text x="523" y="143">QA</text>
-            <text x="270" y="248">BR</text>
+          <!-- Labels -->
+          <g font-family="'JetBrains Mono','Courier New',monospace" font-size="8.5" fill="#6b7280" letter-spacing="0.06em">
+            <text x="373" y="72">UK</text>
+            <text x="426" y="71">DK</text>
+            <text x="581" y="148">IN</text>
+            <text x="476" y="161">SA</text>
+            <text x="516" y="141">QA</text>
+            <text x="261" y="246">BR</text>
           </g>
         </svg>
 
