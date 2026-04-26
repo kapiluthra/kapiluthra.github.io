@@ -65,6 +65,14 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 1px 7px; }
 
 .coming-soon { border: 1px dashed var(--border-2); padding: 2rem; text-align: center; color: var(--text-3); font-size: 12px; }
+.post-read { font-size: 10px; color: var(--text-3); margin-top: 0.3rem; letter-spacing: 0.04em; }
+
+/* SEARCH */
+.search-wrap { position: relative; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+.search-input { font-family: var(--mono); font-size: 12px; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); padding: 0.55rem 1rem; width: 100%; max-width: 360px; outline: none; letter-spacing: 0.02em; transition: border-color 0.15s; }
+.search-input::placeholder { color: var(--text-3); }
+.search-input:focus { border-color: var(--amber-dim); }
+.search-count { font-size: 11px; color: var(--text-3); white-space: nowrap; }
 .coming-soon span { color: var(--amber); }
 
 @media (max-width: 640px) {
@@ -190,6 +198,11 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <p>Technical writing on ECM, cloud, and AI/RAG. Updated as I build and learn. <a href="rss.xml" style="color:var(--amber-dim); font-size:11px;">RSS ↗</a></p>
   </div>
 
+  <div class="search-wrap fade-in">
+    <input type="text" id="blog-search" class="search-input" placeholder="search articles..." autocomplete="off" spellcheck="false">
+    <span class="search-count" id="search-count"></span>
+  </div>
+
   <div class="filter-row fade-in">
     <button class="filter-btn active">all</button>
     <button class="filter-btn">tutorials</button>
@@ -200,6 +213,38 @@ footer a:hover { color: var(--amber); opacity: 1; }
   <div class="section fade-in">
     <div class="section-title">2026</div>
 
+    <div class="post-item" data-cat="tutorials">
+      <div class="post-date">Jul 2026</div>
+      <div class="post-body">
+        <div class="post-category">Tutorial · AI/RAG · Agents</div>
+        <div class="post-title"><a href="blog-agentic-ecm.html">Agentic ECM: When Your AI Decides Which Documents to Fetch</a></div>
+        <div class="post-desc">Single-shot RAG can't answer multi-step enterprise queries. Agentic ECM lets an LLM reason over your content repository in multiple steps — fetching, inspecting, and following document relationships until it has an answer. Tool design, guardrails, and three real patterns.</div>
+        <div class="post-tags"><span class="tag">agents</span><span class="tag">ecm</span><span class="tag">rag</span><span class="tag">opentext</span></div>
+        <div class="post-read">~11 min read</div>
+      </div>
+    </div>
+
+    <div class="post-item" data-cat="tutorials">
+      <div class="post-date">Jul 2026</div>
+      <div class="post-body">
+        <div class="post-category">Tutorial · AI/RAG · Architecture</div>
+        <div class="post-title"><a href="blog-graphrag-opentext.html">GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository</a></div>
+        <div class="post-desc">Flat vector search hits a ceiling when queries require multi-hop reasoning. GraphRAG uses the relationships already embedded in your ECM structure — containment, authorship, approvals, categories — to answer questions that semantic search can't touch.</div>
+        <div class="post-tags"><span class="tag">graphrag</span><span class="tag">knowledge-graph</span><span class="tag">opentext</span><span class="tag">rag</span></div>
+        <div class="post-read">~14 min read</div>
+      </div>
+    </div>
+
+    <div class="post-item" data-cat="tutorials">
+      <div class="post-date">Jul 2026</div>
+      <div class="post-body">
+        <div class="post-category">Tutorial · AI/RAG · Security</div>
+        <div class="post-title"><a href="blog-acl-aware-rag.html">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</a></div>
+        <div class="post-desc">Naive RAG ignores ACLs and leaks confidential documents across user queries. This is the #1 enterprise AI adoption blocker. Here's the architecture — pre-retrieval filtering with a two-tier permission cache — and why post-retrieval filtering is dangerous.</div>
+        <div class="post-tags"><span class="tag">acl</span><span class="tag">security</span><span class="tag">rag</span><span class="tag">opentext</span></div>
+        <div class="post-read">~12 min read</div>
+      </div>
+    </div>
 
     <div class="post-item" data-cat="tutorials">
       <div class="post-date">Jun 2026</div>
@@ -208,6 +253,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-otds-sso-deep-dive.html">OTDS SSO Deep Dive: The Authentication Layer Most xECM Implementations Get Wrong</a></div>
         <div class="post-desc">OTCSTicket vs OTDS federation, user partition pitfalls, the login-attribute mapping trap, and why co-locating OTDS with Content Server causes intermittent 401s that look like permission problems.</div>
         <div class="post-tags"><span class="tag">otds</span><span class="tag">sso</span><span class="tag">opentext</span><span class="tag">xecm</span></div>
+        <div class="post-read">~14 min read</div>
       </div>
     </div>
 
@@ -218,6 +264,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-ecm-agents.html">From RAG to Agents: Building a Tool-Calling LLM over OpenText Content Server</a></div>
         <div class="post-desc">How to wrap OTCS operations as LangChain tools, build a ReAct agent that decides what to search, and handle the ACL enforcement and prompt injection risks that make enterprise agents genuinely different from demos.</div>
         <div class="post-tags"><span class="tag">agents</span><span class="tag">langchain</span><span class="tag">opentext</span><span class="tag">llm</span></div>
+        <div class="post-read">~11 min read</div>
       </div>
     </div>
 
@@ -228,8 +275,10 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-rag-evaluation-ragas.html">RAG Evaluation with RAGAS: Measuring What Actually Matters on an Enterprise OTCS Corpus</a></div>
         <div class="post-desc">How to generate ground truth, run faithfulness/relevancy/recall metrics, and use scores to make concrete pipeline improvements. With baseline numbers from a real 500-document OTCS corpus.</div>
         <div class="post-tags"><span class="tag">rag</span><span class="tag">ragas</span><span class="tag">evaluation</span><span class="tag">opentext</span></div>
+        <div class="post-read">~12 min read</div>
       </div>
     </div>
+
     <div class="post-item" data-cat="tutorials">
       <div class="post-date">Apr 2026</div>
       <div class="post-body">
@@ -237,6 +286,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-otcs-incremental-sync.html">Keeping Your OTCS RAG Pipeline Fresh: Incremental Sync with OTModifyDate</a></div>
         <div class="post-desc">How to detect and re-ingest only changed documents using the modify_date field — with safe-fail timestamp management, deletion reconciliation, and clock-skew buffers.</div>
         <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">incremental sync</span><span class="tag">python</span></div>
+        <div class="post-read">~9 min read</div>
       </div>
     </div>
 
@@ -245,8 +295,9 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-body">
         <div class="post-category">Tutorial · Deep Dive</div>
         <div class="post-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
-        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, parent-child chunking, ChromaDB ingestion, and hybrid retrieval with RRF reranking. Written from real production experience.</div>
-        <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">chromadb</span><span class="tag">python</span><span class="tag">ollama</span></div>
+        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, parent-child chunking, vector ingestion, and hybrid retrieval with RRF reranking. Written from real production experience.</div>
+        <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">vector search</span><span class="tag">python</span></div>
+        <div class="post-read">~18 min read</div>
       </div>
     </div>
 
@@ -257,6 +308,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
         <div class="post-desc">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it. Two days, two bugs, one fix each.</div>
         <div class="post-tags"><span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span><span class="tag">api</span></div>
+        <div class="post-read">~8 min read</div>
       </div>
     </div>
 
@@ -265,8 +317,9 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-body">
         <div class="post-category">Opinion · Architecture</div>
         <div class="post-title"><a href="blog-ecm-architecture.html">Clean Architecture in Enterprise ECM: What Actually Works</a></div>
-        <div class="post-desc">After 14 years of ECM projects I have opinions. On abstraction layers, on LlamaIndex, on vendor lock-in, and on when to build vs buy. These are the ones I'd argue for at 11pm before a go-live.</div>
+        <div class="post-desc">After 14 years of ECM projects I have opinions. On abstraction layers, on vendor lock-in, and on when to build vs buy. These are the ones I'd argue for at 11pm before a go-live.</div>
         <div class="post-tags"><span class="tag">architecture</span><span class="tag">opinion</span><span class="tag">ecm</span><span class="tag">rag</span></div>
+        <div class="post-read">~10 min read</div>
       </div>
     </div>
 
@@ -282,6 +335,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-xecm-sap-patterns.html">xECM for SAP: Architecture Patterns That Actually Work</a></div>
         <div class="post-desc">After 10+ xECM for SAP engagements — pharma, manufacturing, chemicals — here are the patterns that hold up under production load and the anti-patterns I keep seeing repeated.</div>
         <div class="post-tags"><span class="tag">xecm</span><span class="tag">sap</span><span class="tag">opentext</span><span class="tag">architecture</span></div>
+        <div class="post-read">~13 min read</div>
       </div>
     </div>
 
@@ -292,6 +346,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-zero-downtime-ecm-upgrades.html">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</a></div>
         <div class="post-desc">How to plan and execute OpenText Content Server major version upgrades with minimal outage windows — including the 90% outage reduction at SCG USA and GxP-constrained upgrade at Orion Finland.</div>
         <div class="post-tags"><span class="tag">upgrades</span><span class="tag">opentext</span><span class="tag">operations</span><span class="tag">aws</span></div>
+        <div class="post-read">~11 min read</div>
       </div>
     </div>
 
@@ -302,6 +357,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="post-title"><a href="blog-150m-migration.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
         <div class="post-desc">Architecture, tooling, and hard lessons from the Securex Belgium engagement: moving 150M documents from a legacy ECM system into a cloud-native OTCS deployment, with zero data loss.</div>
         <div class="post-tags"><span class="tag">migration</span><span class="tag">kubernetes</span><span class="tag">opentext</span><span class="tag">cloud</span></div>
+        <div class="post-read">~15 min read</div>
       </div>
     </div>
 
@@ -315,6 +371,28 @@ footer a:hover { color: var(--amber); opacity: 1; }
 </footer>
 
 <script>
+// Blog search
+var searchInput = document.getElementById('blog-search');
+var searchCount = document.getElementById('search-count');
+if (searchInput) {
+  searchInput.addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    var total = 0, visible = 0;
+    document.querySelectorAll('.post-item').forEach(function(item) {
+      total++;
+      var text = item.textContent.toLowerCase();
+      var show = !q || text.includes(q);
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.querySelectorAll('.section').forEach(function(sec) {
+      var hasVisible = [...sec.querySelectorAll('.post-item')].some(p => p.style.display !== 'none');
+      sec.style.display = hasVisible ? '' : 'none';
+    });
+    searchCount.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+  });
+}
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));

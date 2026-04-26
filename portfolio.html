@@ -59,7 +59,9 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1
 .project-path { font-size: 11px; color: var(--amber); letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .project-path .note { color: var(--text-3); font-size: 10px; }
 .project-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
-.project-desc { font-size: 12px; color: var(--text-2); line-height: 1.65; margin-bottom: 1rem; }
+.project-desc { font-size: 12px; color: var(--text-2); line-height: 1.65; margin-bottom: 0.75rem; }
+.proj-result { font-size: 11px; color: var(--amber-dim); margin-bottom: 1rem; letter-spacing: 0.02em; }
+.proj-result span { color: var(--amber); font-weight: 500; }
 .project-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem; }
 .tag { font-size: 10px; color: var(--text-2); background: var(--bg-3); border: 1px solid var(--border-2); padding: 2px 8px; letter-spacing: 0.04em; }
 .tag.highlight { color: var(--amber); border-color: var(--amber-dim); background: var(--amber-glow); }
@@ -280,6 +282,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
           Production-grade RAG pipeline for OpenText Content Server. Dual-storage pattern: <strong>Parquet cold store</strong> for re-embedding resilience + <strong>ChromaDB vector hot store</strong> for retrieval. Parent-child chunking (400-token child / 1500-token parent), ACL-enforced security gates, incremental sync via OTModifyDate, hybrid BM25+vector retrieval with RRF reranking, and Streamlit chatbot UI.<br><br>
           Full production version is private (enterprise). A sanitised demo scaffold — cs_client pattern, chunker, ingester skeleton, Streamlit UI — is open-source on GitHub.
         </div>
+        <div class="proj-result">↑ <span>500+ enterprise documents</span> made queryable via natural language · ACL-enforced, production-deployed</div>
         <div class="project-tags">
           <span class="tag highlight">Python</span>
           <span class="tag highlight">ChromaDB</span>
@@ -308,6 +311,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="project-desc">
           Product-managed and architected the Turnpikes Migration Tool — the engine behind 100M+ document migrations into OpenText Content Server. Core capabilities: configurable metadata transformation pipelines, parallel stream processing with per-document PostgreSQL checkpointing, SHA-256 checksum verification, schema-agnostic source connectors. Used in production at Securex Belgium (150M docs).
         </div>
+        <div class="proj-result">↑ <span>150M documents migrated</span> with zero data loss · <span>checksum-verified</span> · deployed at Securex Belgium</div>
         <div class="project-tags">
           <span class="tag">Migration Engine</span>
           <span class="tag">OpenText CS</span>
@@ -331,6 +335,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <div class="project-desc">
           Hand-coded static site (zero frameworks) hosted on GitHub Pages. Terminal aesthetic with JetBrains Mono + Crimson Pro. All article pages are self-contained HTML with custom syntax highlighting, architecture diagrams, and callout components built in plain CSS.
         </div>
+        <div class="proj-result">↑ <span>10+ technical articles</span> published · full RSS feed · sitemap · OG social cards</div>
         <div class="project-tags">
           <span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">GitHub Pages</span><span class="tag">No frameworks</span>
         </div>

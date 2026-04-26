@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — Page Not Found · Kapil Uthra</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; min-height: 100vh; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); display: flex; flex-direction: column; }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.02em; }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; gap: 0; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover { color: var(--amber); background: var(--bg-2); }
+
+.wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 52px 2.5rem 4rem; }
+.inner { max-width: 560px; width: 100%; }
+
+.error-prompt { font-size: 11px; color: var(--text-3); letter-spacing: 0.06em; margin-bottom: 2rem; }
+.error-prompt span { color: var(--amber); }
+
+.error-code { font-size: clamp(5rem, 18vw, 9rem); font-weight: 700; color: var(--text); line-height: 1; letter-spacing: -0.04em; margin-bottom: 0.5rem; text-shadow: 0 0 60px rgba(226,179,72,0.08); }
+.error-code span { color: var(--amber); }
+
+.error-msg { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); font-style: italic; border-left: 2px solid var(--amber); padding-left: 1rem; background: linear-gradient(90deg, rgba(226,179,72,0.04) 0%, transparent 80%); padding-top: 0.25rem; padding-bottom: 0.25rem; margin-bottom: 2.5rem; line-height: 1.7; }
+
+.error-output { border: 1px solid var(--border); background: var(--bg-2); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+.error-output-line { font-size: 12px; color: var(--text-3); padding: 0.1rem 0; }
+.error-output-line .key { color: var(--text-2); }
+.error-output-line .val { color: var(--amber); }
+.error-output-line .err { color: #e06c75; }
+
+.error-nav { display: flex; gap: 0; flex-wrap: wrap; }
+.err-btn { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; padding: 0.65rem 1.5rem; border: 1px solid var(--border-2); color: var(--text-2); transition: all 0.15s; background: transparent; }
+.err-btn:first-child { border-right: none; }
+.err-btn:hover { color: var(--text); background: var(--bg-2); opacity: 1; }
+.err-btn.primary { color: var(--amber); border-color: var(--amber-dim); background: rgba(226,179,72,0.04); }
+.err-btn.primary:hover { background: var(--amber); color: #090c12; border-color: var(--amber); opacity: 1; }
+
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.cursor { display: inline-block; width: 3px; height: 0.8em; background: var(--amber); margin-left: 2px; vertical-align: middle; animation: blink 1s step-end infinite; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in   { animation: fadeIn 0.5s 0.0s ease both; }
+.fade-in-2 { animation: fadeIn 0.5s 0.15s ease both; }
+.fade-in-3 { animation: fadeIn 0.5s 0.3s ease both; }
+.fade-in-4 { animation: fadeIn 0.5s 0.45s ease both; }
+
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .wrap { padding: 52px 1.25rem 4rem; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="wrap">
+  <div class="inner">
+
+    <div class="error-prompt fade-in"><span>kapil@portfolio</span>:~$ fetch <span id="path-display"></span></div>
+
+    <div class="error-code fade-in-2">4<span>0</span>4<span class="cursor"></span></div>
+
+    <p class="error-msg fade-in-2">This page doesn't exist — but 14 years of ECM experience taught me that missing documents are usually a permissions issue, not a content issue.</p>
+
+    <div class="error-output fade-in-3">
+      <div class="error-output-line"><span class="err">ERROR</span> &nbsp;Page not found</div>
+      <div class="error-output-line"><span class="key">status</span> &nbsp;&nbsp;404 Not Found</div>
+      <div class="error-output-line"><span class="key">path</span> &nbsp;&nbsp;&nbsp;<span class="val" id="path-val">/unknown</span></div>
+      <div class="error-output-line"><span class="key">suggest</span> &nbsp;<span class="val">→ try one of the links below</span></div>
+    </div>
+
+    <div class="error-nav fade-in-4">
+      <a href="index.html" class="err-btn primary">← home</a>
+      <a href="blog.html" class="err-btn">blog</a>
+      <a href="portfolio.html" class="err-btn">portfolio</a>
+      <a href="contact.html" class="err-btn">contact</a>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+// Show the attempted path
+var path = window.location.pathname;
+document.getElementById('path-display').textContent = path;
+document.getElementById('path-val').textContent = path;
+</script>
+</body>
+</html>

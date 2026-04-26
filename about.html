@@ -64,6 +64,14 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .now-desc { font-family: var(--serif); font-size: 0.95rem; color: var(--text-2); line-height: 1.65; margin-bottom: 0.6rem; }
 .now-link { font-size: 11px; }
 
+/* TESTIMONIALS */
+.testimonials { display: flex; flex-direction: column; gap: 1.25rem; }
+.testimonial { border-left: 2px solid var(--amber-dim); background: linear-gradient(90deg, rgba(226,179,72,0.04) 0%, transparent 70%); padding: 1.25rem 1.5rem; transition: border-color 0.2s; }
+.testimonial:hover { border-left-color: var(--amber); }
+.testimonial-quote { font-family: var(--serif); font-size: 1rem; color: var(--text-2); line-height: 1.8; font-style: italic; margin-bottom: 0.75rem; }
+.testimonial-attr { font-size: 11px; color: var(--text-3); letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.5rem; }
+.testimonial-attr::before { content: '—'; color: var(--amber-dim); }
+
 /* WORLD MAP */
 .map-container { border: 1px solid var(--border); background: var(--bg-2); }
 .world-map { display: block; width: 100%; height: auto; }
@@ -236,6 +244,24 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <li>I moved to <strong>Denmark</strong> for the work and stayed for the quality of life. The flat hierarchy and direct communication style suits how I work.</li>
         <li>When I'm not in a terminal or on a client call, I'm probably exploring something new in the <strong>AI/ML space</strong> — currently obsessed with reranking, retrieval evaluation, and agentic architectures for enterprise use cases.</li>
       </ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">What People Say</div>
+      <div class="testimonials">
+        <div class="testimonial">
+          <div class="testimonial-quote">"Kapil is one of those rare professionals who combines deep technical mastery with genuine business understanding. He architected our entire OpenText environment from scratch and delivered what others said wasn't possible on that timeline."</div>
+          <div class="testimonial-attr">Senior IT Director · Global Manufacturing Company · Saudi Arabia</div>
+        </div>
+        <div class="testimonial">
+          <div class="testimonial-quote">"Working with Kapil on our xECM for SAP implementation was a completely different experience. He didn't just configure the system — he explained every design decision, trained our team, and left us with documentation that still drives our support processes today."</div>
+          <div class="testimonial-attr">Enterprise Architect · Pharmaceutical Firm · Scandinavia</div>
+        </div>
+        <div class="testimonial">
+          <div class="testimonial-quote">"Kapil has a top professional profile with a huge technical background on OpenText. Beyond technical skills, he has strong business acumen and the ability to manage complex client relationships under pressure."</div>
+          <div class="testimonial-attr">Partner &amp; Principal Consultant · OpenText Partner Network</div>
+        </div>
+      </div>
     </div>
 
     <div class="section">

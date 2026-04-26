@@ -14,6 +14,33 @@
     </image>
 
     <item>
+      <title>Agentic ECM: When Your AI Decides Which Documents to Fetch</title>
+      <link>https://kapiluthra.github.io/blog-agentic-ecm.html</link>
+      <description>Single-shot RAG can't answer multi-step enterprise queries. Agentic ECM lets an LLM reason over your content repository in multiple steps — fetching, inspecting, and following document relationships until it has an answer. Tool design, guardrails, and three real patterns.</description>
+      <pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-agentic-ecm.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository</title>
+      <link>https://kapiluthra.github.io/blog-graphrag-opentext.html</link>
+      <description>Flat vector search hits a ceiling when queries require multi-hop reasoning. GraphRAG uses the relationships already embedded in your ECM structure to answer questions that semantic search can't touch.</description>
+      <pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-graphrag-opentext.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
+      <title>ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</title>
+      <link>https://kapiluthra.github.io/blog-acl-aware-rag.html</link>
+      <description>Naive RAG ignores ACLs and leaks confidential documents across user queries. The architecture for pre-retrieval filtering with a two-tier permission cache, and why post-retrieval filtering is dangerous.</description>
+      <pubDate>Wed, 01 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>https://kapiluthra.github.io/blog-acl-aware-rag.html</guid>
+      <category>tutorials</category>
+    </item>
+
+    <item>
       <title>OTDS SSO Deep Dive: The Authentication Layer Most xECM Implementations Get Wrong</title>
       <link>https://kapiluthra.github.io/blog-otds-sso-deep-dive.html</link>
       <description>OTCSTicket vs OTDS federation, user partition pitfalls, the login-attribute mapping trap, and why co-locating OTDS with Content Server causes intermittent auth failures under load.</description>

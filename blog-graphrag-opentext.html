@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository — Kapil Uthra</title>
+<meta name="description" content="Flat vector search hits a ceiling on enterprise content. GraphRAG uses the relationships already embedded in your ECM structure to answer multi-hop queries that semantic search can't touch.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-graphrag-opentext.html">
+<meta property="og:title" content="GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository">
+<meta property="og:description" content="Flat vector search hits a ceiling on enterprise content. GraphRAG uses the relationships already embedded in your ECM structure to answer multi-hop queries that semantic search can't touch.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+</style>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Architecture
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Architecture</div>
+    <h1 class="article-title">GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository</h1>
+    <p class="article-subtitle">Flat vector search returns the most similar documents. But enterprise questions are rarely flat — they span multiple documents, authors, workspaces, and relationships. GraphRAG uses the structure already in your ECM to answer them.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>July 2026</span>
+      <span>~14 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">graphrag</span>
+      <span class="tag">rag</span>
+      <span class="tag">opentext</span>
+      <span class="tag">knowledge graph</span>
+      <span class="tag">architecture</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>When Microsoft released GraphRAG as open-source in 2024, the AI community noticed. The results on complex, multi-hop questions were dramatically better than flat vector search — in some evaluations, 3–4× more accurate on queries that required synthesising information across multiple documents. The reason: <strong>graphs capture relationships, and enterprise content is fundamentally relational</strong>.</p>
+
+    <p>What the community didn't focus on is that enterprise content management systems like OpenText Content Server are already graph structures. Every folder is a node. Every document is a node. Categories, workspaces, users, workflows — all nodes. The relationships between them — contains, authored-by, classified-as, approved-by — are all edges. You don't need to build a knowledge graph from scratch. You need to <em>expose</em> the one that already exists.</p>
+
+    <h2>Where Flat RAG Hits Its Ceiling</h2>
+
+    <p>Flat vector search works well for a specific class of questions: "find documents that talk about X." It fails — or produces hallucinated answers — on a different class: questions that require traversing relationships across documents.</p>
+
+    <p>Here are real examples I've encountered in enterprise ECM deployments:</p>
+
+    <ul>
+      <li>"Find all contracts referencing Supplier ABC that were reviewed by the legal team after the 2023 policy change."</li>
+      <li>"Which projects have open change requests that were created by engineers who joined after the system upgrade?"</li>
+      <li>"Show me all documents in the Quality workspace that are linked to this batch record and haven't been signed off."</li>
+    </ul>
+
+    <p>These are multi-hop queries. Each one requires traversing at least three entity types with specific relationship constraints. A vector store returns a flat list of similar chunks — it has no concept of "was reviewed by" or "is linked to." GraphRAG does.</p>
+
+    <h2>OpenText as a Graph: The Entities and Relationships</h2>
+
+    <p>Before building anything, map out what already exists in your OTCS instance as a graph structure. The node types are well-defined:</p>
+
+    <h3>Node Types</h3>
+    <ul>
+      <li><strong>Document</strong> — the content node (node_type: 144). Has version history, metadata categories, MIME type.</li>
+      <li><strong>Folder / Workspace</strong> — container nodes (node_type: 0, 848). The structural scaffold of the repository.</li>
+      <li><strong>Category</strong> — classification nodes. Documents can have multiple categories with attribute sets.</li>
+      <li><strong>User</strong> — identity nodes. Author, modifier, assignee.</li>
+      <li><strong>Workflow</strong> — process nodes. Maps to documents that have been through approval chains.</li>
+    </ul>
+
+    <h3>Edge Types (Relationships)</h3>
+    <ul>
+      <li><strong>CONTAINS</strong> — Folder → Document, Workspace → Folder</li>
+      <li><strong>AUTHORED_BY</strong> — Document → User (create_user_id)</li>
+      <li><strong>MODIFIED_BY</strong> — Document → User (modify_user_id)</li>
+      <li><strong>CLASSIFIED_AS</strong> — Document → Category</li>
+      <li><strong>APPROVED_BY</strong> — Document → User (via workflow audit trail)</li>
+      <li><strong>REFERENCES</strong> — Document → Document (via compound documents, URLs in content, or explicit relationship objects)</li>
+    </ul>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p>OTCS also has a native <strong>Relationships</strong> feature (node_type: 1) that creates explicit typed links between nodes. If your implementation uses these, they're the highest-value edges in your graph — they represent intentional human-defined relationships, not just structural containment.</p></div>
+    </div>
+
+    <h2>Extracting the Graph from OTCS</h2>
+
+    <p>The graph extractor pulls the structural graph from OTCS via its REST API. You don't need to read document content at this stage — you're extracting metadata and relationships first.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">GraphRAG Pipeline — Extraction Phase</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Source</div><div class="arch-name">OpenText CS</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Extract</div><div class="arch-name">Graph Extractor</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Enrich</div><div class="arch-name">LLM Entity Extract</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Store</div><div class="arch-name">Graph DB + Vector Store</div></div>
+      </div>
+    </div>
+
+    <div class="codeblock">
+      <div class="codeblock-title">graph_extractor.py — extract nodes and edges from OTCS</div>
+      <pre><span class="kw">import</span> requests
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Iterator
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">GraphNode</span>:
+    id: int
+    type: str          <span class="cmt"># "document" | "folder" | "user" | "category"</span>
+    label: str
+    properties: dict
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">GraphEdge</span>:
+    source_id: int
+    target_id: int
+    relationship: str  <span class="cmt"># "CONTAINS" | "AUTHORED_BY" | "CLASSIFIED_AS" etc.</span>
+    properties: dict
+
+<span class="kw">class</span> <span class="fn">OTCSGraphExtractor</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, base_url: str, ticket: str):
+        self.base_url = base_url
+        self.headers = {<span class="str">"OTCSTicket"</span>: ticket}
+
+    <span class="kw">def</span> <span class="fn">extract_workspace</span>(self, root_id: int) -> tuple[list[GraphNode], list[GraphEdge]]:
+        nodes, edges = [], []
+        <span class="kw">for</span> item <span class="kw">in</span> self.<span class="fn">_walk</span>(root_id):
+            node = <span class="fn">GraphNode</span>(
+                id=item[<span class="str">"id"</span>],
+                type=<span class="str">"document"</span> <span class="kw">if</span> item[<span class="str">"type"</span>] == <span class="num">144</span> <span class="kw">else</span> <span class="str">"folder"</span>,
+                label=item[<span class="str">"name"</span>],
+                properties={
+                    <span class="str">"create_date"</span>: item.get(<span class="str">"create_date"</span>),
+                    <span class="str">"modify_date"</span>: item.get(<span class="str">"modify_date"</span>),
+                    <span class="str">"mime_type"</span>: item.get(<span class="str">"mime_type"</span>),
+                }
+            )
+            nodes.append(node)
+
+            <span class="cmt"># CONTAINS edge: parent → this node</span>
+            edges.append(<span class="fn">GraphEdge</span>(
+                source_id=item[<span class="str">"parent_id"</span>],
+                target_id=item[<span class="str">"id"</span>],
+                relationship=<span class="str">"CONTAINS"</span>,
+                properties={}
+            ))
+
+            <span class="cmt"># AUTHORED_BY edge</span>
+            <span class="kw">if</span> item.get(<span class="str">"create_user_id"</span>):
+                edges.append(<span class="fn">GraphEdge</span>(
+                    source_id=item[<span class="str">"id"</span>],
+                    target_id=item[<span class="str">"create_user_id"</span>],
+                    relationship=<span class="str">"AUTHORED_BY"</span>,
+                    properties={}
+                ))
+
+        <span class="kw">return</span> nodes, edges
+
+    <span class="kw">def</span> <span class="fn">_walk</span>(self, node_id: int) -> Iterator[dict]:
+        url = <span class="str">f"{self.base_url}/api/v1/nodes/{node_id}/nodes"</span>
+        page = <span class="num">1</span>
+        <span class="kw">while True</span>:
+            resp = requests.<span class="fn">get</span>(url, headers=self.headers,
+                               params={<span class="str">"page"</span>: page, <span class="str">"limit"</span>: <span class="num">100</span>})
+            data = resp.<span class="fn">json</span>()
+            <span class="kw">for</span> item <span class="kw">in</span> data.get(<span class="str">"data"</span>, []):
+                <span class="kw">yield</span> item
+                <span class="kw">if</span> item[<span class="str">"type"</span>] == <span class="num">0</span>:  <span class="cmt"># recurse into folders</span>
+                    <span class="kw">yield from</span> self.<span class="fn">_walk</span>(item[<span class="str">"id"</span>])
+            <span class="kw">if not</span> data.get(<span class="str">"collection"</span>, {}).get(<span class="str">"paging"</span>, {}).get(<span class="str">"next"</span>):
+                <span class="kw">break</span>
+            page += <span class="num">1</span></pre>
+    </div>
+
+    <h2>Enriching with LLM Entity Extraction</h2>
+
+    <p>The structural graph gives you containment and authorship relationships. To answer business queries, you need a second layer: <strong>entities extracted from document content</strong>. This is where the LLM comes in.</p>
+
+    <p>For each document, you run an entity extraction prompt that identifies and returns:</p>
+
+    <ul>
+      <li><strong>Named entities</strong>: companies, people, locations, products</li>
+      <li><strong>Key concepts</strong>: regulatory references, process names, system names</li>
+      <li><strong>Relationships</strong>: "Document X references Supplier Y" or "Process A depends on System B"</li>
+    </ul>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Entity extraction prompt template</div>
+      <pre><span class="str">"""
+Extract entities and relationships from this enterprise document.
+Return a JSON object with:
+  - entities: list of {name, type, description}
+  - relationships: list of {source, relation, target}
+
+Entity types: COMPANY, PERSON, SYSTEM, PROCESS, REGULATION, PRODUCT
+Relationship types: REFERENCES, REQUIRES, APPROVES, SUPERSEDES, APPLIES_TO
+
+Document text:
+{document_text}
+
+Respond with valid JSON only. No explanation.
+"""</span></pre>
+    </div>
+
+    <p>These extracted entities and relationships become additional nodes and edges in your graph, enriching it beyond what the OTCS metadata alone provides. A procurement contract now has edges to the supplier entity, the regulatory framework it references, and the systems it impacts — none of which appear in OTCS metadata but are present in the document body.</p>
+
+    <h2>Query Patterns: What GraphRAG Unlocks</h2>
+
+    <p>With the combined structural + semantic graph in place, you can answer query types that were previously impossible with flat RAG.</p>
+
+    <h3>Multi-hop Entity Queries</h3>
+    <p>User asks: <em>"Which contracts reference SABIC and are located in the Procurement workspace?"</em></p>
+    <p>Graph traversal: <code>COMPANY(SABIC) ← REFERENCES ← DOCUMENT → CONTAINS → WORKSPACE(Procurement)</code>. This is a two-hop query that finds the intersection — impossible with a single vector search, trivial with a graph.</p>
+
+    <h3>Relationship Chain Queries</h3>
+    <p>User asks: <em>"Show me all documents approved by the legal team that also appear in the active projects list."</em></p>
+    <p>Graph traversal: <code>USER(Legal Group) ← APPROVED_BY ← DOCUMENT → CONTAINS → WORKSPACE(Active Projects)</code>. Two separate chains, joined on Document.</p>
+
+    <h3>Impact Analysis</h3>
+    <p>User asks: <em>"Which documents would be affected if we update the ISO 9001 quality procedure?"</em></p>
+    <p>Graph traversal: start from <code>REGULATION(ISO 9001)</code>, follow <code>APPLIES_TO</code> edges to find all referencing documents, then expand to their workspaces and related processes.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>GraphRAG is expensive at query time.</strong> Each multi-hop traversal may require multiple LLM calls to decompose the query into graph steps, execute traversals, and synthesise the answer. For simple lookup queries, flat RAG is faster and cheaper. Reserve GraphRAG for the complex relational queries where it genuinely outperforms.</p></div>
+    </div>
+
+    <h2>Hybrid Architecture: Graph + Vector Together</h2>
+
+    <p>The production architecture isn't graph-only or vector-only — it's <strong>both, with a router</strong> that decides which retrieval strategy fits the query.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Hybrid GraphRAG + Vector Retrieval</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Input</div><div class="arch-name">User Query</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Router</div><div class="arch-name">Query Classifier</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Path A</div><div class="arch-name">Graph Traversal</div></div>
+      </div>
+      <div class="arch-flow" style="margin-top:0.5rem">
+        <div class="arch-box" style="visibility:hidden"><div class="arch-label">x</div><div class="arch-name">x</div></div>
+        <div class="arch-arrow" style="visibility:hidden">→</div>
+        <div class="arch-box" style="visibility:hidden"><div class="arch-label">x</div><div class="arch-name">x</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Path B</div><div class="arch-name">Vector Search</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Merge</div><div class="arch-name">LLM Synthesis</div></div>
+      </div>
+    </div>
+
+    <p>The Query Classifier is a lightweight LLM call (or a rules-based classifier) that determines: does this query require relationship traversal (graph path) or content similarity search (vector path)? Many queries benefit from both — retrieve related documents via graph, then rank them by semantic similarity to the query.</p>
+
+    <h2>When to Use GraphRAG vs Plain Hybrid Search</h2>
+
+    <p>GraphRAG adds real operational cost: extraction pipeline, graph database to maintain, more complex query logic, higher latency. It's not always worth it. Use it when your users ask relationship queries that flat search can't answer. Don't use it if your corpus is small, queries are simple, or you need sub-second response times.</p>
+
+    <p>The honest benchmark from my testing: on a 500-document enterprise corpus, GraphRAG outperformed flat hybrid search on roughly 30% of queries — specifically those that spanned multiple document relationships. On the other 70%, the difference was negligible. That 30% subset was, however, the highest-value queries the business actually cared about.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Start with the structural graph only</strong> (containment, authorship, categories). This is cheap to extract, requires no LLM at extraction time, and already unlocks workspace and author-based multi-hop queries. Add LLM entity extraction as a second phase once you've validated the use case with real users.</p></div>
+    </div>
+
+    <p>OpenText Content Server isn't just a document store. It's a structured knowledge graph that most organisations have never thought to query as one. GraphRAG is the mechanism that finally lets you ask it the questions it was built to answer.</p>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-agentic-ecm.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Agents</div>
+          <div class="related-post-title">Agentic ECM: When Your AI Decides Which Documents to Fetch</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial · RAG</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+        <a href="blog-ecm-architecture.html" class="related-post">
+          <div class="related-post-cat">Opinion · Architecture</div>
+          <div class="related-post-title">Clean Architecture in Enterprise ECM: What Actually Works</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    navigator.clipboard.writeText(pre ? pre.innerText : block.innerText).then(function() {
+      btn.textContent = 'copied!'; btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+var bar = document.getElementById('reading-progress');
+if (bar) window.addEventListener('scroll', function() {
+  var d = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (d > 0 ? window.scrollY / d * 100 : 0) + '%';
+});
+</script>
+</body>
+</html>

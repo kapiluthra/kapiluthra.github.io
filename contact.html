@@ -139,6 +139,28 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
 .copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
 
+/* CONTACT FORM */
+.contact-form { display: flex; flex-direction: column; gap: 1rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.form-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.form-input, .form-select, .form-textarea {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text); padding: 0.6rem 0.9rem; outline: none;
+  transition: border-color 0.15s; width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-3); }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--amber-dim); }
+.form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23424b57'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.9rem center; padding-right: 2rem; cursor: pointer; }
+.form-select option { background: #0d1117; }
+.form-submit { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; padding: 0.7rem 1.75rem; border: 1px solid var(--amber-dim); color: var(--amber); background: rgba(226,179,72,0.04); cursor: pointer; transition: all 0.15s; align-self: flex-start; }
+.form-submit:hover { background: var(--amber); color: #090c12; border-color: var(--amber); }
+.form-note { font-size: 11px; color: var(--text-3); margin-top: 0.25rem; }
+@media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+
 /* ── READING PROGRESS ── */
 #reading-progress {
   position: fixed;
@@ -251,6 +273,42 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <span style="color:var(--amber);">▸</span> Anything at the intersection of AI and enterprise content
       </li>
     </ul>
+  </div>
+
+  <!-- CONTACT FORM — replace YOUR_FORM_ID below after signing up free at formspree.io -->
+  <div class="section fade-in">
+    <div class="section-title">Send a Message</div>
+    <form class="contact-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="cf-name">Name</label>
+          <input class="form-input" type="text" id="cf-name" name="name" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cf-email">Email</label>
+          <input class="form-input" type="email" id="cf-email" name="email" placeholder="you@company.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cf-topic">Topic</label>
+        <select class="form-select" id="cf-topic" name="topic" required>
+          <option value="" disabled selected>Select a topic…</option>
+          <option value="consulting">ECM / RAG Consulting</option>
+          <option value="architecture">Architecture Review</option>
+          <option value="speaking">Speaking / Writing</option>
+          <option value="collaboration">Collaboration</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="cf-message">Message</label>
+        <textarea class="form-textarea" id="cf-message" name="message" placeholder="What would you like to discuss?" required></textarea>
+      </div>
+      <div>
+        <button class="form-submit" type="submit">send message →</button>
+        <p class="form-note">Usually responds within 24 hours. No spam, no sales — just conversation.</p>
+      </div>
+    </form>
   </div>
 
   <div class="section fade-in">

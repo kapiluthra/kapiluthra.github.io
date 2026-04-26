@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic ECM: When Your AI Decides Which Documents to Fetch — Kapil Uthra</title>
+<meta name="description" content="Single-shot RAG retrieval isn't enough for complex enterprise queries. Agentic ECM lets an AI reason over your content repository in multiple steps — fetching, inspecting, and following relationships until it has an answer.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-agentic-ecm.html">
+<meta property="og:title" content="Agentic ECM: When Your AI Decides Which Documents to Fetch">
+<meta property="og:description" content="Single-shot RAG retrieval isn't enough for complex enterprise queries. Agentic ECM lets an AI reason over your content repository in multiple steps — fetching, inspecting, and following relationships until it has an answer.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Agentic ECM: When Your AI Decides Which Documents to Fetch">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-flow.vertical { flex-direction: column; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.arch-row { display: flex; align-items: center; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin: 0.4rem 0; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+</style>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <a href="index.html" class="nav-logo">kapil<span>.uthra</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">~/home</a></li>
+    <li><a href="about.html">~/about</a></li>
+    <li><a href="portfolio.html">~/portfolio</a></li>
+    <li><a href="blog.html" class="active">~/blog</a></li>
+    <li><a href="contact.html">~/contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">~/home</a>
+  <a href="about.html">~/about</a>
+  <a href="portfolio.html">~/portfolio</a>
+  <a href="blog.html" class="active">~/blog</a>
+  <a href="contact.html">~/contact</a>
+</div>
+
+<main class="article-wrap">
+  <div class="article-back">
+    <a href="blog.html">← blog</a>
+    <span>/</span>
+    <span>AI/RAG · Agents</span>
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Agents</div>
+    <h1 class="article-title">Agentic ECM: When Your AI Decides Which Documents to Fetch</h1>
+    <p class="article-subtitle">Single-shot retrieval can answer simple questions. But when a query requires fetching a contract, reading an annex, following an approval chain, and cross-referencing a policy — you need an agent, not a search engine.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>·</span>
+      <span>July 2026</span>
+      <span>·</span>
+      <span>~11 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">Agentic AI</span>
+      <span class="tag">ECM</span>
+      <span class="tag">RAG</span>
+      <span class="tag">OpenText</span>
+      <span class="tag">LLM Tools</span>
+      <span class="tag">Enterprise AI</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <h2>The RAG Ceiling</h2>
+    <p>Standard RAG — embed a query, fetch the top-k chunks, generate an answer — is a solved problem for simple factual lookups. "What is the refund policy?" works fine. But enterprise knowledge rarely packages itself into a single passage waiting to be retrieved.</p>
+    <p>Consider a more realistic query: <strong>"Has our master service agreement with Acme Corp been reviewed by Legal since the pricing amendment in Q3, and does it still comply with the new EU data residency requirements?"</strong></p>
+    <p>That question requires an AI to: find the MSA, locate the Q3 amendment, check the Legal review workflow history, then read the EU compliance policy and reason across all of it. No vector search retrieves that in one shot.</p>
+    <p>This is the ceiling that <strong>agentic ECM</strong> is designed to break through. Instead of asking "what documents are most similar to this query?", an agent asks "what do I need to fetch next to make progress on answering this question?" — and keeps asking until it has enough.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <p>This article assumes familiarity with basic RAG. For the retrieval foundation, read <a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline on OpenText</a> first.</p>
+    </div>
+
+    <h2>ECM as a Tool Surface</h2>
+    <p>The key insight behind agentic ECM is that an ECM system is already a structured tool surface — it just hasn't been exposed as one. OpenText Content Server offers everything an agent needs: full-text search, node fetch by ID, workspace traversal, metadata reads, version history, and workflow status. Wrap these as LLM-callable tools and the repository becomes programmable reasoning.</p>
+
+    <p>A minimal agentic ECM tool set looks like this:</p>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">ecm_tools.py — tool definitions</div>
+        <pre><span class="cmt"># Each tool maps to an OTCS REST endpoint wrapped with ACL enforcement</span>
+
+<span class="fn">TOOLS</span> = [
+  {
+    <span class="str">"name"</span>: <span class="str">"search_documents"</span>,
+    <span class="str">"description"</span>: <span class="str">"Full-text search across the ECM repository. Returns node IDs, titles, and snippets."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"query"</span>: <span class="str">"string"</span>, <span class="str">"workspace_id"</span>: <span class="str">"int|null"</span>, <span class="str">"limit"</span>: <span class="str">"int=10"</span>}
+  },
+  {
+    <span class="str">"name"</span>: <span class="str">"fetch_document"</span>,
+    <span class="str">"description"</span>: <span class="str">"Fetch the full text content of a document by its node ID."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"node_id"</span>: <span class="str">"int"</span>, <span class="str">"version"</span>: <span class="str">"int|null"</span>}
+  },
+  {
+    <span class="str">"name"</span>: <span class="str">"get_node_metadata"</span>,
+    <span class="str">"description"</span>: <span class="str">"Read metadata for a node: owner, created date, categories, custom attributes."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"node_id"</span>: <span class="str">"int"</span>}
+  },
+  {
+    <span class="str">"name"</span>: <span class="str">"list_workspace_children"</span>,
+    <span class="str">"description"</span>: <span class="str">"List immediate children of a folder or Business Workspace node."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"node_id"</span>: <span class="str">"int"</span>}
+  },
+  {
+    <span class="str">"name"</span>: <span class="str">"get_workflow_status"</span>,
+    <span class="str">"description"</span>: <span class="str">"Check the approval/review workflow status for a document. Returns step, assignee, date."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"node_id"</span>: <span class="str">"int"</span>}
+  },
+  {
+    <span class="str">"name"</span>: <span class="str">"get_version_history"</span>,
+    <span class="str">"description"</span>: <span class="str">"List versions of a document with timestamps and modifier names."</span>,
+    <span class="str">"parameters"</span>: {<span class="str">"node_id"</span>: <span class="str">"int"</span>}
+  }
+]</pre>
+      </div>
+    </div>
+
+    <p>Notice that <code>workspace_id</code> is an optional scoping parameter. Agents can start broad (search everywhere) or targeted (search within a specific project workspace). This turns out to be critical for performance — unconstrained searches over a large repository are slow, so good agent design encourages workspace-scoped tool calls after an initial locating step.</p>
+
+    <h2>The Agent Loop</h2>
+    <p>The agentic loop is straightforward to implement but surprisingly subtle to tune. At its core it is: plan → call → observe → decide → repeat until done.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Agentic ECM — reasoning loop</div>
+      <div class="arch-flow vertical">
+        <div class="arch-row">
+          <div class="arch-box highlight">
+            <div class="arch-label">Input</div>
+            <div class="arch-name">User Query + Context</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-row">
+          <div class="arch-box highlight">
+            <div class="arch-label">LLM</div>
+            <div class="arch-name">Planner / Reasoner</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ tool_call</div>
+        <div class="arch-row">
+          <div class="arch-box">
+            <div class="arch-label">ECM Tool</div>
+            <div class="arch-name">search / fetch / traverse</div>
+          </div>
+          <div class="arch-box">
+            <div class="arch-label">Guard</div>
+            <div class="arch-name">ACL Check + Hop Counter</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ observation</div>
+        <div class="arch-row">
+          <div class="arch-box">
+            <div class="arch-label">Memory</div>
+            <div class="arch-name">Scratchpad / Context Window</div>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ enough info? → answer : loop</div>
+        <div class="arch-row">
+          <div class="arch-box highlight">
+            <div class="arch-label">Output</div>
+            <div class="arch-name">Final Answer + Source Citations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">agent.py — core loop</div>
+        <pre><span class="kw">import</span> json
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">AgentState</span>:
+    query: str
+    ticket: str                        <span class="cmt"># OTCS auth ticket (scoped to calling user)</span>
+    messages: list = field(default_factory=list)
+    hop_count: int = <span class="num">0</span>
+    MAX_HOPS: int = <span class="num">10</span>
+
+<span class="kw">def</span> <span class="fn">run_agent</span>(query: str, ticket: str, llm, ecm_client) -> str:
+    state = AgentState(query=query, ticket=ticket)
+    state.messages.append({<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: query})
+
+    <span class="kw">while</span> state.hop_count < state.MAX_HOPS:
+        response = llm.chat(
+            messages=state.messages,
+            tools=TOOLS,
+            tool_choice=<span class="str">"auto"</span>
+        )
+
+        <span class="kw">if</span> response.stop_reason == <span class="str">"end_turn"</span>:
+            <span class="kw">return</span> response.content   <span class="cmt"># agent decided it has enough</span>
+
+        <span class="kw">if</span> response.stop_reason != <span class="str">"tool_use"</span>:
+            <span class="kw">raise</span> RuntimeError(<span class="str">f"Unexpected stop: {response.stop_reason}"</span>)
+
+        state.hop_count += <span class="num">1</span>
+        tool_call = response.tool_use
+        state.messages.append({<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: response.raw})
+
+        <span class="cmt"># Execute the tool with ACL guard baked in</span>
+        result = <span class="fn">execute_tool</span>(tool_call, ticket=state.ticket, ecm=ecm_client)
+        state.messages.append({
+            <span class="str">"role"</span>: <span class="str">"tool"</span>,
+            <span class="str">"tool_use_id"</span>: tool_call.id,
+            <span class="str">"content"</span>: json.dumps(result)
+        })
+
+    <span class="kw">return</span> <span class="str">"[Agent exceeded maximum reasoning steps. Partial results may be incomplete.]"</span></pre>
+      </div>
+    </div>
+
+    <p>Two things to notice. First, <code>ticket</code> is threaded through every tool call — there's no way for the LLM to bypass ACL checks by calling a tool directly. The execution layer always re-validates permissions using the authenticated user's ticket. Second, <code>MAX_HOPS</code> is a hard ceiling, not a soft suggestion. Without it, a confused agent can loop indefinitely burning both tokens and API quota.</p>
+
+    <h2>Three Real ECM Agent Patterns</h2>
+
+    <p>The tool surface above enables a whole category of agents that simply weren't possible with single-shot RAG. Here are three patterns I've implemented in production or close-to-production contexts.</p>
+
+    <h3>Pattern 1: Contract Analysis Agent</h3>
+    <p>Given a contract node ID and a compliance checklist, the agent: fetches the main contract, identifies amendment nodes from the version history, fetches each amendment, then reasons across the consolidated text to report which checklist items pass or fail — with citations to the specific clauses.</p>
+    <p>The trick here is that <strong>the agent must self-direct its traversal</strong>. It knows to look for amendments because the prompt gives it domain knowledge ("contracts may have associated amendment documents in the same workspace"). Without that domain hint in the system prompt, a general-purpose LLM will often just read the main document and stop.</p>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">contract_agent_system_prompt.txt</div>
+        <pre>You are a contract analysis assistant with access to an enterprise document repository.
+
+When analyzing a contract:
+1. Always fetch the main contract document first.
+2. List the workspace children to check for amendments, annexes, or addenda.
+3. Fetch each amendment in date order and note any changes to key clauses.
+4. Only then answer the user's question — citing specific sections by name.
+
+Never assume a document is complete without checking for amendments.
+Never cite text you have not fetched and read.
+If a document is inaccessible (permission denied), note this explicitly.</pre>
+      </div>
+    </div>
+
+    <h3>Pattern 2: Onboarding Document Collector</h3>
+    <p>Given a new employee's role and department, the agent: searches for the relevant onboarding workspace, traverses its folder structure, identifies which documents are tagged as "mandatory reading" vs optional, and returns a personalized reading list ordered by recommended sequence — without the HR team having to maintain a static list.</p>
+    <p>This pattern succeeds because ECM categories and custom attributes are machine-readable. The agent can filter by <code>mandatory=true</code> via <code>get_node_metadata</code> and sort by a <code>reading_order</code> attribute if it exists. The intelligence is in knowing to look for these attributes at all — again, a domain hint in the system prompt.</p>
+
+    <h3>Pattern 3: Compliance Audit Agent</h3>
+    <p>Given a regulation reference (e.g., "GDPR Article 30") and a set of business workspaces, the agent: searches for existing Records of Processing Activities, checks their last review dates, identifies which workspaces have no associated RoPA document, and produces a gap report. The loop can span 20–30 tool calls across dozens of workspaces.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <p>Compliance audit agents must log every tool call and its result to an immutable audit trail — not just the final answer. Regulators want to see that the AI actually inspected the documents it claims to have reviewed.</p>
+    </div>
+
+    <h2>The Hard Parts</h2>
+    <p>Agentic ECM sounds powerful in the abstract. In practice, three problems dominate the engineering effort.</p>
+
+    <h3>Tool latency compounds</h3>
+    <p>A single <code>fetch_document</code> call on a large OTCS instance takes 200–800ms. At 10 tool calls per agent run, that's 2–8 seconds of wall-clock latency before the LLM even starts writing the answer. Users accustomed to sub-second RAG responses will find this jarring.</p>
+    <p>Mitigations: pre-fetch documents speculatively while the LLM is generating; cache heavily-accessed documents in a fast store with TTLs; encourage agents to batch related reads where possible. None of these eliminate the latency, but they shift it.</p>
+
+    <h3>Hallucinated node IDs</h3>
+    <p>LLMs have a tendency to invent plausible-looking node IDs when they can't find what they're looking for. A call to <code>fetch_document(node_id=123456)</code> on a non-existent node will return a 404 — but an unchecked agent will sometimes treat a 404 as a signal to try nearby IDs (123455, 123457) rather than reporting failure.</p>
+    <p>Fix: every tool must return a structured error envelope, and the system prompt must explicitly instruct the agent that a "not found" response means the document doesn't exist — not that the ID is slightly wrong.</p>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">ecm_client.py — structured error envelope</div>
+        <pre><span class="kw">def</span> <span class="fn">fetch_document</span>(self, node_id: int, ticket: str) -> dict:
+    resp = self._get(<span class="str">f"/api/v1/nodes/{node_id}/content"</span>, ticket=ticket)
+
+    <span class="kw">if</span> resp.status_code == <span class="num">404</span>:
+        <span class="kw">return</span> {<span class="str">"ok"</span>: <span class="kw">False</span>, <span class="str">"error"</span>: <span class="str">"NOT_FOUND"</span>,
+                <span class="str">"message"</span>: <span class="str">f"Node {node_id} does not exist. Do not guess adjacent IDs."</span>}
+
+    <span class="kw">if</span> resp.status_code == <span class="num">403</span>:
+        <span class="kw">return</span> {<span class="str">"ok"</span>: <span class="kw">False</span>, <span class="str">"error"</span>: <span class="str">"PERMISSION_DENIED"</span>,
+                <span class="str">"message"</span>: <span class="str">f"Node {node_id} exists but you lack See Contents permission."</span>}
+
+    <span class="kw">return</span> {<span class="str">"ok"</span>: <span class="kw">True</span>, <span class="str">"node_id"</span>: node_id, <span class="str">"content"</span>: resp.text[:MAX_CONTENT_CHARS]}</pre>
+      </div>
+    </div>
+
+    <h3>Infinite reasoning loops</h3>
+    <p>The subtlest failure mode is an agent that is genuinely uncertain but keeps searching rather than admitting it. It fetches document A, which mentions document B. It fetches B, which references policy C. Policy C refers to a guideline that expired in 2021. The agent searches for the updated guideline, can't find it, and starts searching more broadly. Meanwhile the hop counter is climbing toward MAX_HOPS.</p>
+    <p>The solution is a <strong>progress signal</strong>: after every tool call, the agent should append a one-line scratchpad note summarising what it just learned and whether it is closer to an answer. When the scratchpad shows no new information for two consecutive steps, the agent should be instructed to conclude with what it has.</p>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">system_prompt_anti_loop.txt</div>
+        <pre>After each tool call, before calling the next tool, write:
+PROGRESS: [one sentence describing what you just learned]
+NEXT: [one sentence describing what you still need to find, or "READY TO ANSWER"]
+
+If NEXT is the same as the previous step's NEXT, you are looping.
+Stop, summarise what you found, and state clearly what you could not locate.</pre>
+      </div>
+    </div>
+
+    <h2>Guardrails in Production</h2>
+    <p>Beyond MAX_HOPS, a production-grade agentic ECM system needs three additional guardrails to be deployable in an enterprise context.</p>
+
+    <h3>ACL checks on every fetch</h3>
+    <p>This one cannot be stressed enough. The agent's ticket is the user's ticket — not an admin service account. Every tool call must pass the ticket through to OTCS, which enforces ACLs natively. Agents that use a shared service account for retrieval <strong>will leak documents across permission boundaries</strong>. The ACL-aware architecture described in <a href="blog-acl-aware-rag.html">ACL-Aware RAG</a> applies here verbatim: the only safe place to enforce permissions is at fetch time, in the tool implementation, using the authenticated user's credentials.</p>
+
+    <h3>Immutable audit logging</h3>
+    <p>Every tool call and its result must be written to an append-only log: who called the agent, when, with what query, which nodes were fetched, and what answer was returned. This is non-negotiable in regulated industries. The log also becomes invaluable for debugging when an agent produces a wrong answer — you can replay every step it took.</p>
+
+    <div class="codeblock-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="codeblock">
+        <div class="codeblock-title">audit_logger.py</div>
+        <pre><span class="kw">import</span> time, json, hashlib
+
+<span class="kw">class</span> <span class="fn">AuditLogger</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, session_id: str, user_id: str, store):
+        self.session_id = session_id
+        self.user_id = user_id
+        self.store = store           <span class="cmt"># write-once object store or append-only DB</span>
+        self.entries = []
+
+    <span class="kw">def</span> <span class="fn">log_tool_call</span>(self, tool: str, params: dict, result: dict):
+        entry = {
+            <span class="str">"ts"</span>: time.time(),
+            <span class="str">"session"</span>: self.session_id,
+            <span class="str">"user"</span>: self.user_id,
+            <span class="str">"tool"</span>: tool,
+            <span class="str">"params"</span>: params,
+            <span class="str">"result_ok"</span>: result.get(<span class="str">"ok"</span>),
+            <span class="str">"result_hash"</span>: hashlib.sha256(json.dumps(result).encode()).hexdigest()
+        }
+        self.entries.append(entry)
+        self.store.append(entry)     <span class="cmt"># write immediately, not at session end</span>
+
+    <span class="kw">def</span> <span class="fn">log_answer</span>(self, answer: str, hop_count: int):
+        self.store.append({
+            <span class="str">"ts"</span>: time.time(), <span class="str">"session"</span>: self.session_id,
+            <span class="str">"type"</span>: <span class="str">"answer"</span>, <span class="str">"hops"</span>: hop_count,
+            <span class="str">"answer_hash"</span>: hashlib.sha256(answer.encode()).hexdigest()
+        })</pre>
+      </div>
+    </div>
+
+    <h3>Content size limits</h3>
+    <p>Enterprise documents can be large — a 200-page contract will overflow any LLM context window. The tool must truncate at a safe character limit and signal that truncation occurred. Agents should be instructed to fetch specific sections (by heading search) rather than entire documents when they already know what they're looking for.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <p>For large documents, expose a <code>fetch_section(node_id, heading)</code> tool that returns only the text under a specific heading. Agents learn to use it after being burned by truncated fetches on full-document calls.</p>
+    </div>
+
+    <h2>Where Agentic ECM Stands Today</h2>
+    <p>The technology is real and the patterns work — I have running implementations of all three agent patterns described above. But "works in a controlled environment" is a long way from "enterprise production-ready." The gap is not in the AI capabilities; it's in the surrounding infrastructure.</p>
+
+    <p>What's missing at most organisations today:</p>
+    <ul>
+      <li>No structured error envelopes from ECM APIs (4xx responses return HTML error pages, not JSON)</li>
+      <li>No per-user audit log infrastructure (most ECM audit logs are admin-only and not queryable by AI systems)</li>
+      <li>No reliable ACL APIs for external callers (ticket-based auth works but isn't designed for high-concurrency agent workloads)</li>
+      <li>No content-size metadata before fetch (agents can't know a document is 500 pages until they try to fetch it)</li>
+      <li>No "intent-aware" ECM search (full-text search returns keyword matches; agents need semantic relevance ranking)</li>
+    </ul>
+
+    <p>Each of these is solvable. Structured error envelopes are a thin wrapper layer. ACL concurrency limits can be managed with a connection pool. Content-size metadata is usually available via node metadata before content fetch. Semantic search is the RAG infrastructure problem already solved in earlier articles.</p>
+
+    <p>The honest assessment: <strong>agentic ECM is 18–24 months away from mainstream enterprise deployment</strong> at most large organisations, not because the AI isn't ready, but because the ECM infrastructure wasn't designed for agents as clients. The organisations that start instrumenting their ECM APIs today — adding structured errors, per-user audit trails, semantic search, and content-size metadata — will be ready to deploy agents when the LLMs and tooling mature. Everyone else will spend that time on infrastructure catch-up.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <p>The patterns in this article combine naturally with <a href="blog-graphrag-opentext.html">GraphRAG</a> — a graph gives the agent a map of the repository it can consult before deciding which nodes to fetch. Combining graph-guided traversal with agentic tool calls is the next frontier.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="article-footer">
+      <h4>Related Articles</h4>
+      <div class="related-posts">
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Building a Production RAG Pipeline on OpenText Content Server</div>
+        </a>
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-graphrag-opentext.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository</div>
+        </a>
+        <a href="blog-opentext-ai.html" class="related-post">
+          <div class="related-post-cat">ECM · AI</div>
+          <div class="related-post-title">OpenText AI Services: What's Real, What's Hype, and What's Next</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <span>© 2026 Kapil Uthra</span>
+  <div style="display:flex;gap:1.5rem;">
+    <a href="https://linkedin.com/in/kapiluthra" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="rss.xml">RSS</a>
+    <a href="sitemap.xml">Sitemap</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var prog = document.getElementById('reading-progress');
+  window.addEventListener('scroll', function(){
+    var s = document.documentElement;
+    var pct = s.scrollTop / (s.scrollHeight - s.clientHeight) * 100;
+    prog.style.width = Math.min(pct, 100) + '%';
+  });
+  var btn = document.getElementById('hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  btn.addEventListener('click', function(){
+    btn.classList.toggle('open');
+    drawer.classList.toggle('open');
+  });
+  document.querySelectorAll('.copy-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = b.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        b.textContent = 'copied!';
+        b.classList.add('copied');
+        setTimeout(function(){ b.textContent = 'copy'; b.classList.remove('copied'); }, 1800);
+      });
+    });
+  });
+})();
+function copyCode(btn){ /* handled above */ }
+</script>
+</body>
+</html>
