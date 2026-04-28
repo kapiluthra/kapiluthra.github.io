@@ -16,6 +16,7 @@
 <meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -122,6 +123,18 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
 .copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
 .copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.toc { border: 1px solid var(--border); background: var(--bg-2); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+.toc-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.toc-list { list-style: none; }
+.toc-list li { padding: 0.2rem 0; }
+.toc-list a { font-size: 11px; color: var(--text-3); letter-spacing: 0.02em; transition: color 0.15s; display: flex; gap: 0.6rem; align-items: baseline; }
+.toc-list a::before { content: '▸'; color: var(--border-2); font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
+.toc-list a:hover, .toc-list a.active { color: var(--amber); opacity: 1; }
+.toc-list a.active::before { color: var(--amber); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
 </style>
 </head>
 <body>
@@ -172,6 +185,19 @@ footer a:hover { color: var(--amber); opacity: 1; }
     </div>
   </div>
 
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#acl-how">How OpenText ACLs Work</a></li>
+      <li><a href="#acl-approaches">Two Approaches — Why One Is Dangerous</a></li>
+      <li><a href="#acl-impl">Implementation: Permission Resolver</a></li>
+      <li><a href="#acl-wiring">Wiring Into Your Retrieval Pipeline</a></li>
+      <li><a href="#acl-testing">Testing ACL Enforcement</a></li>
+      <li><a href="#acl-dynamic">Group Memberships &amp; Dynamic ACLs</a></li>
+      <li><a href="#acl-blocker">Why This Is the #1 Enterprise AI Blocker</a></li>
+    </ul>
+  </nav>
+
   <div class="article-body">
 
     <p>Every RAG tutorial does the same thing: ingest your documents, embed them, store them in a vector database, retrieve the top-k, generate an answer. It works beautifully in demos. Then you try to deploy it in an enterprise and the security team asks a simple question: <strong>if a user who can't see a document asks the AI about it, will the AI tell them?</strong></p>
@@ -180,7 +206,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>This is the #1 reason enterprise AI projects get blocked by information security teams. And it's entirely solvable, if you build the right architecture from the start.</p>
 
-    <h2>How OpenText Content Server ACLs Work</h2>
+    <h2 id="acl-how">How OpenText Content Server ACLs Work</h2>
 
     <p>Before you can enforce permissions in a RAG system, you need to understand what permissions actually exist in the source system. OpenText Content Server has a mature, node-level permission model that most implementors only partially understand.</p>
 
@@ -203,7 +229,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div><p><strong>The inheritance trap:</strong> I've seen implementations that check only the parent workspace ACL and assume child documents inherit identically. They don't, especially after document-level permission overrides from legal or HR workflows. Always check node-level ACLs.</p></div>
     </div>
 
-    <h2>The Two Approaches — and Why One Is Dangerous</h2>
+    <h2 id="acl-approaches">The Two Approaches — and Why One Is Dangerous</h2>
 
     <p>When engineers first encounter the ACL problem in RAG, they typically reach for the obvious solution: retrieve the chunks as normal, then filter out any that the user shouldn't see before generating the answer. This is called <strong>post-retrieval filtering</strong> and it sounds reasonable. It isn't.</p>
 
@@ -236,7 +262,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>The key insight is that the <strong>OTCSTicket</strong> — the session token issued by Content Server authentication — already represents the user's identity and implicitly carries their permission context. Every OTCS REST API call made with that ticket will only return content the user is authorised to see. This is your enforcement mechanism.</p>
 
-    <h2>Implementation: The Permission Resolver</h2>
+    <h2 id="acl-impl">Implementation: The Permission Resolver</h2>
 
     <p>The Permission Resolver sits between the user's query and the vector store. Its job is to produce a list of node IDs that the current user can access with See Contents permission. That list becomes a mandatory filter on every vector store query.</p>
 
@@ -325,7 +351,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
         <span class="kw">return</span> result</pre>
     </div>
 
-    <h2>Wiring It Into Your Retrieval Pipeline</h2>
+    <h2 id="acl-wiring">Wiring It Into Your Retrieval Pipeline</h2>
 
     <p>Once you have the allowed node set, you pass it as a filter to your vector store query. Most vector stores support metadata filtering — you stored the OTCS node ID alongside each chunk at index time, and now you use it as a retrieval filter.</p>
 
@@ -357,7 +383,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>The <code>$in</code> filter syntax varies by vector store. ChromaDB uses a <code>where</code> clause, Pinecone uses a metadata filter dict, Qdrant uses a <code>Filter</code> object. The principle is the same: the vector index only searches within the allowed document set.</p>
 
-    <h2>Testing ACL Enforcement</h2>
+    <h2 id="acl-testing">Testing ACL Enforcement</h2>
 
     <p>ACL enforcement needs to be tested actively — not assumed to work because the code looks right. The test I run on every pipeline is what I call the <strong>poison document test</strong>:</p>
 
@@ -374,7 +400,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div><p><strong>Test with re-ranking enabled:</strong> If your pipeline uses a re-ranker, run the poison document test with it active. Re-rankers can reorder chunks in ways that expose information through the final answer even when the source chunk is filtered — especially if you're doing any form of multi-step retrieval.</p></div>
     </div>
 
-    <h2>The Harder Problem: Group Memberships and Dynamic ACLs</h2>
+    <h2 id="acl-dynamic">The Harder Problem: Group Memberships and Dynamic ACLs</h2>
 
     <p>The implementation above works well when permissions are relatively stable. It becomes more complex when:</p>
 
@@ -389,7 +415,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>The simpler fallback: keep your cache TTL short (under 5 minutes) and accept the performance trade-off. For most enterprise RAG use cases, a 5-minute window is acceptable — permission changes don't take effect instantaneously in OTCS either.</p>
 
-    <h2>Why This Is the #1 Enterprise AI Blocker</h2>
+    <h2 id="acl-blocker">Why This Is the #1 Enterprise AI Blocker</h2>
 
     <p>I've sat in more than a dozen conversations with information security teams about enterprise AI deployments. In almost every case, the first question is some variant of: <em>"How do you ensure the AI only answers based on what the user is authorised to see?"</em></p>
 
@@ -400,6 +426,12 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <p><strong>ACL-aware RAG isn't an advanced feature. It's the minimum viable security bar for any enterprise deployment.</strong> Build it in from the start — retrofitting it later means reindexing your entire corpus with permission metadata and rewriting your retrieval layer.</p>
 
     <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
 
     <div class="article-footer">
       <h4>Related Reading</h4>
@@ -446,6 +478,29 @@ document.addEventListener('click', function(e) {
 });
 </script>
 <script>
+// TOC active link on scroll
+(function(){
+  var links = document.querySelectorAll('.toc-list a');
+  var headings = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  window.addEventListener('scroll', function(){
+    var scrollY = window.scrollY + 120;
+    var active = 0;
+    headings.forEach(function(h, i){ if(h && h.offsetTop <= scrollY) active = i; });
+    links.forEach(function(a, i){ a.classList.toggle('active', i === active); });
+  }, {passive: true});
+})();
+// Share buttons
+(function(){
+  var url = 'https://kapiluthra.github.io/blog-acl-aware-rag.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
 document.querySelectorAll('.codeblock').forEach(function(block) {
   var wrap = document.createElement('div');
   wrap.className = 'codeblock-wrap';

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Now — Kapil Uthra</title>
+<meta name="description" content="What Kapil Uthra is working on right now — current projects, focus areas, and reading list.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kapiluthra.github.io/now.html">
+<meta property="og:title" content="Now — Kapil Uthra">
+<meta property="og:description" content="What Kapil Uthra is working on right now — current projects, focus areas, and reading list.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.wrap { max-width: 680px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.page-header { margin-bottom: 3rem; }
+.page-eyebrow { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.page-title { font-family: var(--serif); font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 600; color: var(--text); line-height: 1.15; margin-bottom: 0.75rem; }
+.page-updated { font-size: 11px; color: var(--text-3); }
+.page-updated span { color: var(--amber-dim); }
+.now-section { margin-bottom: 3rem; }
+.now-section h2 { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.now-section h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.now-item { border-bottom: 1px solid var(--border); padding: 1rem 0; display: flex; gap: 1.5rem; align-items: flex-start; }
+.now-item:last-child { border-bottom: none; }
+.now-dot { width: 6px; height: 6px; background: var(--amber); border-radius: 50%; margin-top: 8px; flex-shrink: 0; }
+.now-dot.dim { background: var(--text-3); }
+.now-body {}
+.now-label { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 0.25rem; }
+.now-desc { font-family: var(--serif); font-size: 1rem; color: var(--text-2); line-height: 1.7; }
+.now-desc a { font-family: var(--mono); font-size: 12px; }
+.status-badge { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--border-2); color: var(--text-3); margin-bottom: 0.5rem; }
+.status-badge.active { color: var(--green); border-color: rgba(78,201,123,0.3); }
+.status-badge.active::before { content: ''; display: block; width: 5px; height: 5px; background: var(--green); border-radius: 50%; }
+.status-badge.reading { color: var(--blue); border-color: rgba(91,156,246,0.3); }
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+.now-note { font-family: var(--serif); font-size: 0.9rem; color: var(--text-3); font-style: italic; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .wrap { padding: 76px 1rem 4rem; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">kapil<span>.uthra</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">~/home</a></li>
+    <li><a href="about.html">~/about</a></li>
+    <li><a href="portfolio.html">~/portfolio</a></li>
+    <li><a href="blog.html">~/blog</a></li>
+    <li><a href="contact.html">~/contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">~/home</a>
+  <a href="about.html">~/about</a>
+  <a href="portfolio.html">~/portfolio</a>
+  <a href="blog.html">~/blog</a>
+  <a href="contact.html">~/contact</a>
+</div>
+
+<main class="wrap">
+
+  <div class="page-header">
+    <div class="page-eyebrow">~/now</div>
+    <h1 class="page-title">What I'm working on</h1>
+    <p class="page-updated">Last updated <span>April 2026</span> · Inspired by <a href="https://nownownow.com" target="_blank" rel="noopener">nownownow.com</a></p>
+  </div>
+
+  <div class="now-section">
+    <h2>Current Work</h2>
+
+    <div class="now-item">
+      <div class="now-dot"></div>
+      <div class="now-body">
+        <div class="status-badge active">Active</div>
+        <div class="now-label">Agentic ECM — production pilot</div>
+        <div class="now-desc">Building the first production agentic layer on top of OpenText Content Server for a large enterprise client. The agent handles multi-document contract analysis, replacing a process that previously required 3–4 analyst hours per contract. ACL enforcement and audit logging are non-negotiable — both are live.</div>
+      </div>
+    </div>
+
+    <div class="now-item">
+      <div class="now-dot"></div>
+      <div class="now-body">
+        <div class="status-badge active">Active</div>
+        <div class="now-label">GraphRAG knowledge graph — architecture phase</div>
+        <div class="now-desc">Designing the graph extraction pipeline for a client with 2M+ documents across 40 Business Workspaces. The challenge is defining stable edge types that survive ECM reorganisations — most folder structures get rearranged every 18 months. Working through the node canonicalisation strategy now.</div>
+      </div>
+    </div>
+
+    <div class="now-item">
+      <div class="now-dot"></div>
+      <div class="now-body">
+        <div class="status-badge active">Active</div>
+        <div class="now-label">This site</div>
+        <div class="now-desc">Documenting the work I'm doing as I do it. The three-article RAG series (<a href="rag-series.html">read it here</a>) covers ACL-aware retrieval, GraphRAG, and agentic patterns — written from real implementation experience, not theory.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="now-section">
+    <h2>Reading</h2>
+
+    <div class="now-item">
+      <div class="now-dot dim"></div>
+      <div class="now-body">
+        <div class="status-badge reading">Reading</div>
+        <div class="now-label">Designing Data-Intensive Applications — Martin Kleppmann</div>
+        <div class="now-desc">Re-reading the distributed systems chapters with a focus on consistency models. Relevant to multi-node OTCS clusters and the replication lag issues I keep hitting in large deployments.</div>
+      </div>
+    </div>
+
+    <div class="now-item">
+      <div class="now-dot dim"></div>
+      <div class="now-body">
+        <div class="status-badge reading">Reading</div>
+        <div class="now-label">The Model Behind the Model — various</div>
+        <div class="now-desc">Following the current wave of research on LLM evaluation, particularly RAGAS-style metrics and the gap between benchmark performance and enterprise reliability. The evaluation problem is harder than the retrieval problem at this point.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="now-section">
+    <h2>Not Doing</h2>
+
+    <div class="now-item">
+      <div class="now-dot dim"></div>
+      <div class="now-body">
+        <div class="now-label">Taking new clients</div>
+        <div class="now-desc">At capacity through Q3 2026. If you have something interesting for Q4+, <a href="contact.html">get in touch</a> and I'll keep you in mind.</div>
+      </div>
+    </div>
+
+    <div class="now-item">
+      <div class="now-dot dim"></div>
+      <div class="now-body">
+        <div class="now-label">Permanent roles</div>
+        <div class="now-desc">Actively choosing the consulting path. Not looking for full-time employment regardless of the offer.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="now-note">This is a <a href="https://nownownow.com/about" target="_blank" rel="noopener">/now page</a> — a simple page about what I'm focused on at this point in my life. Updated roughly monthly.</p>
+
+</main>
+
+<footer>
+  <span>© 2026 Kapil Uthra</span>
+  <div style="display:flex;gap:1.5rem;">
+    <a href="https://linkedin.com/in/kapiluthra" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="rss.xml">RSS</a>
+    <a href="sitemap.xml">Sitemap</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var btn = document.getElementById('hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  btn.addEventListener('click', function(){
+    btn.classList.toggle('open');
+    drawer.classList.toggle('open');
+  });
+})();
+</script>
+</body>
+</html>

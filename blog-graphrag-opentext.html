@@ -16,6 +16,7 @@
 <meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -122,6 +123,18 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
 .copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
 .copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.toc { border: 1px solid var(--border); background: var(--bg-2); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+.toc-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.toc-list { list-style: none; }
+.toc-list li { padding: 0.2rem 0; }
+.toc-list a { font-size: 11px; color: var(--text-3); letter-spacing: 0.02em; transition: color 0.15s; display: flex; gap: 0.6rem; align-items: baseline; }
+.toc-list a::before { content: '▸'; color: var(--border-2); font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
+.toc-list a:hover, .toc-list a.active { color: var(--amber); opacity: 1; }
+.toc-list a.active::before { color: var(--amber); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
 </style>
 </head>
 <body>
@@ -172,13 +185,26 @@ footer a:hover { color: var(--amber); opacity: 1; }
     </div>
   </div>
 
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#gr-ceiling">Where Flat RAG Hits Its Ceiling</a></li>
+      <li><a href="#gr-entities">OpenText as a Graph: Entities &amp; Relationships</a></li>
+      <li><a href="#gr-extract">Extracting the Graph from OTCS</a></li>
+      <li><a href="#gr-llm">Enriching with LLM Entity Extraction</a></li>
+      <li><a href="#gr-patterns">Query Patterns: What GraphRAG Unlocks</a></li>
+      <li><a href="#gr-hybrid">Hybrid Architecture: Graph + Vector Together</a></li>
+      <li><a href="#gr-when">When to Use GraphRAG vs Plain Hybrid Search</a></li>
+    </ul>
+  </nav>
+
   <div class="article-body">
 
     <p>When Microsoft released GraphRAG as open-source in 2024, the AI community noticed. The results on complex, multi-hop questions were dramatically better than flat vector search — in some evaluations, 3–4× more accurate on queries that required synthesising information across multiple documents. The reason: <strong>graphs capture relationships, and enterprise content is fundamentally relational</strong>.</p>
 
     <p>What the community didn't focus on is that enterprise content management systems like OpenText Content Server are already graph structures. Every folder is a node. Every document is a node. Categories, workspaces, users, workflows — all nodes. The relationships between them — contains, authored-by, classified-as, approved-by — are all edges. You don't need to build a knowledge graph from scratch. You need to <em>expose</em> the one that already exists.</p>
 
-    <h2>Where Flat RAG Hits Its Ceiling</h2>
+    <h2 id="gr-ceiling">Where Flat RAG Hits Its Ceiling</h2>
 
     <p>Flat vector search works well for a specific class of questions: "find documents that talk about X." It fails — or produces hallucinated answers — on a different class: questions that require traversing relationships across documents.</p>
 
@@ -192,7 +218,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>These are multi-hop queries. Each one requires traversing at least three entity types with specific relationship constraints. A vector store returns a flat list of similar chunks — it has no concept of "was reviewed by" or "is linked to." GraphRAG does.</p>
 
-    <h2>OpenText as a Graph: The Entities and Relationships</h2>
+    <h2 id="gr-entities">OpenText as a Graph: The Entities and Relationships</h2>
 
     <p>Before building anything, map out what already exists in your OTCS instance as a graph structure. The node types are well-defined:</p>
 
@@ -220,7 +246,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div><p>OTCS also has a native <strong>Relationships</strong> feature (node_type: 1) that creates explicit typed links between nodes. If your implementation uses these, they're the highest-value edges in your graph — they represent intentional human-defined relationships, not just structural containment.</p></div>
     </div>
 
-    <h2>Extracting the Graph from OTCS</h2>
+    <h2 id="gr-extract">Extracting the Graph from OTCS</h2>
 
     <p>The graph extractor pulls the structural graph from OTCS via its REST API. You don't need to read document content at this stage — you're extracting metadata and relationships first.</p>
 
@@ -312,7 +338,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
             page += <span class="num">1</span></pre>
     </div>
 
-    <h2>Enriching with LLM Entity Extraction</h2>
+    <h2 id="gr-llm">Enriching with LLM Entity Extraction</h2>
 
     <p>The structural graph gives you containment and authorship relationships. To answer business queries, you need a second layer: <strong>entities extracted from document content</strong>. This is where the LLM comes in.</p>
 
@@ -344,7 +370,7 @@ Respond with valid JSON only. No explanation.
 
     <p>These extracted entities and relationships become additional nodes and edges in your graph, enriching it beyond what the OTCS metadata alone provides. A procurement contract now has edges to the supplier entity, the regulatory framework it references, and the systems it impacts — none of which appear in OTCS metadata but are present in the document body.</p>
 
-    <h2>Query Patterns: What GraphRAG Unlocks</h2>
+    <h2 id="gr-patterns">Query Patterns: What GraphRAG Unlocks</h2>
 
     <p>With the combined structural + semantic graph in place, you can answer query types that were previously impossible with flat RAG.</p>
 
@@ -365,7 +391,7 @@ Respond with valid JSON only. No explanation.
       <div><p><strong>GraphRAG is expensive at query time.</strong> Each multi-hop traversal may require multiple LLM calls to decompose the query into graph steps, execute traversals, and synthesise the answer. For simple lookup queries, flat RAG is faster and cheaper. Reserve GraphRAG for the complex relational queries where it genuinely outperforms.</p></div>
     </div>
 
-    <h2>Hybrid Architecture: Graph + Vector Together</h2>
+    <h2 id="gr-hybrid">Hybrid Architecture: Graph + Vector Together</h2>
 
     <p>The production architecture isn't graph-only or vector-only — it's <strong>both, with a router</strong> that decides which retrieval strategy fits the query.</p>
 
@@ -391,7 +417,7 @@ Respond with valid JSON only. No explanation.
 
     <p>The Query Classifier is a lightweight LLM call (or a rules-based classifier) that determines: does this query require relationship traversal (graph path) or content similarity search (vector path)? Many queries benefit from both — retrieve related documents via graph, then rank them by semantic similarity to the query.</p>
 
-    <h2>When to Use GraphRAG vs Plain Hybrid Search</h2>
+    <h2 id="gr-when">When to Use GraphRAG vs Plain Hybrid Search</h2>
 
     <p>GraphRAG adds real operational cost: extraction pipeline, graph database to maintain, more complex query logic, higher latency. It's not always worth it. Use it when your users ask relationship queries that flat search can't answer. Don't use it if your corpus is small, queries are simple, or you need sub-second response times.</p>
 
@@ -405,6 +431,12 @@ Respond with valid JSON only. No explanation.
     <p>OpenText Content Server isn't just a document store. It's a structured knowledge graph that most organisations have never thought to query as one. GraphRAG is the mechanism that finally lets you ask it the questions it was built to answer.</p>
 
     <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
 
     <div class="article-footer">
       <h4>Related Reading</h4>
@@ -449,6 +481,27 @@ document.addEventListener('click', function(e) {
     drawer.classList.remove('open');
   }
 });
+</script>
+<script>
+(function(){
+  var links = document.querySelectorAll('.toc-list a');
+  var headings = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  window.addEventListener('scroll', function(){
+    var scrollY = window.scrollY + 120;
+    var active = 0;
+    headings.forEach(function(h, i){ if(h && h.offsetTop <= scrollY) active = i; });
+    links.forEach(function(a, i){ a.classList.toggle('active', i === active); });
+  }, {passive: true});
+  var url = 'https://kapiluthra.github.io/blog-graphrag-opentext.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
 </script>
 <script>
 document.querySelectorAll('.codeblock').forEach(function(block) {

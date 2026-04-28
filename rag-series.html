@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise RAG Series — Kapil Uthra</title>
+<meta name="description" content="A three-part deep dive into production RAG on enterprise ECM systems: ACL enforcement, GraphRAG knowledge graphs, and agentic document retrieval.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kapiluthra.github.io/rag-series.html">
+<meta property="og:title" content="Enterprise RAG Series — Kapil Uthra">
+<meta property="og:description" content="A three-part deep dive into production RAG on enterprise ECM systems: ACL enforcement, GraphRAG knowledge graphs, and agentic document retrieval.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover { color: var(--amber); background: var(--bg-2); }
+.wrap { max-width: 760px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.series-header { margin-bottom: 3.5rem; }
+.series-eyebrow { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.series-title { font-family: var(--serif); font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 600; color: var(--text); line-height: 1.15; margin-bottom: 1rem; }
+.series-desc { font-family: var(--serif); font-size: 1.15rem; color: var(--text-2); line-height: 1.8; max-width: 600px; }
+.series-meta { margin-top: 1.5rem; font-size: 11px; color: var(--text-3); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.series-meta span { color: var(--amber-dim); }
+.articles { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 4rem; }
+.article-card { background: var(--bg); display: grid; grid-template-columns: 56px 1fr; }
+.article-num { background: var(--bg-2); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--border-2); border-right: 1px solid var(--border); font-family: var(--mono); padding: 2rem 0; }
+.article-card:hover .article-num { color: var(--amber-dim); }
+.article-card-body { padding: 1.75rem 2rem; transition: background 0.15s; }
+.article-card:hover .article-card-body { background: var(--bg-2); }
+.article-card-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.article-card-title { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 0.6rem; }
+.article-card-title a { color: var(--text); }
+.article-card-title a:hover { color: var(--amber); opacity: 1; }
+.article-card-desc { font-family: var(--serif); font-size: 1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 0.75rem; }
+.article-card-meta { font-size: 11px; color: var(--text-3); display: flex; gap: 1rem; flex-wrap: wrap; }
+.article-card-meta a { color: var(--amber); font-size: 11px; }
+.series-prereq { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.5rem 2rem; margin-bottom: 3rem; }
+.series-prereq h3 { font-size: 11px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+.prereq-item { display: flex; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+.prereq-item:last-child { border-bottom: none; }
+.prereq-item a { color: var(--amber); }
+.prereq-check { color: var(--green); flex-shrink: 0; }
+.share-strip { border: 1px solid var(--border); padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 6px 14px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .wrap { padding: 76px 1rem 4rem; }
+  .article-card { grid-template-columns: 40px 1fr; }
+  .article-card-body { padding: 1.25rem; }
+  .article-num { font-size: 16px; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">kapil<span>.uthra</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">~/home</a></li>
+    <li><a href="about.html">~/about</a></li>
+    <li><a href="portfolio.html">~/portfolio</a></li>
+    <li><a href="blog.html">~/blog</a></li>
+    <li><a href="contact.html">~/contact</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">~/home</a>
+  <a href="about.html">~/about</a>
+  <a href="portfolio.html">~/portfolio</a>
+  <a href="blog.html">~/blog</a>
+  <a href="contact.html">~/contact</a>
+</div>
+
+<main class="wrap">
+
+  <div class="series-header">
+    <div class="series-eyebrow">Article Series</div>
+    <h1 class="series-title">Enterprise RAG on OpenText ECM</h1>
+    <p class="series-desc">Three deep dives into production-grade RAG on enterprise content management systems — written from real implementation experience. Covers the three problems that kill most enterprise AI projects before they ship.</p>
+    <div class="series-meta">
+      <div>3 articles</div>
+      <div>·</div>
+      <div>~37 min total</div>
+      <div>·</div>
+      <div>July 2026</div>
+      <div>·</div>
+      <div><span>Kapil Uthra</span></div>
+    </div>
+  </div>
+
+  <div class="series-prereq">
+    <h3>Before you start</h3>
+    <div class="prereq-item">
+      <span class="prereq-check">✓</span>
+      <span>Familiarity with vector search / RAG basics. Start with <a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline on OpenText</a> if you're new to this stack.</span>
+    </div>
+    <div class="prereq-item">
+      <span class="prereq-check">✓</span>
+      <span>Basic understanding of OpenText Content Server (node IDs, workspaces, OTCSTicket auth). The articles explain OTCS-specific concepts as they arise.</span>
+    </div>
+    <div class="prereq-item">
+      <span class="prereq-check">✓</span>
+      <span>Python comfort level — code examples use Python 3.10+. The patterns translate to any language.</span>
+    </div>
+  </div>
+
+  <div class="articles">
+
+    <div class="article-card">
+      <div class="article-num">01</div>
+      <div class="article-card-body">
+        <div class="article-card-cat">AI/RAG · Security</div>
+        <div class="article-card-title"><a href="blog-acl-aware-rag.html">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</a></div>
+        <div class="article-card-desc">Naive RAG leaks confidential documents across users — it's the #1 reason enterprise AI projects get killed. This article covers the only safe architecture: pre-retrieval filtering using a two-tier permission cache keyed to OTCSTickets. Includes a complete PermissionResolver implementation and test methodology.</div>
+        <div class="article-card-meta">
+          <span>~12 min read</span>
+          <span>·</span>
+          <a href="blog-acl-aware-rag.html">Read →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="article-num">02</div>
+      <div class="article-card-body">
+        <div class="article-card-cat">AI/RAG · Architecture</div>
+        <div class="article-card-title"><a href="blog-graphrag-opentext.html">GraphRAG on OpenText: Building a Knowledge Graph from Your Content Repository</a></div>
+        <div class="article-card-desc">Flat vector search can't answer multi-hop questions like "find all contracts referencing supplier X that were approved by Legal." GraphRAG maps your ECM structure — containment, authorship, approvals, categories — as graph edges, then routes queries to graph traversal or vector search depending on their shape.</div>
+        <div class="article-card-meta">
+          <span>~14 min read</span>
+          <span>·</span>
+          <a href="blog-graphrag-opentext.html">Read →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="article-card">
+      <div class="article-num">03</div>
+      <div class="article-card-body">
+        <div class="article-card-cat">AI/RAG · Agents</div>
+        <div class="article-card-title"><a href="blog-agentic-ecm.html">Agentic ECM: When Your AI Decides Which Documents to Fetch</a></div>
+        <div class="article-card-desc">When a query requires fetching a contract, reading an amendment, checking workflow history, and cross-referencing a policy — you need an agent, not a search engine. This article covers the tool surface design, agent loop with MAX_HOPS guardrails, three production patterns, and the hard parts: tool latency, hallucinated node IDs, and infinite reasoning loops.</div>
+        <div class="article-card-meta">
+          <span>~11 min read</span>
+          <span>·</span>
+          <a href="blog-agentic-ecm.html">Read →</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="share-strip">
+    <p>Found this series useful? Share it with someone building enterprise AI.</p>
+    <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">&#xf08c; Share on LinkedIn</a>
+    <button class="share-btn" id="copy-link">⧉ Copy link</button>
+  </div>
+
+</main>
+
+<footer>
+  <span>© 2026 Kapil Uthra</span>
+  <div style="display:flex;gap:1.5rem;">
+    <a href="https://linkedin.com/in/kapiluthra" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="blog.html">All articles</a>
+    <a href="rss.xml">RSS</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var btn = document.getElementById('hamburger');
+  var drawer = document.getElementById('nav-drawer');
+  btn.addEventListener('click', function(){
+    btn.classList.toggle('open');
+    drawer.classList.toggle('open');
+  });
+
+  var pageUrl = 'https://kapiluthra.github.io/rag-series.html';
+  var liBtn = document.getElementById('share-li');
+  liBtn.href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(pageUrl);
+
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(pageUrl).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
+</script>
+</body>
+</html>

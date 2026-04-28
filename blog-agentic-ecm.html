@@ -16,6 +16,7 @@
 <meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -124,6 +125,18 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
 .copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
 .copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.toc { border: 1px solid var(--border); background: var(--bg-2); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
+.toc-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.toc-list { list-style: none; }
+.toc-list li { padding: 0.2rem 0; }
+.toc-list a { font-size: 11px; color: var(--text-3); letter-spacing: 0.02em; transition: color 0.15s; display: flex; gap: 0.6rem; align-items: baseline; }
+.toc-list a::before { content: '▸'; color: var(--border-2); font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
+.toc-list a:hover, .toc-list a.active { color: var(--amber); opacity: 1; }
+.toc-list a.active::before { color: var(--amber); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
 </style>
 </head>
 <body>
@@ -178,9 +191,22 @@ footer a:hover { color: var(--amber); opacity: 1; }
     </div>
   </div>
 
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#ag-ceiling">The RAG Ceiling</a></li>
+      <li><a href="#ag-tools">ECM as a Tool Surface</a></li>
+      <li><a href="#ag-loop">The Agent Loop</a></li>
+      <li><a href="#ag-patterns">Three Real ECM Agent Patterns</a></li>
+      <li><a href="#ag-hard">The Hard Parts</a></li>
+      <li><a href="#ag-guardrails">Guardrails in Production</a></li>
+      <li><a href="#ag-today">Where Agentic ECM Stands Today</a></li>
+    </ul>
+  </nav>
+
   <div class="article-body">
 
-    <h2>The RAG Ceiling</h2>
+    <h2 id="ag-ceiling">The RAG Ceiling</h2>
     <p>Standard RAG — embed a query, fetch the top-k chunks, generate an answer — is a solved problem for simple factual lookups. "What is the refund policy?" works fine. But enterprise knowledge rarely packages itself into a single passage waiting to be retrieved.</p>
     <p>Consider a more realistic query: <strong>"Has our master service agreement with Acme Corp been reviewed by Legal since the pricing amendment in Q3, and does it still comply with the new EU data residency requirements?"</strong></p>
     <p>That question requires an AI to: find the MSA, locate the Q3 amendment, check the Legal review workflow history, then read the EU compliance policy and reason across all of it. No vector search retrieves that in one shot.</p>
@@ -191,7 +217,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <p>This article assumes familiarity with basic RAG. For the retrieval foundation, read <a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline on OpenText</a> first.</p>
     </div>
 
-    <h2>ECM as a Tool Surface</h2>
+    <h2 id="ag-tools">ECM as a Tool Surface</h2>
     <p>The key insight behind agentic ECM is that an ECM system is already a structured tool surface — it just hasn't been exposed as one. OpenText Content Server offers everything an agent needs: full-text search, node fetch by ID, workspace traversal, metadata reads, version history, and workflow status. Wrap these as LLM-callable tools and the repository becomes programmable reasoning.</p>
 
     <p>A minimal agentic ECM tool set looks like this:</p>
@@ -239,7 +265,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>Notice that <code>workspace_id</code> is an optional scoping parameter. Agents can start broad (search everywhere) or targeted (search within a specific project workspace). This turns out to be critical for performance — unconstrained searches over a large repository are slow, so good agent design encourages workspace-scoped tool calls after an initial locating step.</p>
 
-    <h2>The Agent Loop</h2>
+    <h2 id="ag-loop">The Agent Loop</h2>
     <p>The agentic loop is straightforward to implement but surprisingly subtle to tune. At its core it is: plan → call → observe → decide → repeat until done.</p>
 
     <div class="arch-diagram">
@@ -337,7 +363,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>Two things to notice. First, <code>ticket</code> is threaded through every tool call — there's no way for the LLM to bypass ACL checks by calling a tool directly. The execution layer always re-validates permissions using the authenticated user's ticket. Second, <code>MAX_HOPS</code> is a hard ceiling, not a soft suggestion. Without it, a confused agent can loop indefinitely burning both tokens and API quota.</p>
 
-    <h2>Three Real ECM Agent Patterns</h2>
+    <h2 id="ag-patterns">Three Real ECM Agent Patterns</h2>
 
     <p>The tool surface above enables a whole category of agents that simply weren't possible with single-shot RAG. Here are three patterns I've implemented in production or close-to-production contexts.</p>
 
@@ -375,7 +401,7 @@ If a document is inaccessible (permission denied), note this explicitly.</pre>
       <p>Compliance audit agents must log every tool call and its result to an immutable audit trail — not just the final answer. Regulators want to see that the AI actually inspected the documents it claims to have reviewed.</p>
     </div>
 
-    <h2>The Hard Parts</h2>
+    <h2 id="ag-hard">The Hard Parts</h2>
     <p>Agentic ECM sounds powerful in the abstract. In practice, three problems dominate the engineering effort.</p>
 
     <h3>Tool latency compounds</h3>
@@ -422,7 +448,7 @@ Stop, summarise what you found, and state clearly what you could not locate.</pr
       </div>
     </div>
 
-    <h2>Guardrails in Production</h2>
+    <h2 id="ag-guardrails">Guardrails in Production</h2>
     <p>Beyond MAX_HOPS, a production-grade agentic ECM system needs three additional guardrails to be deployable in an enterprise context.</p>
 
     <h3>ACL checks on every fetch</h3>
@@ -474,7 +500,7 @@ Stop, summarise what you found, and state clearly what you could not locate.</pr
       <p>For large documents, expose a <code>fetch_section(node_id, heading)</code> tool that returns only the text under a specific heading. Agents learn to use it after being burned by truncated fetches on full-document calls.</p>
     </div>
 
-    <h2>Where Agentic ECM Stands Today</h2>
+    <h2 id="ag-today">Where Agentic ECM Stands Today</h2>
     <p>The technology is real and the patterns work — I have running implementations of all three agent patterns described above. But "works in a controlled environment" is a long way from "enterprise production-ready." The gap is not in the AI capabilities; it's in the surrounding infrastructure.</p>
 
     <p>What's missing at most organisations today:</p>
@@ -496,6 +522,12 @@ Stop, summarise what you found, and state clearly what you could not locate.</pr
     </div>
 
     <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
 
     <div class="article-footer">
       <h4>Related Articles</h4>
@@ -532,6 +564,25 @@ Stop, summarise what you found, and state clearly what you could not locate.</pr
 </footer>
 
 <script>
+(function(){
+  var links = document.querySelectorAll('.toc-list a');
+  var headings = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  window.addEventListener('scroll', function(){
+    var scrollY = window.scrollY + 120;
+    var active = 0;
+    headings.forEach(function(h, i){ if(h && h.offsetTop <= scrollY) active = i; });
+    links.forEach(function(a, i){ a.classList.toggle('active', i === active); });
+  }, {passive: true});
+  var url = 'https://kapiluthra.github.io/blog-agentic-ecm.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
 (function(){
   var prog = document.getElementById('reading-progress');
   window.addEventListener('scroll', function(){
