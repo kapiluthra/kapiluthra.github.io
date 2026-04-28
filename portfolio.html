@@ -9,7 +9,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kapiluthra.github.io/portfolio.html">
 <meta property="og:title" content="Portfolio — Kapil Uthra">
-<meta property="og:description" content="RAG pipelines, migration tools, ECM case studies from 6 countries. 150M documents, Kubernetes, ChromaDB, Ollama.">
+<meta property="og:description" content="RAG pipelines, migration tools, ECM case studies from 6 countries. 150M documents, Kubernetes, hybrid retrieval, ACL-enforced AI.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Portfolio — Kapil Uthra">
@@ -268,7 +268,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <div class="building-card">
       <div class="building-label">Active — in progress</div>
       <div class="building-title">ECM Query Agent — Agentic Natural Language Interface over OpenText CS</div>
-      <div class="building-desc">Tool-calling LLM layer on top of the OTCS RAG pipeline. Users query in plain English; the agent decides which OTCS nodes to search, retrieves chunks with ACL enforcement, and returns cited answers. Stack: Streamlit + LangChain tool-calling + ChromaDB.</div>
+      <div class="building-desc">Tool-calling LLM layer on top of the OTCS RAG pipeline. Users query in plain English; the agent decides which OTCS nodes to search, retrieves chunks with ACL enforcement, and returns cited answers — using a hybrid retrieval stack with LangChain tool-calling.</div>
     </div>
 
     <!-- RAG Pipeline -->
@@ -280,20 +280,18 @@ footer a:hover { color: var(--amber); opacity: 1; }
         </div>
         <div class="project-title">OpenText Content Server RAG Pipeline</div>
         <div class="project-desc">
-          Production-grade RAG pipeline for OpenText Content Server. Dual-storage pattern: <strong>Parquet cold store</strong> for re-embedding resilience + <strong>ChromaDB vector hot store</strong> for retrieval. Parent-child chunking (400-token child / 1500-token parent), ACL-enforced security gates, incremental sync via OTModifyDate, hybrid BM25+vector retrieval with RRF reranking, and Streamlit chatbot UI.<br><br>
-          Full production version is private (enterprise). A sanitised demo scaffold — cs_client pattern, chunker, ingester skeleton, Streamlit UI — is open-source on GitHub.
+          Production-grade RAG pipeline for OpenText Content Server. Dual-storage pattern: <strong>cold store</strong> for re-embedding resilience + <strong>vector hot store</strong> for retrieval. Parent-child chunking (400-token child / 1500-token parent), ACL-enforced security gates, incremental sync via OTModifyDate, hybrid BM25+vector retrieval with RRF reranking, and a conversational chatbot UI.<br><br>
+          Full production version is private (enterprise). A sanitised demo scaffold — cs_client pattern, chunker, ingester skeleton — is open-source on GitHub.
         </div>
         <div class="proj-result">↑ <span>500+ enterprise documents</span> made queryable via natural language · ACL-enforced, production-deployed</div>
         <div class="project-tags">
           <span class="tag highlight">Python</span>
-          <span class="tag highlight">ChromaDB</span>
-          <span class="tag highlight">Ollama</span>
-          <span class="tag highlight">nomic-embed-text</span>
-          <span class="tag">OpenText CS REST API</span>
-          <span class="tag">RAG</span>
-          <span class="tag">Parquet</span>
+          <span class="tag highlight">RAG</span>
+          <span class="tag highlight">Hybrid Retrieval</span>
+          <span class="tag">OpenText Content Server</span>
+          <span class="tag">Vector Search</span>
           <span class="tag">BM25 + RRF</span>
-          <span class="tag">Streamlit</span>
+          <span class="tag">Parent-Child Chunking</span>
           <span class="tag">ACL Security</span>
         </div>
         <div class="project-links">
