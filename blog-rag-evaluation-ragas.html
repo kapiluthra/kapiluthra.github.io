@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -108,7 +108,19 @@ footer a { color:var(--text-3); } footer a:hover { color:var(--amber);opacity:1;
   .related-posts { grid-template-columns:1fr; }
   footer { padding:1.5rem;flex-direction:column;gap:0.4rem; }
 }
-</style>
+
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
 <div id="reading-progress"></div>
@@ -122,6 +134,7 @@ footer a { color:var(--text-3); } footer a:hover { color:var(--amber);opacity:1;
     <li><a href="blog.html" class="active">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
   <button class="nav-hamburger" id="nav-btn" aria-label="Toggle menu" onclick="toggleNav()">
     <span></span><span></span><span></span>
   </button>
@@ -428,6 +441,9 @@ function toggleNav(){var b=document.getElementById('nav-btn'),d=document.getElem
 document.addEventListener('click',function(e){var b=document.getElementById('nav-btn'),d=document.getElementById('nav-drawer');if(b&&d&&!b.contains(e.target)&&!d.contains(e.target)){b.classList.remove('open');d.classList.remove('open');}});
 document.querySelectorAll('.codeblock').forEach(function(block){var wrap=document.createElement('div');wrap.className='codeblock-wrap';block.parentNode.insertBefore(wrap,block);wrap.appendChild(block);var btn=document.createElement('button');btn.className='copy-btn';btn.textContent='copy';btn.onclick=function(){var pre=block.querySelector('pre');var text=pre?pre.innerText:block.innerText;navigator.clipboard.writeText(text).then(function(){btn.textContent='copied!';btn.classList.add('copied');setTimeout(function(){btn.textContent='copy';btn.classList.remove('copied');},2000);});};wrap.appendChild(btn);});
 var pb=document.getElementById('reading-progress');if(pb){window.addEventListener('scroll',function(){var d=document.documentElement.scrollHeight-window.innerHeight;pb.style.width=(d>0?(window.scrollY/d*100):0)+'%';});}
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
 </script>
 </body>
 </html>

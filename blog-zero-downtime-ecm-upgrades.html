@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -171,7 +171,19 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .nav-links { display: none !important; }
   .nav-hamburger { display: flex; }
 }
-</style>
+
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
 <nav>
@@ -184,6 +196,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <li><a href="blog.html" class="active">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
   <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
 </nav>
 <div class="nav-drawer" id="nav-drawer">
@@ -277,9 +290,9 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
     <p>The key change was upgrading the architecture to support <strong>rolling upgrades</strong>. In a single-server deployment, you can't do rolling upgrades — you take the server down, upgrade it, bring it back up. In a distributed deployment, you can take one front-end node out of the load balancer, upgrade it, verify it, put it back, then move to the next node. Users continue to use the remaining nodes during the process.</p>
 
-    <p>This required solving a version compatibility problem: for the period when nodes are running different versions, the session and cache layers need to be compatible. We isolated session state to a shared Redis cluster (outside the CS nodes), which meant any node could serve any user session regardless of which version it was running.</p>
+    <p>The real work happened before the maintenance window. Extensive prep and multiple dry-run rounds on a staging environment that closely mirrored production let us understand exactly how long every step would take and where the risks sat. We also fast-tracked two things that are often left until upgrade day: the <strong>database upgrade</strong> (schema changes applied and validated in advance on a restored production snapshot) and the <strong>full-text indexing rebuild</strong> (pre-staged so the index wasn't starting from zero after go-live). By the time the production window opened, the team had executed the same sequence four times. There were no surprises.</p>
 
-    <p>Result: 30+ servers upgraded with a total user-facing outage of under 45 minutes (for the database schema upgrade step, which still requires all nodes to be stopped). That's the 90% reduction.</p>
+    <p>Result: 30+ servers upgraded with a total user-facing outage of under 45 minutes — only the unavoidable database schema step required all nodes to be stopped simultaneously. That's the 90% reduction.</p>
 
     <h2>Orion Finland: GxP Constraints</h2>
 
@@ -394,6 +407,9 @@ if (progressBar) {
     progressBar.style.width = pct + '%';
   });
 }
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
 </script>
 </body>
 </html>

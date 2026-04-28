@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -17,7 +17,6 @@
 <link rel="alternate" type="application/rss+xml" title="Kapil Uthra Blog" href="https://kapiluthra.github.io/rss.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
-<script defer data-domain="kapiluthra.github.io" src="https://plausible.io/js/script.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root { --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f; --border: #21262d; --border-2: #30363d; --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57; --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12); --mono: 'JetBrains Mono', 'Courier New', monospace; }
@@ -167,7 +166,19 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .nav-links { display: none !important; }
   .nav-hamburger { display: flex; }
 }
-</style>
+
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
 
@@ -181,6 +192,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <li><a href="blog.html" class="active">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
   <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
 </nav>
 <div class="nav-drawer" id="nav-drawer">
@@ -252,7 +264,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-body">
         <div class="post-category">Tutorial · Enterprise Auth</div>
         <div class="post-title"><a href="blog-otds-sso-deep-dive.html">OTDS SSO Deep Dive: The Authentication Layer Most xECM Implementations Get Wrong</a></div>
-        <div class="post-desc">OTCSTicket vs OTDS federation, user partition pitfalls, the login-attribute mapping trap, and why co-locating OTDS with Content Server causes intermittent 401s that look like permission problems.</div>
+        <div class="post-desc">Content Server ticket auth vs OTDS federation, user partition pitfalls, the login-attribute mapping trap, and the subtle misconfigurations that cause intermittent auth failures that look like permission problems.</div>
         <div class="post-tags"><span class="tag">otds</span><span class="tag">sso</span><span class="tag">opentext</span><span class="tag">xecm</span></div>
         <div class="post-read">~14 min read</div>
       </div>
@@ -296,7 +308,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-body">
         <div class="post-category">Tutorial · Deep Dive</div>
         <div class="post-title"><a href="blog-rag-opentext-pipeline.html">Building a Production RAG Pipeline for OpenText Content Server</a></div>
-        <div class="post-desc">End-to-end walkthrough: OTCSTicket auth, document discovery, parent-child chunking, vector ingestion, and hybrid retrieval with RRF reranking. Written from real production experience.</div>
+        <div class="post-desc">End-to-end walkthrough: authentication, document discovery, parent-child chunking, vector ingestion, and hybrid retrieval with RRF reranking. Written from real production experience on an enterprise OTCS corpus.</div>
         <div class="post-tags"><span class="tag">rag</span><span class="tag">opentext</span><span class="tag">vector search</span><span class="tag">python</span></div>
         <div class="post-read">~18 min read</div>
       </div>
@@ -306,7 +318,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-date">Mar 2026</div>
       <div class="post-body">
         <div class="post-category">Project · Debugging</div>
-        <div class="post-title"><a href="blog-cs-client-debugging.html">How I Debugged 150M Document Download Failures in cs_client.py</a></div>
+        <div class="post-title"><a href="blog-cs-client-debugging.html">Two cs_client.py Bugs That Silently Emptied My RAG Vector Store</a></div>
         <div class="post-desc">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it. Two days, two bugs, one fix each.</div>
         <div class="post-tags"><span class="tag">debugging</span><span class="tag">opentext</span><span class="tag">python</span><span class="tag">api</span></div>
         <div class="post-read">~8 min read</div>
@@ -355,8 +367,8 @@ footer a:hover { color: var(--amber); opacity: 1; }
       <div class="post-date">Dec 2025</div>
       <div class="post-body">
         <div class="post-category">Deep Dive · Migration</div>
-        <div class="post-title"><a href="blog-150m-migration.html">Migrating 150M Documents to Kubernetes-Native Content Server</a></div>
-        <div class="post-desc">Architecture, tooling, and hard lessons from the Securex Belgium engagement: moving 150M documents from a legacy ECM system into a cloud-native OTCS deployment, with zero data loss.</div>
+        <div class="post-title"><a href="blog-150m-migration.html">Migrating 150M Documents into OpenText Content Server</a></div>
+        <div class="post-desc">Architecture, tooling, and hard lessons from the Securex Belgium engagement: moving 150M documents from a legacy ECM at end-of-life into a fresh OpenText Content Server deployment, with zero data loss.</div>
         <div class="post-tags"><span class="tag">migration</span><span class="tag">kubernetes</span><span class="tag">opentext</span><span class="tag">cloud</span></div>
         <div class="post-read">~15 min read</div>
       </div>
@@ -465,6 +477,9 @@ if (progressBar) {
     progressBar.style.width = pct + '%';
   });
 }
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
 </script>
 </body>
 </html>

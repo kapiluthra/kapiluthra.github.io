@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How I Debugged 150M Document Download Failures in cs_client.py — Kapil Uthra</title>
+<title>Two cs_client.py Bugs That Silently Emptied My RAG Vector Store — Kapil Uthra</title>
 <meta name="description" content="The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://kapiluthra.github.io/blog-cs-client-debugging.html">
-<meta property="og:title" content="How I Debugged 150M Document Download Failures in cs_client.py — Kapil Uthra">
+<meta property="og:title" content="Two cs_client.py Bugs That Silently Emptied My RAG Vector Store — Kapil Uthra">
 <meta property="og:description" content="The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="How I Debugged 150M Document Download Failures in cs_client.py">
+<meta name="twitter:title" content="Two cs_client.py Bugs That Silently Emptied My RAG Vector Store">
 <meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
@@ -187,7 +187,19 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .nav-links { display: none !important; }
   .nav-hamburger { display: flex; }
 }
-</style>
+
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
 <nav>
@@ -200,6 +212,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
     <li><a href="blog.html" class="active">blog</a></li>
     <li><a href="contact.html">contact</a></li>
   </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
   <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
 </nav>
 <div class="nav-drawer" id="nav-drawer">
@@ -219,8 +232,8 @@ footer a:hover { color: var(--amber); opacity: 1; }
 
   <div class="article-meta">
     <div class="article-category">Project · Debugging</div>
-    <h1 class="article-title">How I Debugged 150M Document Download Failures in cs_client.py</h1>
-    <p class="article-subtitle">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked it — an honest account of two days of head-scratching with the OpenText REST API.</p>
+    <h1 class="article-title">Two cs_client.py Bugs That Silently Emptied My RAG Vector Store</h1>
+    <p class="article-subtitle">The container flag vs node_type trap, the results vs data key mismatch, and the diagnostic scripts that finally cracked them — two OpenText REST API quirks that will silently under-populate your RAG vector store if you don't know about them.</p>
     <div class="article-byline">
       <span>Kapil Uthra</span>
       <span>March 2026</span>
@@ -450,6 +463,9 @@ if (progressBar) {
     progressBar.style.width = pct + '%';
   });
 }
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
 </script>
 </body>
 </html>
