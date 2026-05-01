@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It — Kapil Uthra</title>
+<meta name="description" content="Vector-only RAG fails on the queries that matter most in enterprise ECM. Exact part numbers, document IDs, policy codes — embeddings miss them. Here's the hybrid architecture that fixes it.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-hybrid-search.html">
+<meta property="og:title" content="Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It">
+<meta property="og:description" content="Vector embeddings are powerful, but they miss exact terms, product codes, document IDs, and metadata. In OpenText Content Server, that failure mode is expensive. Here's why hybrid search is non-negotiable for enterprise RAG.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Architecture
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Architecture</div>
+    <h1 class="article-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</h1>
+    <p class="article-subtitle">Vector embeddings are powerful, but they miss exact terms, product codes, document IDs, and metadata. In OpenText Content Server, that failure mode is expensive. Here's why hybrid search is non-negotiable for enterprise RAG.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~10 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">hybrid-search</span>
+      <span class="tag">opentext</span>
+      <span class="tag">ecm</span>
+      <span class="tag">bm25</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>The demo always works. You load a few thousand documents, spin up a vector store, run a handful of concept queries — "what is our policy on contractor safety?" — and the answers are excellent. Stakeholders are impressed. You move to production.</p>
+
+    <p>Then the first real users hit it. A procurement engineer searches for <strong>"PO-2024-08821"</strong>. A compliance officer asks about <strong>"POL-EHS-2024-007"</strong>. A document controller needs <strong>"NodeID 4821993"</strong>. The vector store returns semantically similar documents — procurement policies, EHS frameworks, other node metadata — but not the specific item the user was looking for. The answers are confidently wrong.</p>
+
+    <p>This is the exact failure mode that kills enterprise RAG deployments. It's not a bug. It's a fundamental property of how embedding models work — and it has a well-understood fix: <strong>hybrid search</strong>.</p>
+
+    <h2 id="vector-failure">The Promise vs. the Reality of Vector Search in Enterprise</h2>
+
+    <p>Embedding models are trained to capture semantic similarity. They're extraordinarily good at understanding that "motor vehicle accident" and "road traffic collision" mean the same thing. They learn this from vast quantities of general web text, academic papers, and crawled documents.</p>
+
+    <p>What they don't learn from that corpus: that <code>POL-EHS-2024-007</code> is a specific, unique identifier that must be matched exactly. To an embedding model, <code>POL-EHS-2024-007</code> and <code>POL-EHS-2023-012</code> are nearly identical — same structure, same prefix, high cosine similarity. But to your compliance officer, they are completely different documents. One is current; one is superseded.</p>
+
+    <p>The deeper problem is that embedding models compress text into a fixed-dimensional vector. This compression is lossy by design — it captures meaning at the cost of exact token identity. For enterprise ECM, where documents are identified by codes, numbers, and structured identifiers, this loss is catastrophic at query time.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Real failure example:</strong> A user at an energy company searched for a specific contract reference number in their RAG system. The vector search returned three contracts with similar clause structures and counterparty names — all semantically plausible, all wrong. The user assumed the AI had confirmed the wrong contract terms. The error was caught in legal review, but only barely. Vector-only search in contract management is a liability.</p></div>
+    </div>
+
+    <h2 id="bm25-strength">What BM25 Gets Right That Embeddings Miss</h2>
+
+    <p>BM25 (Best Match 25) is a term-frequency-based ranking function developed in the 1990s. It is not glamorous. It does not understand synonyms or paraphrase. What it does with exceptional reliability is <strong>score exact term matches high</strong>.</p>
+
+    <p>When a user searches for <code>POL-EHS-2024-007</code>, BM25 looks for documents containing that exact string. It finds them. It ranks them at the top. It doesn't get confused by similar policy codes from adjacent years. The specificity that embeddings smooth over is exactly what BM25 preserves.</p>
+
+    <p>BM25 excels at:</p>
+    <ul>
+      <li>Part numbers and product codes (e.g., <code>MFG-COMP-4471-B</code>)</li>
+      <li>Policy and procedure identifiers (e.g., <code>POL-EHS-2024-007</code>, <code>SOP-QA-112</code>)</li>
+      <li>Document IDs and node references (e.g., OTCS DataID <code>4821993</code>)</li>
+      <li>Dates and version numbers (e.g., <code>v4.2</code>, <code>2024-Q3</code>)</li>
+      <li>Personal names and organisational abbreviations</li>
+      <li>Technical acronyms that embeddings will conflate with similar ones</li>
+    </ul>
+
+    <p>BM25 fails at:</p>
+    <ul>
+      <li>"Find contracts similar to this one" — requires semantic similarity, not term matching</li>
+      <li>Paraphrase queries where the user's words don't appear in the document</li>
+      <li>Concept search across synonym boundaries ("vehicle accident" vs "road collision")</li>
+      <li>Multilingual retrieval where the query and document use different language variants</li>
+    </ul>
+
+    <p>Neither approach is universally better. They're complementary — and a production enterprise RAG system needs both.</p>
+
+    <h2 id="otcs-retrieval">The OTCS Retrieval Landscape</h2>
+
+    <p>OpenText Content Server ships with its own full-text search infrastructure — historically Verity, now typically based on Solr or the OpenText Directory Services (OTDS) search stack depending on your version and configuration. Under the hood, this is BM25-like: it's an inverted index with term-frequency scoring.</p>
+
+    <p>The OTCS search engine is genuinely good at what BM25 is good at. It indexes document content plus metadata fields, supports fielded queries, and has years of enterprise tuning around security-aware search (respecting ACLs at query time — something your vector store probably doesn't do by default). Its weaknesses are predictable: no semantic understanding, limited synonym expansion, basic relevance ranking that doesn't adapt to the query type.</p>
+
+    <p>This creates a clear architectural opportunity: <strong>use OTCS's own search API as your BM25 retrieval leg</strong>. You get exact-term matching, ACL-aware results, and indexed metadata fields — all without maintaining a separate BM25 index. Your vector store provides the semantic leg. You merge them.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p>The OTCS REST search endpoint is <code>GET /api/v2/nodes?where_query={query}&where_type=144</code> (type 144 = documents). For full-text search with field-level control, use <code>POST /api/v2/search</code> with a structured query body. Both endpoints respect the OTCSTicket — so your BM25 leg is automatically ACL-aware.</p></div>
+    </div>
+
+    <h2 id="hybrid-arch">Hybrid Search Architecture</h2>
+
+    <p>The hybrid retrieval pattern runs two independent retrieval legs in parallel, then merges their result sets using a rank fusion algorithm before passing context to the LLM. Neither leg's results are discarded — they're combined, with the fusion step determining final ordering.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Hybrid Search Architecture — Dual Retrieval with RRF Merge</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Input</div><div class="arch-name">User Query</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Parallel Retrieval</div><div class="arch-name">OTCS Search API<br><span style="color:var(--text-3);font-size:9px">(BM25 leg)</span></div></div>
+        <div class="arch-arrow">+</div>
+        <div class="arch-box highlight"><div class="arch-label">Parallel Retrieval</div><div class="arch-name">Vector Store<br><span style="color:var(--text-3);font-size:9px">(Semantic leg)</span></div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Fusion</div><div class="arch-name">RRF Merge</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Generate</div><div class="arch-name">LLM Answer</div></div>
+      </div>
+    </div>
+
+    <p>Reciprocal Rank Fusion (RRF) is the standard merge algorithm for this pattern. It's simple, parameter-light, and empirically outperforms weighted score averaging in most retrieval benchmarks. The formula for each document's RRF score is:</p>
+
+    <p><code>RRF(d) = Σ 1 / (k + rank(d, leg))</code></p>
+
+    <p>Where <code>k</code> is a constant (default 60) and <code>rank(d, leg)</code> is the document's rank in each retrieval leg. Documents appearing in both legs accumulate contributions from both — they rise to the top. Documents appearing in only one leg still score, but lower.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">hybrid_retrieval.py — parallel retrieval with RRF merge</div>
+      <pre><span class="kw">import</span> asyncio
+<span class="kw">import</span> requests
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">RetrievedChunk</span>:
+    node_id: int
+    text: str
+    source: str  <span class="cmt"># "bm25" | "semantic" | "both"</span>
+    rrf_score: float = <span class="num">0.0</span>
+
+<span class="kw">def</span> <span class="fn">reciprocal_rank_fusion</span>(
+    bm25_results: list[dict],
+    semantic_results: list[dict],
+    k: int = <span class="num">60</span>
+) -> list[RetrievedChunk]:
+    scores: dict[int, float] = {}
+    sources: dict[int, set] = {}
+    texts: dict[int, str] = {}
+
+    <span class="kw">for</span> rank, doc <span class="kw">in</span> <span class="fn">enumerate</span>(bm25_results, start=<span class="num">1</span>):
+        nid = doc[<span class="str">"node_id"</span>]
+        scores[nid] = scores.<span class="fn">get</span>(nid, <span class="num">0</span>) + <span class="num">1</span> / (k + rank)
+        sources.<span class="fn">setdefault</span>(nid, <span class="fn">set</span>()).<span class="fn">add</span>(<span class="str">"bm25"</span>)
+        texts[nid] = doc[<span class="str">"text"</span>]
+
+    <span class="kw">for</span> rank, doc <span class="kw">in</span> <span class="fn">enumerate</span>(semantic_results, start=<span class="num">1</span>):
+        nid = doc[<span class="str">"node_id"</span>]
+        scores[nid] = scores.<span class="fn">get</span>(nid, <span class="num">0</span>) + <span class="num">1</span> / (k + rank)
+        sources.<span class="fn">setdefault</span>(nid, <span class="fn">set</span>()).<span class="fn">add</span>(<span class="str">"semantic"</span>)
+        <span class="kw">if</span> nid <span class="kw">not in</span> texts:
+            texts[nid] = doc[<span class="str">"text"</span>]
+
+    ranked = <span class="fn">sorted</span>(scores.<span class="fn">items</span>(), key=<span class="kw">lambda</span> x: x[<span class="num">1</span>], reverse=<span class="kw">True</span>)
+    <span class="kw">return</span> [
+        <span class="fn">RetrievedChunk</span>(
+            node_id=nid,
+            text=texts[nid],
+            source=<span class="str">"both"</span> <span class="kw">if</span> <span class="fn">len</span>(sources[nid]) > <span class="num">1</span> <span class="kw">else</span> <span class="fn">list</span>(sources[nid])[<span class="num">0</span>],
+            rrf_score=score
+        )
+        <span class="kw">for</span> nid, score <span class="kw">in</span> ranked
+    ]
+
+<span class="kw">async def</span> <span class="fn">hybrid_retrieve</span>(
+    query: str,
+    ticket: str,
+    otcs_base_url: str,
+    vector_store,
+    top_k: int = <span class="num">10</span>,
+    rrf_k: int = <span class="num">60</span>
+) -> list[RetrievedChunk]:
+    <span class="cmt"># Run both retrieval legs concurrently</span>
+    bm25_task = asyncio.<span class="fn">to_thread</span>(<span class="fn">_otcs_search</span>, query, ticket, otcs_base_url, top_k)
+    semantic_task = asyncio.<span class="fn">to_thread</span>(<span class="fn">_vector_search</span>, query, vector_store, top_k)
+
+    bm25_results, semantic_results = <span class="kw">await</span> asyncio.<span class="fn">gather</span>(bm25_task, semantic_task)
+    <span class="kw">return</span> <span class="fn">reciprocal_rank_fusion</span>(bm25_results, semantic_results, k=rrf_k)
+
+<span class="kw">def</span> <span class="fn">_otcs_search</span>(query: str, ticket: str, base_url: str, top_k: int) -> list[dict]:
+    <span class="cmt"># POST /api/v2/search — full-text search, ACL-enforced</span>
+    url = <span class="str">f"{base_url}/api/v2/search"</span>
+    payload = {
+        <span class="str">"where"</span>: query,
+        <span class="str">"limit"</span>: top_k,
+        <span class="str">"where_type"</span>: [<span class="num">144</span>],  <span class="cmt"># type 144 = documents</span>
+        <span class="str">"options"</span>: {<span class="str">"highlight"</span>: <span class="kw">False</span>}
+    }
+    resp = requests.<span class="fn">post</span>(url, json=payload,
+                         headers={<span class="str">"OTCSTicket"</span>: ticket}, timeout=<span class="num">10</span>)
+    resp.<span class="fn">raise_for_status</span>()
+    results = resp.<span class="fn">json</span>().<span class="fn">get</span>(<span class="str">"results"</span>, [])
+    <span class="kw">return</span> [
+        {<span class="str">"node_id"</span>: r[<span class="str">"data"</span>][<span class="str">"properties"</span>][<span class="str">"id"</span>],
+         <span class="str">"text"</span>: r[<span class="str">"data"</span>][<span class="str">"properties"</span>].<span class="fn">get</span>(<span class="str">"summary"</span>, <span class="str">""</span>)}
+        <span class="kw">for</span> r <span class="kw">in</span> results
+    ]</pre>
+    </div>
+
+    <h2 id="tuning">Tuning the Balance</h2>
+
+    <p>The RRF <code>k</code> parameter controls how much influence rank position has on the final score. A higher <code>k</code> dampens rank differences — all positions get similar scores, and documents appearing in both legs win almost by default. A lower <code>k</code> amplifies rank differences — the top result from each leg gets a large score boost, and position matters more.</p>
+
+    <p>The default of <code>k=60</code> is well-calibrated for most cases, but consider adjusting in these situations:</p>
+
+    <ul>
+      <li><strong>Raise k (towards 80–100)</strong> when your corpus has many documents with partially overlapping content and you want cross-leg co-occurrence to dominate. Good for concept-heavy exploratory queries.</li>
+      <li><strong>Lower k (towards 20–40)</strong> when you trust one leg's top result strongly and want rank-1 to matter. Useful when your BM25 leg is returning very high-precision exact matches.</li>
+    </ul>
+
+    <p>Beyond RRF tuning, you can detect query type at runtime and shift weight accordingly. A simple heuristic: if the query contains tokens that match the pattern of your document ID schema (e.g., two or more uppercase segments separated by hyphens), it's a known-item query. Weight the BM25 leg results higher by duplicating their entries before fusion.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Query type heuristic — detect known-item vs exploratory queries</div>
+      <pre><span class="kw">import</span> re
+
+<span class="cmt"># Matches: POL-EHS-2024-007, MFG-COMP-4471-B, SOP-QA-112</span>
+_CODE_PATTERN = re.<span class="fn">compile</span>(<span class="str">r'\b[A-Z]{2,}-[A-Z0-9]{2,}(?:-[A-Z0-9]+)*\b'</span>)
+
+<span class="kw">def</span> <span class="fn">is_known_item_query</span>(query: str) -> bool:
+    <span class="str">"""True if query contains structured identifiers."""</span>
+    <span class="kw">return</span> <span class="fn">bool</span>(_CODE_PATTERN.<span class="fn">search</span>(query))
+
+<span class="kw">def</span> <span class="fn">weighted_rrf</span>(
+    bm25_results: list[dict],
+    semantic_results: list[dict],
+    query: str,
+    k: int = <span class="num">60</span>
+) -> list[RetrievedChunk]:
+    <span class="kw">if</span> <span class="fn">is_known_item_query</span>(query):
+        <span class="cmt"># Boost BM25: duplicate entries to double their RRF contribution</span>
+        bm25_results = bm25_results + bm25_results
+    <span class="kw">return</span> <span class="fn">reciprocal_rank_fusion</span>(bm25_results, semantic_results, k=k)</pre>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Log the source field:</strong> The <code>RetrievedChunk.source</code> field tells you whether each result came from BM25, semantic, or both legs. Track this in your observability layer. If 90% of retrieved chunks come from a single leg, your hybrid is effectively single-leg — investigate why the other leg isn't contributing.</p></div>
+    </div>
+
+    <h2 id="without-hybrid">What You Lose Without Hybrid</h2>
+
+    <p>The failure is predictable and insidious. Demos use concept queries because concept queries showcase what makes LLM-powered search exciting. Production systems face code queries because that's what real users actually need when they're trying to locate a specific document in a repository of 500,000 items.</p>
+
+    <p>The "90% good enough" trap: your system correctly handles 9 out of 10 queries in testing, and the one it misses is the one that matters most. In a compliance context, failing to retrieve the specific version of a safety policy that was active on the date of an incident is not a retrieval quality issue — it's a legal exposure. In a procurement context, returning a similar but different contract means your AI has endorsed the wrong terms.</p>
+
+    <p>Single-leg vector search also degrades gracefully in ways that are hard to catch in evaluation. The answers look good. The citations exist. The documents are semantically relevant. But they're not the right documents, and the user who knows their document IDs will learn quickly not to trust the system.</p>
+
+    <h2 id="closing">Hybrid Is Table Stakes, Not an Optimisation</h2>
+
+    <p>The framing of hybrid search as an "advanced feature" or "future optimisation" is wrong. It's the baseline architecture for any enterprise RAG deployment where users know what they're looking for. In ECM systems like OpenText Content Server — where documents are identified by structured codes, where exact version matters, where retrieval failures have compliance consequences — <strong>vector-only search is the experimental approach, and hybrid is the production standard</strong>.</p>
+
+    <p>The good news: implementing the OTCS search API as your BM25 leg is not significantly more complex than a pure vector approach. The search endpoint is documented, it's ACL-aware by default, and running two retrieval legs in parallel adds perhaps 20ms of latency on a well-configured system. The RRF merge is a dozen lines of Python.</p>
+
+    <p>Build hybrid from day one. The alternative is a demo that impresses stakeholders and a production system that erodes user trust one missed document ID at a time.</p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-metadata-indexing.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">What to Index from OpenText Content Server — and What to Leave Out</div>
+        </a>
+        <a href="blog-rag-node-id-preservation.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial · RAG</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+(function(){
+  var url = 'https://kapiluthra.github.io/blog-rag-hybrid-search.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    navigator.clipboard.writeText(pre ? pre.innerText : block.innerText).then(function() {
+      btn.textContent = 'copied!'; btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+var bar = document.getElementById('reading-progress');
+if (bar) window.addEventListener('scroll', function() {
+  var d = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (d > 0 ? window.scrollY / d * 100 : 0) + '%';
+});
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
+</script>
+</body>
+</html>

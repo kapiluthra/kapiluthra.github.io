@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What to Index from OpenText Content Server — and What to Leave Out — Kapil Uthra</title>
+<meta name="description" content="Most teams index everything from OTCS and wonder why their RAG pipeline is slow and noisy. The answer is in what you choose NOT to index. Here's the field-by-field breakdown.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-metadata-indexing.html">
+<meta property="og:title" content="What to Index from OpenText Content Server — and What to Leave Out">
+<meta property="og:description" content="Not all metadata is retrieval-useful. Indexing everything from OTCS bloats your vector store, slows queries, and adds noise. Here's a field-by-field breakdown of what actually improves RAG quality.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What to Index from OpenText Content Server — and What to Leave Out">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Implementation
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Implementation</div>
+    <h1 class="article-title">What to Index from OpenText Content Server — and What to Leave Out</h1>
+    <p class="article-subtitle">Not all metadata is retrieval-useful. Indexing everything from OTCS bloats your vector store, slows queries, and adds noise. Here's a field-by-field breakdown of what actually improves RAG quality.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~11 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">metadata</span>
+      <span class="tag">opentext</span>
+      <span class="tag">otcs</span>
+      <span class="tag">indexing</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>The naive approach to building a RAG pipeline on top of OpenText Content Server goes like this: pull every document, extract its text, pull all the metadata from the node properties endpoint, concatenate everything into a chunk, embed it, and store it. Job done. Ship it.</p>
+
+    <p>The result is a vector store that's 40% larger than it needs to be, with embedding quality degraded by metadata noise, retrieval that surfaces documents from the wrong lifecycle stage, and an LLM context window cluttered with internal system IDs that mean nothing to the model. The answers look plausible but aren't well-grounded — and the errors are subtle enough to slip through review.</p>
+
+    <p>Metadata design for RAG is not a minor implementation detail. It is the retrieval configuration layer — it determines which documents can be filtered, how the LLM interprets document context, and whether citations are meaningful. This is the field-by-field breakdown I wish existed when I started building OTCS-connected RAG systems.</p>
+
+    <h2 id="why-metadata">Why Metadata Matters Beyond the Document Body</h2>
+
+    <p>In a pure embedding pipeline, retrieval is purely semantic: you embed the query, find the nearest chunks by cosine similarity, and send the top-k to the LLM. Metadata doesn't factor in at all. This works acceptably for small corpora of uniform, current documents.</p>
+
+    <p>In enterprise ECM, this breaks in three specific ways:</p>
+
+    <ul>
+      <li><strong>Version confusion.</strong> Your vector store has five versions of the same safety policy. Without version metadata, semantic search will retrieve whichever version has the highest embedding similarity to the query — which may be the 2018 draft, not the 2024 approved version.</li>
+      <li><strong>Workspace bleed.</strong> Documents from the HR workspace and the Finance workspace can have nearly identical semantic content (both discuss "budget approval thresholds"). Without workspace metadata as a filter, a Finance user's query retrieves HR documents they may not be authorised to see — or simply doesn't have.</li>
+      <li><strong>Stale document retrieval.</strong> OTCS repositories accumulate superseded documents. Expired contracts, retired procedures, cancelled projects — they're all still in the repository, searchable, embeddable. Without a "Status" metadata filter, your RAG will confidently cite a policy that was withdrawn three years ago.</li>
+    </ul>
+
+    <p>Metadata filters pre-restrict the retrieval candidate set before embedding comparison even begins. And metadata stored alongside chunks provides context the LLM uses when constructing its answer: "this is an expired contract from 2019" changes how the model should qualify its response.</p>
+
+    <h2 id="otcs-node-landscape">The OTCS Node Metadata Landscape</h2>
+
+    <p>Every node in OpenText Content Server has a standard set of system properties accessible via <code>GET /api/v2/nodes/{id}</code>. Understanding what each field actually represents is the prerequisite for deciding what to index.</p>
+
+    <p>The standard node properties response includes:</p>
+
+    <ul>
+      <li><code>id</code> (DataID) — the integer node identifier, permanent and unique</li>
+      <li><code>parent_id</code> — the DataID of the parent folder or workspace</li>
+      <li><code>name</code> — the display name of the document</li>
+      <li><code>type</code> — node type integer (144 = document, 0 = folder, 848 = workspace)</li>
+      <li><code>create_date</code>, <code>modify_date</code> — ISO 8601 timestamps</li>
+      <li><code>create_user_id</code>, <code>modify_user_id</code> — integer user IDs</li>
+      <li><code>mime_type</code> — for documents (e.g., <code>application/pdf</code>)</li>
+      <li><code>version</code> — version number of the current version</li>
+      <li><code>versions_control_advanced</code> — whether versioning is enabled</li>
+      <li><code>description</code> — optional free-text description field</li>
+    </ul>
+
+    <p>Beyond system properties, each node can have <strong>Categories</strong> — custom metadata attribute sets attached at the workspace or document level. Categories are accessed via <code>GET /api/v2/nodes/{id}/categories</code> and are the most powerful and most underused feature in OTCS-connected RAG implementations.</p>
+
+    <h2 id="what-to-index">What TO Index — and Why</h2>
+
+    <h3>DataID (node_id) — mandatory</h3>
+
+    <p>Store this as a structured metadata field on every chunk, never embedded in the text. It is your permanent linkback key to the source document. Without it, your citations are decoration. Every vector store supports scalar metadata fields — use one for <code>node_id</code>. This is covered in depth in the <a href="blog-rag-node-id-preservation.html">node ID preservation article</a>, but the short version is: if you don't store it now, you will rebuild your index later to add it.</p>
+
+    <h3>Name — critical signal</h3>
+
+    <p>Document names in OTCS carry dense, structured signal. "Annual EHS Report 2023 v4 APPROVED" tells you: domain (EHS), document type (report), year (2023), version (4), and status (approved) — all from the name field. Including this in the embedded text of every chunk significantly improves retrieval relevance for queries that reference document type or time period.</p>
+
+    <p>Prepend the name to each chunk at index time. Don't rely on users discovering it through semantic similarity alone.</p>
+
+    <h3>ModifyDate — essential for recency filtering</h3>
+
+    <p>Store as an ISO date string or Unix timestamp metadata field. Use it to build pre-retrieval filters for queries where currency matters. "What is our current policy on X?" should filter to documents modified within the last two years, not surface the 2015 version that happens to have the highest embedding similarity.</p>
+
+    <p>ModifyDate also powers staleness warnings: if a chunk was indexed six months ago and the document was modified last week, surface a flag to the user.</p>
+
+    <h3>VersionNumber — index as metadata, not embedded text</h3>
+
+    <p>Store version as a structured metadata field (integer or string). Do not include it in the embedded text chunk. Version numbers are used as filters, not as semantic content — embedding them adds noise to the vector representation without adding retrieval value. Use the metadata field to filter to the latest version when that's the intent, or to a specific version when auditing.</p>
+
+    <h3>Category attributes — selective, high-signal fields only</h3>
+
+    <p>This is where the real value lies. OTCS categories are custom attribute sets defined at the workspace or repository level. Common high-signal attributes in enterprise deployments include:</p>
+
+    <ul>
+      <li><strong>Document Class</strong> — "Policy", "Procedure", "Contract", "Report", "Form"</li>
+      <li><strong>Status</strong> / <strong>Lifecycle State</strong> — "Draft", "Under Review", "Approved", "Superseded", "Expired"</li>
+      <li><strong>Contract Type</strong> — "NDA", "MSA", "SOW", "Lease"</li>
+      <li><strong>Applicable Region</strong> / <strong>Jurisdiction</strong> — for multi-region organisations</li>
+      <li><strong>Confidentiality Level</strong> — "Public", "Internal", "Confidential", "Restricted"</li>
+    </ul>
+
+    <p>Index these as structured metadata fields. They are filters, not semantic content — but including the values in the chunk text header (e.g., "Document Class: Policy | Status: Approved") also helps the LLM contextualise the document when generating answers.</p>
+
+    <h3>Parent workspace name — locality context</h3>
+
+    <p>Resolve the parent workspace name at index time (via <code>GET /api/v2/nodes/{parent_id}</code>) and store it as metadata. "This chunk is from the HR Policies Workspace" vs "this chunk is from the Finance Procedures Workspace" is context the LLM needs to qualify its answers accurately. It also enables workspace-scoped retrieval without needing a separate index per workspace.</p>
+
+    <h3>MimeType — for filtering, not embedding</h3>
+
+    <p>Store as a metadata field. Use it to exclude document types that produce poor retrieval results: scanned image PDFs with no OCR text, <code>.msg</code> email attachments, legacy binary formats. A filter for <code>mime_type IN ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]</code> restricts retrieval to document types your text extraction pipeline can actually handle well.</p>
+
+    <h2 id="what-not-to-index">What NOT to Index — and Why</h2>
+
+    <h3>ParentID as a number — meaningless noise</h3>
+
+    <p>The raw <code>parent_id</code> integer (e.g., <code>3847291</code>) means nothing to an embedding model and nothing to the LLM. If you need workspace context, resolve it to the workspace name at index time. The raw ID adds noise to embeddings and bloats your metadata payload without any retrieval or generation value.</p>
+
+    <h3>CreatedBy / ModifiedBy as raw user IDs</h3>
+
+    <p>OTCS user IDs are integers. Embedding <code>"modified_by": 10482</code> in your chunk text tells the LLM nothing. If author information is relevant to your use case (e.g., "find all documents written by the legal team"), resolve user IDs to display names using <code>GET /api/v2/members/{id}</code> at index time and store the resolved name. Raw user IDs are noise.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Privacy consideration:</strong> Even resolved user names can be sensitive. In some jurisdictions, indexing "this document was last modified by [Name]" into a system that generates AI responses constitutes personal data processing. Check your data privacy requirements before indexing author information at all.</p></div>
+    </div>
+
+    <h3>VersionComment — almost always empty or noise</h3>
+
+    <p>OTCS prompts users for a version comment when checking in a new version. In practice, these are almost universally empty, "minor fix", "updated per review", or "see email from 14/03". They're not semantic content — they're workflow artefacts. Index them only if your organisation has a disciplined practice of writing meaningful version comments, which is rare.</p>
+
+    <h3>All category attributes blindly</h3>
+
+    <p>A mature OTCS deployment will have 30–60 custom category attributes defined across different workspace templates. Most of these are workflow state fields: "Assigned To", "Review Due Date", "Approval Status", "Workflow Instance ID". These are operational metadata for the OTCS workflow engine — not semantic signal for RAG retrieval.</p>
+
+    <p>Indexing all of them bloats your embedded chunk text with values like "Workflow Instance ID: 8473920" and "Review Due Date: 2024-03-15" — both of which contaminate your embedding with tokens that look like dates and IDs but contribute nothing to semantic similarity. Limit your category indexing to 5–8 attributes that describe the document's purpose, domain, and audience.</p>
+
+    <h3>Full ACL permission lists — never</h3>
+
+    <p>Never embed the ACL. Not as text, not as metadata visible to the LLM. ACLs contain user IDs and group IDs that are sensitive system information, and including them in chunk text means the LLM can potentially surface them in answers. Store a <code>node_id</code> and resolve permissions at query time via the permission resolver — that's the right architecture, covered in the <a href="blog-acl-aware-rag.html">ACL-aware RAG article</a>.</p>
+
+    <h2 id="chunking">Chunking Strategy for OTCS Documents</h2>
+
+    <p>The metadata you've selected needs to travel with every chunk through the pipeline. The most common failure mode is chunking a document into text fragments and then losing the metadata association — the chunk knows its text, but not which node it came from.</p>
+
+    <p>Two chunking strategies that work well for OTCS documents:</p>
+
+    <ul>
+      <li><strong>Heading-based chunking</strong> — for structured documents (policies, procedures, technical manuals). Split at H1/H2 headings, preserving section context. Each chunk is semantically coherent and maps to a document section.</li>
+      <li><strong>Fixed-window with overlap</strong> — for unstructured documents (contracts, reports). 512-token windows with ~10% overlap (50 tokens). Overlap prevents important content from being split exactly at a chunk boundary.</li>
+    </ul>
+
+    <p>In both cases, prepend a metadata header to every chunk. This header is embedded with the text — it gives the embedding model context about the document type and status, which improves retrieval precision for filtered queries.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">chunk_builder.py — chunk with metadata header, preserving node linkage</div>
+      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">import</span> textwrap
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">OTCSChunk</span>:
+    node_id: int
+    node_name: str
+    workspace_name: str
+    doc_class: str
+    status: str
+    modify_date: str
+    version: int
+    mime_type: str
+    chunk_index: int
+    text: str          <span class="cmt"># raw chunk text, no header</span>
+    embed_text: str    <span class="cmt"># header + text, used for embedding</span>
+
+<span class="kw">def</span> <span class="fn">build_chunk</span>(
+    node_id: int,
+    node_name: str,
+    workspace_name: str,
+    doc_class: str,
+    status: str,
+    modify_date: str,
+    version: int,
+    mime_type: str,
+    chunk_index: int,
+    chunk_text: str,
+) -> <span class="fn">OTCSChunk</span>:
+    <span class="cmt"># Metadata header prepended to every chunk for embedding</span>
+    header = (
+        <span class="str">f"Document: {node_name}\n"</span>
+        <span class="str">f"Workspace: {workspace_name}\n"</span>
+        <span class="str">f"Class: {doc_class} | Status: {status} | Modified: {modify_date}\n"</span>
+        <span class="str">f"---\n"</span>
+    )
+    <span class="kw">return</span> <span class="fn">OTCSChunk</span>(
+        node_id=node_id,
+        node_name=node_name,
+        workspace_name=workspace_name,
+        doc_class=doc_class,
+        status=status,
+        modify_date=modify_date,
+        version=version,
+        mime_type=mime_type,
+        chunk_index=chunk_index,
+        text=chunk_text,
+        embed_text=header + chunk_text,
+    )
+
+<span class="kw">def</span> <span class="fn">to_vector_store_doc</span>(chunk: OTCSChunk) -> dict:
+    <span class="str">"""Convert chunk to vector store ingestion format."""</span>
+    <span class="kw">return</span> {
+        <span class="str">"id"</span>: <span class="str">f"{chunk.node_id}_{chunk.chunk_index}"</span>,
+        <span class="str">"text"</span>: chunk.embed_text,   <span class="cmt"># embed the header+text</span>
+        <span class="str">"metadata"</span>: {
+            <span class="str">"node_id"</span>: chunk.node_id,
+            <span class="str">"node_name"</span>: chunk.node_name,
+            <span class="str">"workspace"</span>: chunk.workspace_name,
+            <span class="str">"doc_class"</span>: chunk.doc_class,
+            <span class="str">"status"</span>: chunk.status,
+            <span class="str">"modify_date"</span>: chunk.modify_date,
+            <span class="str">"version"</span>: chunk.version,
+            <span class="str">"mime_type"</span>: chunk.mime_type,
+            <span class="str">"chunk_index"</span>: chunk.chunk_index,
+        }
+    }</pre>
+    </div>
+
+    <h2 id="category-opportunity">The Category Attribute Opportunity</h2>
+
+    <p>OTCS categories are the hidden gem that most RAG implementations ignore. A category is a named set of typed attributes attached to a workspace or document type. When a document is in the "Contract Management" workspace, it might have a "Contract Details" category with attributes like <code>Contract Type</code>, <code>Counterparty</code>, <code>Effective Date</code>, <code>Expiry Date</code>, and <code>Contract Status</code>.</p>
+
+    <p>These attributes are retrieved via <code>GET /api/v2/nodes/{id}/categories</code>, which returns a structured JSON object with all category definitions and their current values for that node. The response structure looks like:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">OTCS categories API response — example structure</div>
+      <pre><span class="cmt"># GET /api/v2/nodes/4821993/categories</span>
+{
+  <span class="str">"data"</span>: {
+    <span class="str">"categories"</span>: {
+      <span class="str">"17429"</span>: {           <span class="cmt"># category node ID</span>
+        <span class="str">"17429_2"</span>: <span class="str">"NDA"</span>,              <span class="cmt"># Contract Type</span>
+        <span class="str">"17429_3"</span>: <span class="str">"Acme Corp Ltd"</span>,   <span class="cmt"># Counterparty</span>
+        <span class="str">"17429_4"</span>: <span class="str">"2024-01-15"</span>,       <span class="cmt"># Effective Date</span>
+        <span class="str">"17429_5"</span>: <span class="str">"2026-01-14"</span>,       <span class="cmt"># Expiry Date</span>
+        <span class="str">"17429_6"</span>: <span class="str">"Active"</span>            <span class="cmt"># Contract Status</span>
+      }
+    }
+  }
+}</pre>
+    </div>
+
+    <p>To use these effectively you need to resolve the attribute IDs (<code>17429_2</code>) to human-readable names using the category definition endpoint <code>GET /api/v2/nodes/{category_id}</code>. Build a category schema map at startup and reuse it for all documents in the same workspace.</p>
+
+    <p>Once resolved, a <code>Contract Status = Active</code> attribute becomes a first-class metadata filter. Your retrieval query can include <code>metadata.contract_status = "Active"</code> as a hard pre-filter, eliminating expired and draft contracts from retrieval entirely. This is functionality that most RAG implementations simulate with post-hoc LLM filtering — which is slower, less reliable, and doesn't actually prevent expired content from entering the context window.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Build a category registry:</strong> For each workspace type in your OTCS deployment, map the category attribute IDs to their human-readable names and data types once, at pipeline setup time. Store this mapping in your pipeline config. The attribute IDs are stable — they don't change unless an administrator modifies the category definition, which is rare and auditable.</p></div>
+    </div>
+
+    <h2 id="closing">Metadata Is Your Retrieval Configuration</h2>
+
+    <p>The documents in your vector store are fixed once indexed. The metadata you index with them determines every filter, every scope constraint, every staleness check, and every piece of LLM context that shapes how answers are generated. Getting it wrong means rebuilding your index — which in a 200,000-document OTCS deployment is a multi-day operation.</p>
+
+    <p><strong>Design your metadata schema before you index a single document.</strong> Ask: what filters will users need? What context does the LLM need to qualify its answers accurately? What fields do you need to build the linkback URL? What fields signal document currency vs. staleness?</p>
+
+    <p>Treat metadata design like API design — it's a contract between your indexing pipeline and your retrieval layer. Change it carefully, version it explicitly, and document the rationale for every field you include and every field you deliberately exclude.</p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+        </a>
+        <a href="blog-rag-node-id-preservation.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial · RAG</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+(function(){
+  var url = 'https://kapiluthra.github.io/blog-rag-metadata-indexing.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    navigator.clipboard.writeText(pre ? pre.innerText : block.innerText).then(function() {
+      btn.textContent = 'copied!'; btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+var bar = document.getElementById('reading-progress');
+if (bar) window.addEventListener('scroll', function() {
+  var d = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (d > 0 ? window.scrollY / d * 100 : 0) + '%';
+});
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
+</script>
+</body>
+</html>

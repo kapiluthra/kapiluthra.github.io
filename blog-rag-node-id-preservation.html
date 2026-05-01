@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break — Kapil Uthra</title>
+<meta name="description" content="RAG without source traceability is just a confident hallucination machine. In OpenText, every document has a node ID — and your pipeline needs to preserve it from index to answer. Here's the pattern.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-node-id-preservation.html">
+<meta property="og:title" content="Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break">
+<meta property="og:description" content="Your RAG pipeline retrieved the right chunk. Now what? If you can't trace it back to the source document in Content Server, you've built a citation machine with broken links. Here's how to preserve the chain from chunk to node.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||(window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Implementation
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Implementation</div>
+    <h1 class="article-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</h1>
+    <p class="article-subtitle">Your RAG pipeline retrieved the right chunk. Now what? If you can't trace it back to the source document in Content Server, you've built a citation machine with broken links. Here's how to preserve the chain from chunk to node.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~9 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">opentext</span>
+      <span class="tag">node-id</span>
+      <span class="tag">citations</span>
+      <span class="tag">traceability</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>The retrieval worked. The chunk is correct. The LLM synthesises a clear, accurate answer and — in the citations — references "Annual EHS Report 2023, Section 4.2." The user reads the answer, finds it credible, and asks the natural follow-up question: <strong>"Can you show me the document?"</strong></p>
+
+    <p>You have no link. The chunk exists in your vector store as floating text, severed from the Content Server node it came from. You can tell the user the document name. You cannot tell them where it lives, which version it is, or how to open it. If they're lucky, they'll find it through OTCS search. If they're not, they'll go looking and fail — and the next time the AI cites something, they won't trust it.</p>
+
+    <p>This is one of the most common and most preventable failures in enterprise RAG deployments. Node ID preservation is five lines of code to add at index time and months of user trust to rebuild if you skip it.</p>
+
+    <h2 id="node-id-stability">What the OTCS Node ID Is and Why It's Stable</h2>
+
+    <p>Every object in OpenText Content Server — documents, folders, workspaces, compound documents, wiki pages — is assigned a <strong>DataID</strong> at creation time. This is an integer, typically in the millions for mature OTCS deployments (e.g., <code>4821993</code>). It is the primary key of the <code>DTreeCore</code> database table and the universal identifier for that object throughout the OTCS system.</p>
+
+    <p>The DataID has a critical property: <strong>it never changes</strong>. Rename the document — same DataID. Move it to a different folder — same DataID. Check in a new version — same DataID. Copy the document — the copy gets a new DataID; the original keeps its own. Even if the document moves between workspaces or gets reclassified, the DataID is permanent for the lifetime of the object.</p>
+
+    <p>This permanence is what makes the DataID the right anchor for your linkback. It's not the document name (which changes), not the file path (OTCS doesn't have traditional paths), not the URL (which encodes folder navigation and can be reconstructed from the DataID). It's the DataID.</p>
+
+    <p>The direct link pattern for any OTCS document is:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">OTCS direct link patterns — classic UI and REST API</div>
+      <pre><span class="cmt"># Classic Content Server UI deep link</span>
+https://{otcs-host}/otcs/cs.exe?func=ll&objType=<span class="num">1</span>&objID={node_id}
+
+<span class="cmt"># Smart UI deep link (OTCS 16.x+)</span>
+https://{otcs-host}/otcs/cs.exe/open/{node_id}
+
+<span class="cmt"># REST API: get node metadata</span>
+GET /api/v2/nodes/{node_id}
+
+<span class="cmt"># REST API: download content</span>
+GET /api/v2/nodes/{node_id}/content
+
+<span class="cmt"># REST API: get version list</span>
+GET /api/v2/nodes/{node_id}/versions</pre>
+    </div>
+
+    <p>All of these are stable as long as you have the DataID. The Classic UI link is the most universally compatible — it works across OTCS versions from 10.5 to current. The Smart UI link is cleaner for modern deployments. The REST API endpoints are what your pipeline uses to retrieve metadata and content programmatically.</p>
+
+    <h2 id="where-node-id-gets-lost">The Four Places Node ID Gets Lost</h2>
+
+    <p>Node ID loss is almost never intentional. It happens at the seams between pipeline stages — places where one component passes data to the next, and the handoff loses the metadata that wasn't explicitly included. Here are the four failure points I've seen repeatedly in real pipelines:</p>
+
+    <h3>1. During Text Extraction</h3>
+
+    <p>You call <code>pdfplumber.open(file)</code> or <code>python-docx</code>'s <code>Document(file)</code>. These libraries return text. They know nothing about where the file came from or what node it represents. If you extract text to a variable or write it to a file without explicitly carrying the node_id alongside it, the provenance is already gone.</p>
+
+    <p>The fix is trivially simple: never extract text in isolation. Always extract into a data structure that includes the node ID as a field.</p>
+
+    <h3>2. During Chunking</h3>
+
+    <p>Text splitters — LangChain's <code>RecursiveCharacterTextSplitter</code>, LlamaIndex's <code>SentenceSplitter</code>, or custom implementations — take text as input and return a list of text strings. If you pass raw text to the splitter, you get raw text chunks back. The node_id is not threaded through.</p>
+
+    <p>The fix: wrap your chunker to accept a source document object and propagate its metadata to each output chunk.</p>
+
+    <h3>3. During Vector Store Ingestion</h3>
+
+    <p>Most vector store client libraries have two ingestion patterns: pass a list of strings (no metadata), or pass a list of <code>Document</code> objects with a <code>metadata</code> dict. If you use the string-list path — which is what most quick-start examples demonstrate — the node_id has nowhere to go.</p>
+
+    <p>The fix: always use the document-with-metadata ingestion path, and always include <code>node_id</code> in the metadata dict.</p>
+
+    <h3>4. During Retrieval</h3>
+
+    <p>Vector store retrieval returns either a list of text strings or a list of document objects. Many retrieval wrapper functions are written to extract just the <code>.page_content</code> or <code>.text</code> field from returned documents — discarding the <code>.metadata</code> dict that contains node_id. The retrieval result passed to the LLM is a list of strings with no provenance.</p>
+
+    <p>The fix: return the full document object from your retrieval function, never just the text. Strip metadata only at the point of LLM context construction, and only strip what the LLM doesn't need — keep node_id in the citation layer.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>The silent drop:</strong> None of these failures raise an exception. The pipeline runs, the LLM generates answers, the system looks correct in demos. The node_id is simply absent from the output. You only discover the problem when a user asks for the source document and you have nothing to show them.</p></div>
+    </div>
+
+    <h2 id="preservation-pattern">The Preservation Pattern — End to End</h2>
+
+    <p>The solution is to use a typed data structure that carries node_id through every pipeline stage, and to never accept raw strings at a stage boundary. Pass objects, not strings.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">chunk.py — typed chunk dataclass, node_id as first-class field</div>
+      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">OTCSChunk</span>:
+    <span class="cmt"># Source provenance — never optional</span>
+    node_id: int
+    node_name: str
+    indexed_version: int
+
+    <span class="cmt"># Position within the source document</span>
+    chunk_index: int
+    total_chunks: int
+
+    <span class="cmt"># Content — two forms</span>
+    text: str            <span class="cmt"># raw chunk text, for display</span>
+    embed_text: str      <span class="cmt"># header + text, used for embedding</span>
+
+    <span class="cmt"># Optional enrichment</span>
+    workspace_name: str = <span class="str">""</span>
+    doc_class: str = <span class="str">""</span>
+    status: str = <span class="str">""</span>
+    modify_date: str = <span class="str">""</span>
+
+    <span class="kw">def</span> <span class="fn">chunk_id</span>(self) -> str:
+        <span class="str">"""Stable unique ID for this chunk in the vector store."""</span>
+        <span class="kw">return</span> <span class="str">f"{self.node_id}_{self.chunk_index}"</span>
+
+    <span class="kw">def</span> <span class="fn">to_metadata</span>(self) -> dict:
+        <span class="str">"""Metadata dict for vector store ingestion."""</span>
+        <span class="kw">return</span> {
+            <span class="str">"node_id"</span>: self.node_id,
+            <span class="str">"node_name"</span>: self.node_name,
+            <span class="str">"indexed_version"</span>: self.indexed_version,
+            <span class="str">"chunk_index"</span>: self.chunk_index,
+            <span class="str">"workspace"</span>: self.workspace_name,
+            <span class="str">"doc_class"</span>: self.doc_class,
+            <span class="str">"status"</span>: self.status,
+            <span class="str">"modify_date"</span>: self.modify_date,
+        }</pre>
+    </div>
+
+    <p>At every pipeline stage boundary, the rule is: <strong>accept <code>OTCSChunk</code>, return <code>OTCSChunk</code></strong>. Your text extractor creates it. Your chunker splits it while copying metadata to each split. Your embedder reads <code>embed_text</code>. Your vector store ingestor reads <code>chunk_id()</code>, <code>embed_text</code>, and <code>to_metadata()</code>. None of these stages sees or passes raw strings.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Node ID Preservation — End-to-End Chain</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">OTCS</div><div class="arch-name">node_id: 4821993</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Extract</div><div class="arch-name">OTCSChunk(node_id=…)</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Split</div><div class="arch-name">OTCSChunk × N (node_id copied)</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Ingest</div><div class="arch-name">metadata.node_id stored</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Retrieve</div><div class="arch-name">metadata.node_id returned</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Cite</div><div class="arch-name">build_otcs_link(node_id)</div></div>
+      </div>
+    </div>
+
+    <h2 id="building-the-link">Building the Source Link</h2>
+
+    <p>Once node_id is preserved through retrieval, building the clickable source link is straightforward. Your answer generation layer receives retrieved chunks with their metadata intact — use the node_id to construct the OTCS deep link for each cited source.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">citations.py — build OTCS source links from retrieved chunk metadata</div>
+      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> urllib.parse <span class="kw">import</span> quote
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">Citation</span>:
+    node_id: int
+    node_name: str
+    url: str
+    version: int
+    status: str
+
+<span class="kw">def</span> <span class="fn">build_otcs_link</span>(
+    node_id: int,
+    base_url: str,
+    ui: str = <span class="str">"smart"</span>  <span class="cmt"># "smart" | "classic"</span>
+) -> str:
+    <span class="str">"""Build a direct-open link for an OTCS node."""</span>
+    base = base_url.<span class="fn">rstrip</span>(<span class="str">"/"</span>)
+    <span class="kw">if</span> ui == <span class="str">"smart"</span>:
+        <span class="kw">return</span> <span class="str">f"{base}/otcs/cs.exe/open/{node_id}"</span>
+    <span class="kw">else</span>:
+        <span class="kw">return</span> (
+            <span class="str">f"{base}/otcs/cs.exe"</span>
+            <span class="str">f"?func=ll&objType=1&objID={node_id}"</span>
+        )
+
+<span class="kw">def</span> <span class="fn">build_citations</span>(
+    retrieved_chunks: list[dict],
+    otcs_base_url: str,
+    deduplicate: bool = <span class="kw">True</span>
+) -> list[<span class="fn">Citation</span>]:
+    <span class="str">"""Extract unique citations from retrieved chunk metadata."""</span>
+    seen: set[int] = <span class="fn">set</span>()
+    citations: list[Citation] = []
+
+    <span class="kw">for</span> chunk <span class="kw">in</span> retrieved_chunks:
+        meta = chunk.<span class="fn">get</span>(<span class="str">"metadata"</span>, {})
+        node_id = meta.<span class="fn">get</span>(<span class="str">"node_id"</span>)
+        <span class="kw">if not</span> node_id:
+            <span class="kw">continue</span>
+        <span class="kw">if</span> deduplicate <span class="kw">and</span> node_id <span class="kw">in</span> seen:
+            <span class="kw">continue</span>
+        seen.<span class="fn">add</span>(node_id)
+        citations.<span class="fn">append</span>(<span class="fn">Citation</span>(
+            node_id=node_id,
+            node_name=meta.<span class="fn">get</span>(<span class="str">"node_name"</span>, <span class="str">f"Node {node_id}"</span>),
+            url=<span class="fn">build_otcs_link</span>(node_id, otcs_base_url),
+            version=meta.<span class="fn">get</span>(<span class="str">"indexed_version"</span>, <span class="num">0</span>),
+            status=meta.<span class="fn">get</span>(<span class="str">"status"</span>, <span class="str">""</span>),
+        ))
+    <span class="kw">return</span> citations</pre>
+    </div>
+
+    <p>The citation list is passed to your UI layer, which renders each source as a named link: "Source: <em>Annual EHS Report 2023</em> → open in OpenText." The user clicks and lands directly on the document. No search, no navigation, no guessing.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Pass citations alongside the LLM answer, not through the LLM:</strong> Don't ask the LLM to generate clickable URLs. LLMs hallucinate URLs reliably and creatively. Build the citation list programmatically from the retrieved chunk metadata, and render it in your UI layer. Keep the LLM responsible for synthesising the answer; keep your code responsible for tracing where it came from.</p></div>
+    </div>
+
+    <h2 id="versioning-edge-case">The Versioning Edge Case</h2>
+
+    <p>OTCS maintains full version history. When a user checks in a new version of a document, the DataID stays the same but the version number increments. Your index was built against version 4 of the safety policy. The user has since checked in version 5 with a significant amendment. Your RAG answer is based on the v4 content but links to the current document — which is now v5 and says something different.</p>
+
+    <p>You have two options for managing this, and you should implement both:</p>
+
+    <ul>
+      <li><strong>Store <code>indexed_version</code> in chunk metadata.</strong> At retrieval time, compare it to the document's current version (via <code>GET /api/v2/nodes/{node_id}</code>). If they differ, surface a staleness warning alongside the citation.</li>
+      <li><strong>Link to the node (current version) but note the indexed version in the audit record.</strong> The user wants to see the current document. The audit trail needs to know which version was used to generate the answer. Store both.</li>
+    </ul>
+
+    <div class="codeblock">
+      <div class="codeblock-title">staleness_check.py — detect updated documents at query time</div>
+      <pre><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">check_staleness</span>(
+    node_id: int,
+    indexed_version: int,
+    ticket: str,
+    otcs_base_url: str
+) -> dict:
+    <span class="str">"""
+    Returns staleness status for a cited node.
+    Adds ~30ms latency per unique citation — cache aggressively.
+    """</span>
+    url = <span class="str">f"{otcs_base_url}/api/v2/nodes/{node_id}"</span>
+    resp = requests.<span class="fn">get</span>(url, headers={<span class="str">"OTCSTicket"</span>: ticket}, timeout=<span class="num">5</span>)
+    <span class="kw">if</span> resp.status_code != <span class="num">200</span>:
+        <span class="kw">return</span> {<span class="str">"stale"</span>: <span class="kw">False</span>, <span class="str">"current_version"</span>: <span class="kw">None</span>}
+
+    data = resp.<span class="fn">json</span>().<span class="fn">get</span>(<span class="str">"data"</span>, {})
+    current_version = data.<span class="fn">get</span>(<span class="str">"version"</span>, indexed_version)
+    is_stale = current_version > indexed_version
+
+    <span class="kw">return</span> {
+        <span class="str">"stale"</span>: is_stale,
+        <span class="str">"current_version"</span>: current_version,
+        <span class="str">"indexed_version"</span>: indexed_version,
+        <span class="str">"warning"</span>: (
+            <span class="str">f"Document updated (v{indexed_version} → v{current_version})"</span>
+            <span class="kw">if</span> is_stale <span class="kw">else</span> <span class="kw">None</span>
+        )
+    }</pre>
+    </div>
+
+    <p>A staleness warning surfaced in the UI — "Note: this document has been updated since it was indexed. Current version is v5; this answer is based on v4." — is enormously valuable for compliance use cases. It tells the user that the AI's answer may not reflect the current state of the document, without breaking the citation or removing the source link.</p>
+
+    <h2 id="audit-trail">The Audit Trail Benefit</h2>
+
+    <p>When node_id is preserved end to end, your system can produce a complete audit record for every AI interaction: which user, which query, which chunks were retrieved, which nodes were cited. In enterprise, particularly in regulated industries, this isn't a nice-to-have — it's a sign-off requirement for AI deployment.</p>
+
+    <p>The audit record structure for a single query looks like:</p>
+
+    <ul>
+      <li>Timestamp and user identity (from the OTCSTicket or your auth layer)</li>
+      <li>Query text (sanitised — strip any sensitive terms before logging)</li>
+      <li>Retrieved node IDs and their chunk indices</li>
+      <li>Final cited node IDs (deduplicated) with version numbers</li>
+      <li>LLM model and version used for generation</li>
+    </ul>
+
+    <p>This record correlates directly with the OTCS audit log. OTCS records every document access — if your RAG pipeline retrieves content on behalf of a user, that access appears in the OTCS audit tables via the OTCSTicket. Your RAG audit log, combined with the OTCS audit log, gives compliance teams a complete picture: not just "user accessed document" but "user asked this question, AI retrieved these documents, AI cited these nodes in the answer."</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p>OTCS audit events are accessible via <code>GET /api/v2/nodes/{node_id}/audit</code> and through the Audit Management module if your deployment has it licensed. For real-time audit event streaming, the OTCS Event Framework (where available) emits document access events that can be consumed by an external audit system.</p></div>
+    </div>
+
+    <h2 id="closing">5 Lines of Code. Months of Trust.</h2>
+
+    <p>The actual code change to add node_id preservation to a naive pipeline is small. You're adding a field to your chunk dataclass, ensuring it's populated at extraction time, passing the dataclass through chunking instead of raw strings, storing the field in vector store metadata, and returning it from your retrieval function. If your pipeline is well-structured, this is a one-afternoon change.</p>
+
+    <p>The cost of not doing it: every citation your system generates is a dead end. Users who care about sources — and in enterprise, the users who matter most always care about sources — will learn quickly that the AI's citations can't be followed. They'll stop trusting the answers, even the correct ones. The RAG system becomes a novelty rather than a workflow tool.</p>
+
+    <p><strong>RAG without source traceability is not enterprise-grade. It's a demo.</strong> Node ID preservation is the minimum technical requirement for an enterprise AI system to earn and maintain user trust. Build it in from day one, because adding it later means reindexing your corpus, and that's a conversation nobody wants to have six months into a production deployment.</p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+        </a>
+        <a href="blog-rag-metadata-indexing.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">What to Index from OpenText Content Server — and What to Leave Out</div>
+        </a>
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-rag-opentext-pipeline.html" class="related-post">
+          <div class="related-post-cat">Tutorial · RAG</div>
+          <div class="related-post-title">Building a Production RAG Pipeline for OpenText Content Server</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+(function(){
+  var url = 'https://kapiluthra.github.io/blog-rag-node-id-preservation.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function(){
+    navigator.clipboard.writeText(url).then(function(){
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied!';
+      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.onclick = function() {
+    var pre = block.querySelector('pre');
+    navigator.clipboard.writeText(pre ? pre.innerText : block.innerText).then(function() {
+      btn.textContent = 'copied!'; btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  };
+  wrap.appendChild(btn);
+});
+var bar = document.getElementById('reading-progress');
+if (bar) window.addEventListener('scroll', function() {
+  var d = document.documentElement.scrollHeight - window.innerHeight;
+  bar.style.width = (d > 0 ? window.scrollY / d * 100 : 0) + '%';
+});
+</script>
+<script>
+(function(){var b=document.getElementById("theme-btn");if(!b)return;b.textContent=document.documentElement.getAttribute("data-theme")==="light"?"◑":"◐";b.addEventListener("click",function(){var n=document.documentElement.getAttribute("data-theme")==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",n);localStorage.setItem("ku-theme",n);b.textContent=n==="light"?"◑":"◐";});})();
+</script>
+</body>
+</html>
