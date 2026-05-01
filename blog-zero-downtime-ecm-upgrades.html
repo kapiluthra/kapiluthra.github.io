@@ -9,7 +9,7 @@
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://kapiluthra.github.io/blog-zero-downtime-ecm-upgrades.html">
 <meta property="og:title" content="Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland — Kapil Uthra">
-<meta property="og:description" content="How to execute OpenText Content Server upgrades with minimal outage — 10+ major version upgrades across three continents, including 90% outage reduction at SCG USA.">
+<meta property="og:description" content="How to execute OpenText Content Server upgrades with minimal outage — 10+ major version upgrades across three continents, including 90% outage reduction for a US manufacturing client.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland">
@@ -217,7 +217,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
   <div class="article-meta">
     <div class="article-category">Deep Dive · Operations</div>
     <h1 class="article-title">Zero-Downtime ECM Upgrades: Lessons from KSA, Brazil, and Finland</h1>
-    <p class="article-subtitle">Planning and executing OpenText Content Server major version upgrades with minimal outage windows — drawn from 10+ upgrades across three continents, including a 90% outage reduction at SCG USA and a GxP-constrained upgrade at Orion Finland.</p>
+    <p class="article-subtitle">Planning and executing OpenText Content Server major version upgrades with minimal outage windows — drawn from 10+ upgrades across three continents, including a 90% outage reduction for a US manufacturing client and a GxP-constrained upgrade for a Finnish pharmaceutical company.</p>
     <div class="article-byline">
       <span>Kapil Uthra</span>
       <span>January 2026</span>
@@ -284,7 +284,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
 
     <p>We partnered directly with OpenText engineering for the schema migration scripts — at 16.2 there were non-trivial schema changes that required OpenText's involvement to execute correctly. That relationship matters: for complex upgrades, escalating early to OpenText support is not admitting failure, it's good risk management.</p>
 
-    <h2>SCG USA: 90% Outage Reduction</h2>
+    <h2>USA — Manufacturing: 90% Outage Reduction</h2>
 
     <p>SCG ran a 30+ server AWS landscape — a distributed Content Server deployment with multiple front-end nodes, separate search/indexing nodes, and an Archive Center integration. Their historical upgrade outages ran 8–12 hours. The goal was to get under 1 hour.</p>
 
@@ -294,11 +294,11 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
 
     <p>Result: 30+ servers upgraded with a total user-facing outage of under 45 minutes — only the unavoidable database schema step required all nodes to be stopped simultaneously. That's the 90% reduction.</p>
 
-    <h2>Orion Finland: GxP Constraints</h2>
+    <h2>Finland — Pharmaceuticals: GxP Constraints</h2>
 
     <p>Pharmaceutical environments under GxP regulations have special upgrade requirements. Every change to a validated system must go through Change Control, have documented impact assessment, require User Acceptance Testing with sign-off, and have an audit trail of the upgrade execution itself.</p>
 
-    <p>The technical upgrade at Orion was straightforward. The GxP overhead was not. Here's what the process required on top of the standard upgrade:</p>
+    <p>The technical upgrade was straightforward. The GxP overhead was not. Here's what the process required on top of the standard upgrade:</p>
 
     <ul>
       <li><strong>Change Control documentation</strong> including risk assessment, impact analysis, and proposed validation approach — submitted and approved 6 weeks in advance.</li>
@@ -312,7 +312,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
       <div><p><strong>GxP tip:</strong> use the Content Server audit log itself as part of your post-upgrade IQ documentation. The first entries after upgrade start should be logins by the validation team executing IQ scripts — this gives you a timestamped record in the validated system's own audit trail.</p></div>
     </div>
 
-    <p>The Orion upgrade was technically the simplest of the three I've described here. The discipline required for GxP compliance makes it the most time-consuming — but that discipline is the point. In a pharmaceutical environment, the document management system is part of the product quality infrastructure. It should be treated accordingly.</p>
+    <p>This upgrade was technically the simplest of the three I've described here. The discipline required for GxP compliance makes it the most time-consuming — but that discipline is the point. In a pharmaceutical environment, the document management system is part of the product quality infrastructure. It should be treated accordingly.</p>
 
     <h2>Common Failure Modes</h2>
 

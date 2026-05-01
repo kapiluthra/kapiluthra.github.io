@@ -124,14 +124,6 @@ footer a:hover { color: var(--amber); opacity: 1; }
 .copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
 .copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
 .copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
-.toc { border: 1px solid var(--border); background: var(--bg-2); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; }
-.toc-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
-.toc-list { list-style: none; }
-.toc-list li { padding: 0.2rem 0; }
-.toc-list a { font-size: 11px; color: var(--text-3); letter-spacing: 0.02em; transition: color 0.15s; display: flex; gap: 0.6rem; align-items: baseline; }
-.toc-list a::before { content: '▸'; color: var(--border-2); font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
-.toc-list a:hover, .toc-list a.active { color: var(--amber); opacity: 1; }
-.toc-list a.active::before { color: var(--amber); }
 .share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
 .share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
 .share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
@@ -202,19 +194,6 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
       <span class="tag">Enterprise AI</span>
     </div>
   </div>
-
-  <nav class="toc" aria-label="Table of contents">
-    <div class="toc-title">Contents</div>
-    <ul class="toc-list">
-      <li><a href="#ag-ceiling">The RAG Ceiling</a></li>
-      <li><a href="#ag-tools">ECM as a Tool Surface</a></li>
-      <li><a href="#ag-loop">The Agent Loop</a></li>
-      <li><a href="#ag-patterns">Three Real ECM Agent Patterns</a></li>
-      <li><a href="#ag-hard">The Hard Parts</a></li>
-      <li><a href="#ag-guardrails">Guardrails in Production</a></li>
-      <li><a href="#ag-today">Where Agentic ECM Stands Today</a></li>
-    </ul>
-  </nav>
 
   <div class="article-body">
 
@@ -576,25 +555,6 @@ Stop, summarise what you found, and state clearly what you could not locate.</pr
 </footer>
 
 <script>
-(function(){
-  var links = document.querySelectorAll('.toc-list a');
-  var headings = Array.from(links).map(function(a){ return document.querySelector(a.getAttribute('href')); });
-  window.addEventListener('scroll', function(){
-    var scrollY = window.scrollY + 120;
-    var active = 0;
-    headings.forEach(function(h, i){ if(h && h.offsetTop <= scrollY) active = i; });
-    links.forEach(function(a, i){ a.classList.toggle('active', i === active); });
-  }, {passive: true});
-  var url = 'https://kapiluthra.github.io/blog-agentic-ecm.html';
-  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
-  document.getElementById('copy-link').addEventListener('click', function(){
-    navigator.clipboard.writeText(url).then(function(){
-      var b = document.getElementById('copy-link');
-      b.textContent = '✓ Copied!';
-      setTimeout(function(){ b.textContent = '⧉ Copy link'; }, 2000);
-    });
-  });
-})();
 (function(){
   var prog = document.getElementById('reading-progress');
   window.addEventListener('scroll', function(){

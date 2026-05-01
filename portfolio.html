@@ -320,9 +320,9 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
         <div class="project-path">~/projects/ecm-migration-toolkit <span class="note">— Turnpikes IP</span></div>
         <div class="project-title">ECM Migration Toolkit — Product Manager + Architect</div>
         <div class="project-desc">
-          Product-managed and architected the Turnpikes Migration Tool — the engine behind 100M+ document migrations into OpenText Content Server. Core capabilities: configurable metadata transformation pipelines, parallel stream processing with per-document PostgreSQL checkpointing, SHA-256 checksum verification, schema-agnostic source connectors. Used in production at Securex Belgium (150M docs).
+          Product-managed and architected the Turnpikes Migration Tool — the engine behind 100M+ document migrations into OpenText Content Server. Core capabilities: configurable metadata transformation pipelines, parallel stream processing with per-document PostgreSQL checkpointing, SHA-256 checksum verification, schema-agnostic source connectors. Used in production at a Belgian HR services firm (150M docs).
         </div>
-        <div class="proj-result">↑ <span>150M documents migrated</span> with zero data loss · <span>checksum-verified</span> · deployed at Securex Belgium</div>
+        <div class="proj-result">↑ <span>150M documents migrated</span> with zero data loss · <span>checksum-verified</span> · deployed for a Belgian HR services firm</div>
         <div class="project-tags">
           <span class="tag">Migration Engine</span>
           <span class="tag">OpenText CS</span>
@@ -364,11 +364,11 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
     <div class="section-title">Case Studies</div>
     <div class="section-desc">Selected enterprise engagements — challenge, approach, results, what I'd do differently. Click to expand.</div>
 
-    <!-- ── CS 1: Securex Belgium ── -->
+    <!-- ── CS 1: Belgium HR Services ── -->
     <div class="case-study open" id="cs-securex">
       <div class="cs-header" onclick="toggle('cs-securex')">
         <div class="cs-header-left">
-          <div class="cs-path">Securex · Belgium · 2024</div>
+          <div class="cs-path">Belgium · HR Services · 2024</div>
           <div class="cs-title">150M Document Migration into OpenText Content Server + xECM for Salesforce</div>
           <div class="cs-meta">
             <span>Lead Architect</span>
@@ -382,17 +382,17 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
         <div class="cs-metrics">
           <div class="cs-metric"><div class="cs-metric-num">150M</div><div class="cs-metric-label">Docs migrated</div></div>
           <div class="cs-metric"><div class="cs-metric-num">0</div><div class="cs-metric-label">Data loss</div></div>
-          <div class="cs-metric"><div class="cs-metric-num">6 wk</div><div class="cs-metric-label">Migration window</div></div>
+          <div class="cs-metric"><div class="cs-metric-num">147</div><div class="cs-metric-label">Files recovered</div></div>
           <div class="cs-metric"><div class="cs-metric-num">20</div><div class="cs-metric-label">Parallel streams</div></div>
         </div>
         <div class="cs-grid">
           <div class="cs-block">
             <div class="cs-block-title">The Challenge</div>
-            <div class="cs-block-content">Securex Belgium needed to exit a legacy ECM at end-of-life, landing <strong>150 million documents</strong> into a fresh OpenText Content Server deployment — simultaneously integrating with Salesforce CRM via xECM for Salesforce. Hard deadline, zero data loss tolerance, 15 years of inconsistent flat source metadata that needed mapping to a structured OTCS Category model.</div>
+            <div class="cs-block-content">A Belgian HR services company needed to exit a legacy ECM at end-of-life, landing <strong>150 million documents</strong> into a fresh OpenText Content Server deployment — simultaneously integrating with Salesforce CRM via xECM for Salesforce. Hard deadline, zero data loss tolerance, 15 years of inconsistent flat source metadata that needed mapping to a structured OTCS Category model.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">Architecture Decisions</div>
-            <div class="cs-block-content"><strong>Hybrid injection</strong>: metadata via OTCS REST API; binary content injected directly into the file store with post-injection SHA-256 verification. This cut migration time from ~180 days (API-only) to 6 weeks. <strong>20 parallel migration streams</strong> by document category, each with per-document PostgreSQL checkpointing for fault-tolerant resumability. xECM for Salesforce workspace type configured before migration — critical for correct linkage.</div>
+            <div class="cs-block-content"><strong>Hybrid injection</strong>: metadata via OTCS REST API; binary content injected directly into the file store with post-injection SHA-256 verification — the only approach that could hit the hard deadline at this volume. <strong>20 parallel migration streams</strong> by document category, each with per-document PostgreSQL checkpointing for fault-tolerant resumability. xECM for Salesforce workspace type configured before migration — critical for correct linkage.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">What Surprised Us</div>
@@ -411,11 +411,11 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
       </div>
     </div>
 
-    <!-- ── CS 2: Orion Finland ── -->
+    <!-- ── CS 2: Finland Pharmaceuticals ── -->
     <div class="case-study" id="cs-orion">
       <div class="cs-header" onclick="toggle('cs-orion')">
         <div class="cs-header-left">
-          <div class="cs-path">Orion Pharma · Finland · 2023–2024</div>
+          <div class="cs-path">Finland · Pharmaceuticals · 2023–2024</div>
           <div class="cs-title">GxP-Validated xECM for SAP — Pharmaceutical Manufacturing</div>
           <div class="cs-meta">
             <span>Lead Architect + Delivery Owner</span>
@@ -435,11 +435,11 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
         <div class="cs-grid">
           <div class="cs-block">
             <div class="cs-block-title">The Challenge</div>
-            <div class="cs-block-content">Orion is a Finnish pharma manufacturer under EU GxP / <strong>21 CFR Part 11</strong> requirements. Their document management system is part of the validated environment — every configuration change requires documented evidence. Standard xECM implementation timelines don't account for validation overhead.</div>
+            <div class="cs-block-content">Our client is a Finnish pharma manufacturer under EU GxP / <strong>21 CFR Part 11</strong> requirements. Their document management system is part of the validated environment — every configuration change requires documented evidence. Standard xECM implementation timelines don't account for validation overhead.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">GxP Overhead (What Others Skip)</div>
-            <div class="cs-block-content">Change Control submitted <strong>6 weeks pre-implementation</strong>. IQ/OQ/PQ protocols written with full traceability matrix. Post-go-live audit trail captured in OTCS audit log itself — used as primary IQ evidence. This overhead roughly <strong>doubled project timeline</strong> vs non-regulated xECM. Worth every day.</div>
+            <div class="cs-block-content">Change Control submitted well ahead of implementation. IQ/OQ/PQ protocols written with full traceability matrix. Post-go-live audit trail captured in OTCS audit log itself — used as primary IQ evidence. This overhead roughly <strong>doubled project timeline</strong> vs non-regulated xECM. Worth every day.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">Key Lesson</div>
@@ -458,11 +458,11 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
       </div>
     </div>
 
-    <!-- ── CS 3: SCG USA ── -->
+    <!-- ── CS 3: USA Manufacturing ── -->
     <div class="case-study" id="cs-scg">
       <div class="cs-header" onclick="toggle('cs-scg')">
         <div class="cs-header-left">
-          <div class="cs-path">SCG · USA · 2022–2023</div>
+          <div class="cs-path">USA · Manufacturing · 2022–2023</div>
           <div class="cs-title">30-Server AWS Landscape — 90% Upgrade Outage Reduction via Rolling Deployment</div>
           <div class="cs-meta">
             <span>Lead Architect</span>
@@ -482,7 +482,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
         <div class="cs-grid">
           <div class="cs-block">
             <div class="cs-block-title">The Problem</div>
-            <div class="cs-block-content">SCG's 30+ server Content Server landscape on AWS required <strong>8–12 hour outage windows</strong> for major version upgrades. Significant business disruption and compliance risk around change management. All nodes had to stop simultaneously because session state was node-local.</div>
+            <div class="cs-block-content">The client's 30+ server Content Server landscape on AWS required <strong>8–12 hour outage windows</strong> for major version upgrades. Significant business disruption and compliance risk around change management. All nodes had to stop simultaneously because session state was node-local.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">The Solution</div>
@@ -490,7 +490,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
           </div>
           <div class="cs-block">
             <div class="cs-block-title">DR Architecture</div>
-            <div class="cs-block-content">Alongside the upgrade redesign: cross-AZ standby, automated ALB failover via Route53 health checks, documented RTO/RPO targets. The previous single-region setup couldn't meet SCG's business continuity requirements — this engagement addressed both upgrade pain and DR gap in a single architecture revision.</div>
+            <div class="cs-block-content">Alongside the upgrade redesign: cross-AZ standby, automated ALB failover via Route53 health checks, documented RTO/RPO targets. The previous single-region setup couldn't meet the client's business continuity requirements — this engagement addressed both upgrade pain and DR gap in a single architecture revision.</div>
           </div>
           <div class="cs-block">
             <div class="cs-block-title">Transferable Pattern</div>

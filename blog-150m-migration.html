@@ -9,7 +9,7 @@
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://kapiluthra.github.io/blog-150m-migration.html">
 <meta property="og:title" content="Migrating 150M Documents into OpenText Content Server — Kapil Uthra">
-<meta property="og:description" content="Architecture, tooling, and hard lessons from the Securex Belgium engagement: 150M documents, zero data loss, checksum-verified migration into OpenText Content Server.">
+<meta property="og:description" content="Architecture, tooling, and hard lessons from a Belgian HR services engagement: 150M documents, zero data loss, checksum-verified migration into OpenText Content Server.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Migrating 150M Documents into OpenText Content Server">
@@ -221,7 +221,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
   <div class="article-meta">
     <div class="article-category">Deep Dive · Migration</div>
     <h1 class="article-title">Migrating 150M Documents into OpenText Content Server</h1>
-    <p class="article-subtitle">Architecture, tooling, and hard lessons from the Securex Belgium engagement — moving 150 million documents from a legacy ECM system into a cloud-native OpenText Content Server deployment, with zero data loss.</p>
+    <p class="article-subtitle">Architecture, tooling, and hard lessons from a Belgian HR services engagement — moving 150 million documents from a legacy ECM system into a cloud-native OpenText Content Server deployment, with zero data loss.</p>
     <div class="article-byline">
       <span>Kapil Uthra</span>
       <span>February 2026</span>
@@ -240,13 +240,13 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
       <div class="stat-cell"><div class="stat-num">xECM</div><div class="stat-label">Salesforce Integration</div></div>
     </div>
 
-    <p>When Securex Belgium approached us at Turnpikes, they had a specific problem: 150 million documents sitting in a legacy ECM system that had reached end-of-life, and a hard deadline to complete the migration. The target was a fresh OpenText Content Server deployment, also integrated with their Salesforce CRM through Extended ECM for Salesforce.</p>
+    <p>When our client approached us, they had a specific problem: 150 million documents sitting in a legacy ECM system that had reached end-of-life, and a hard deadline to complete the migration. The target was a fresh OpenText Content Server deployment, also integrated with their Salesforce CRM through Extended ECM for Salesforce.</p>
 
     <p>This is the architecture writeup. What we built, how the migration tooling worked, and what surprised us along the way.</p>
 
     <h2>The Target Environment</h2>
 
-    <p>The target was a standard OpenText Content Server deployment — not cloud-native, not containerised. A conventional, on-premise style installation with the database on a dedicated SQL Server instance and the OTCS file store on a high-throughput NAS. This is the deployment topology the majority of enterprise OTCS customers run, and it was the right call for Securex's infrastructure team who already operated and understood it.</p>
+    <p>The target was a standard OpenText Content Server deployment — not cloud-native, not containerised. A conventional, on-premise style installation with the database on a dedicated SQL Server instance and the OTCS file store on a high-throughput NAS. This is the deployment topology the majority of enterprise OTCS customers run, and it was the right call for the client's infrastructure team who already operated and understood it.</p>
 
     <p>The challenge wasn't the target platform — it was scale. 150 million documents across a source system with 15 years of inconsistent metadata, an aggressive deadline, and a simultaneous xECM for Salesforce integration that had to be wired in before go-live. Execution discipline and tooling mattered far more than the deployment model.</p>
 
@@ -254,7 +254,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
 
     <p>We used the Turnpikes Migration Tool — a tool I product-managed — as the core migration engine. The overall flow breaks into three phases: <strong>extraction</strong> (read from source system), <strong>transformation</strong> (map metadata, clean data, build OTCS target model), and <strong>load</strong> (write into Content Server via API or direct DB + file store injection).</p>
 
-    <p>For 150M documents, API-only ingestion is too slow. We used a <strong>hybrid approach</strong>: metadata goes through the OTCS REST API (which handles the DTree entries, category assignments, and permission sets), while binary content is injected directly into the file store with checksums verified post-injection. This reduced ingestion time from an estimated 180 days (API-only) to under 6 weeks.</p>
+    <p>For 150M documents, API-only ingestion is too slow. We used a <strong>hybrid approach</strong>: metadata goes through the OTCS REST API (which handles the DTree entries, category assignments, and permission sets), while binary content is injected directly into the file store with checksums verified post-injection. This was the only approach that could hit the hard deadline at this volume — API-only ingestion simply doesn't scale to 150M documents.</p>
 
     <h2>Metadata Mapping: The Real Work</h2>
 
@@ -308,7 +308,7 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
     <p>The migration completed successfully — 150M documents, zero data loss, on schedule. But there were things I'd approach differently next time:</p>
 
     <ul>
-      <li><strong>Start checkpointing earlier in design.</strong> We added document-level checkpointing partway through development. Starting with it would have saved two weeks of rework.</li>
+      <li><strong>Start checkpointing earlier in design.</strong> We added document-level checkpointing partway through development. Starting with it from day one would have eliminated a costly rework cycle.</li>
       <li><strong>Run a 1M document dry-run on production infrastructure</strong> before committing to the full migration. We ran our dry-runs on staging, which had different storage performance characteristics than production. The production run initially ran slower than projected until we tuned the injection batch sizes against the actual file store.</li>
       <li><strong>Plan the post-migration indexing time explicitly.</strong> After loading 150M documents, Content Server's full-text search index needed significant time to catch up. Users expected search to work immediately after go-live. We should have communicated the indexing window more clearly in advance.</li>
     </ul>
