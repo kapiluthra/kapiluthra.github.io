@@ -157,6 +157,15 @@ a.stat-cell { border-top: 2px solid var(--border); }
 a.stat-cell:hover { background: var(--bg-2); opacity: 1; border-top-color: var(--amber-dim); }
 a.stat-cell:hover .stat-num { color: var(--text); text-shadow: 0 0 20px rgba(226,179,72,0.4); }
 
+/* CERT STRIP */
+.cert-strip { display: flex; align-items: center; gap: 0; border: 1px solid var(--border); border-top: none; background: var(--bg-2); overflow-x: auto; }
+.cert-strip-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-3); padding: 0.65rem 1rem; border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0; }
+.cert-badge { font-size: 11px; color: var(--text-2); padding: 0.65rem 1rem; border-right: 1px solid var(--border); white-space: nowrap; display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+.cert-badge::before { content: '✓'; color: var(--amber); font-size: 10px; }
+.cert-badge:last-child { border-right: none; }
+.cert-credly { font-size: 11px; color: var(--amber-dim); padding: 0.65rem 1rem; margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+.cert-credly:hover { color: var(--amber); opacity: 1; }
+
 /* QUICK NAV GRID */
 .quick-grid {
   display: grid;
@@ -348,6 +357,15 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
         <div class="stat-num">95%</div>
         <div class="stat-label">Project success</div>
       </a>
+    </div>
+
+    <div class="cert-strip fade-in-5">
+      <span class="cert-strip-label">Verified</span>
+      <span class="cert-badge">OpenText Content Suite</span>
+      <span class="cert-badge">Extended ECM for SAP</span>
+      <span class="cert-badge">OpenText OTDS &amp; SSO</span>
+      <span class="cert-badge">AI / RAG Architecture</span>
+      <a href="https://credly.com/users/kapil-uthra" target="_blank" class="cert-credly">View credentials →</a>
     </div>
 
     <div class="quick-grid fade-in-5">
