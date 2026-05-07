@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why You Need a Retrieval Cache in Your OpenText RAG Pipeline — Kapil Uthra</title>
+<meta name="description" content="The same question gets asked every day. Your RAG pipeline computes embeddings and fetches from OTCS every time. A cache makes that 45ms instead of 2.4 seconds. Here's how to build one.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-retrieval-cache.html">
+<meta property="og:title" content="Why You Need a Retrieval Cache in Your OpenText RAG Pipeline">
+<meta property="og:description" content="800ms per query, 30–50% repeat rate, zero caching. That's most enterprise RAG deployments. Here's the cache architecture that cuts retrieval latency by 50× for the majority of real-world queries.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Why You Need a Retrieval Cache in Your OpenText RAG Pipeline">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] nav { background: rgba(245,242,236,0.95); }
+html[data-theme="light"] .nav-drawer { background: rgba(245,242,236,0.98); }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Performance
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Performance</div>
+    <h1 class="article-title">Why You Need a Retrieval Cache in Your OpenText RAG Pipeline</h1>
+    <p class="article-subtitle">The same question gets asked every day. Your pipeline re-embeds, re-searches, and re-fetches from OTCS every time. A retrieval cache makes that 45ms instead of 2.4 seconds — and in production, that difference is between a system people use and one they abandon.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~10 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">caching</span>
+      <span class="tag">performance</span>
+      <span class="tag">opentext</span>
+      <span class="tag">redis</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>"What's the Q3 budget policy?" Someone asks it at 9 AM. Someone else asks it at 2 PM. A third person asks it the next morning after a team meeting. Each time, your RAG pipeline computes embeddings, runs a vector search, issues REST calls to OpenText Content Management, re-ranks results, and generates an answer. <strong>2.4 seconds. Three times. Same answer.</strong></p>
+
+    <p>A retrieval cache would have served the second and third response in 45ms from memory. Over a month, as your cache hit rate climbs to 60–80% on a real enterprise corpus, you've cut retrieval latency by 50× for the majority of queries. The cost drop is proportional. The user experience is night and day.</p>
+
+    <p>This isn't premature optimisation. Caching is the difference between a prototype and a production system. And the enterprise ECM context makes it even more valuable than in generic RAG deployments — because <strong>OTCS query patterns are bursty and deeply repetitive by department</strong>.</p>
+
+    <h2 id="why-ecm">Why OpenText RAG is Especially Cache-Friendly</h2>
+
+    <p>Generic RAG deployments on diverse corpora see moderate repetition — maybe 15–25% of queries overlap within a day. Enterprise ECM deployments on OpenText are different. The query population is structured around business roles and repeating work cycles:</p>
+
+    <ul>
+      <li>A legal team asks about the same contract templates every time a new deal starts</li>
+      <li>An operations team asks about the same policy documents before each audit</li>
+      <li>Finance asks the same budget and reporting questions every month-end</li>
+      <li>HR asks the same onboarding document questions every new joiner wave</li>
+    </ul>
+
+    <p>In production OTCS RAG deployments, <strong>30–50% of queries repeat within a 4-hour window</strong> from users in the same department. The same semantic question, phrased slightly differently ("show me the Q3 policy" vs "what does the Q3 policy say" vs "Q3 budget rules") but pointing at the same retrieval result set.</p>
+
+    <p>Your pipeline treats every one of these as a novel query. It shouldn't.</p>
+
+    <h2 id="latency">The Latency Breakdown</h2>
+
+    <p>Before building a cache, it helps to understand where the time actually goes in a typical OTCS RAG query. In a production deployment I instrumented, a single end-to-end query broke down like this:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Latency profile — single RAG query without cache</div>
+      <pre><span class="cmt"># Measured on a 50k-document OTCS corpus, AWS eu-west-1</span>
+
+Embed query (OpenAI ada-002)        ~120ms
+Vector store search (Qdrant, k=20)  ~180ms
+OTCS REST fetch (10 nodes, serial)  ~900ms   <span class="cmt"># dominant cost</span>
+Re-rank (cross-encoder)             ~200ms
+LLM generation (GPT-4o, 600 tok)   ~900ms
+─────────────────────────────────────────
+Total                              ~2,300ms
+
+<span class="cmt"># With cache hit on retrieval layer:</span>
+Cache lookup (Redis GET)             ~5ms
+LLM generation (GPT-4o, 600 tok)   ~900ms
+─────────────────────────────────────────
+Total                               ~905ms   <span class="cmt"># 2.5× faster end-to-end</span>
+
+<span class="cmt"># With cache hit on full response:</span>
+Cache lookup (Redis GET)             ~5ms
+─────────────────────────────────────────
+Total                                 ~5ms   <span class="cmt"># 460× faster</span></pre>
+    </div>
+
+    <p>The OTCS REST fetch is the dominant cost — nearly 900ms just to retrieve the content of 10 documents over the network. This is the layer that benefits most from caching. Even partial caching of the retrieval result set (skipping vector search and OTCS fetch, but still running LLM generation) cuts latency from 2.3 seconds to under 1 second.</p>
+
+    <h2 id="what-to-cache">What to Cache — and What Not To</h2>
+
+    <p>There are three distinct layers you can cache, each with different trade-offs:</p>
+
+    <h3>Layer 1: Retrieval Results (Recommended)</h3>
+
+    <p>Cache the output of your retrieval pipeline: the ranked list of chunks (with node IDs, metadata, and text) that would be passed to the LLM. The cache key is a hash of the query embedding plus any active filters.</p>
+
+    <p>This is the right default. You skip the expensive vector search and OTCS fetch, but still run LLM generation fresh — which means your answers stay up to date even if the cached retrieval is slightly stale. The risk surface is small.</p>
+
+    <h3>Layer 2: Full Response (Use Sparingly)</h3>
+
+    <p>Cache the complete LLM-generated answer for an exact query. Fastest possible hit — 5ms total. But risky: if the underlying documents change, users get cached answers that are factually outdated with no indication of staleness. Reserve this for truly static content (regulatory text, archived policies) where the underlying documents don't change.</p>
+
+    <h3>Layer 3: OTCS Node Content (Always Worth It)</h3>
+
+    <p>Cache the raw content fetched from OTCS for individual node IDs, keyed by <code>(node_id, version_number)</code>. This is safe to cache aggressively because the key is version-scoped — a new document version gets a new key automatically. It eliminates the per-query OTCS REST round-trips even when the retrieval result set itself isn't cached.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Don't cache by document ID alone.</strong> Cache <code>(node_id, version_number)</code>. If someone updates a document in OTCS, the version number increments and the old cache entry becomes unreachable — automatic invalidation without a complex event system.</p></div>
+    </div>
+
+    <h2 id="cache-key">The Cache Key Design</h2>
+
+    <p>Getting the cache key right is the most important design decision. A bad key causes either cache misses (you never hit) or cache collisions (different queries return the same result).</p>
+
+    <p>For retrieval result caching, the key needs to capture everything that would change the retrieval output:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cache_key.py — building a stable retrieval cache key</div>
+      <pre><span class="kw">import</span> hashlib, json
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">make_retrieval_cache_key</span>(
+    query_embedding: list[float],
+    filters: dict,
+    top_k: int,
+    max_doc_date: str <span class="cmt"># ISO date of most recently modified indexed doc</span>
+) -> str:
+    <span class="cmt"># Quantise embedding to 2 decimal places — groups semantically</span>
+    <span class="cmt"># similar queries into the same bucket (semantic hashing)</span>
+    quantised = [<span class="fn">round</span>(x, <span class="num">2</span>) <span class="kw">for</span> x <span class="kw">in</span> query_embedding]
+
+    payload = {
+        <span class="str">"emb"</span>: quantised,
+        <span class="str">"filters"</span>: filters,
+        <span class="str">"k"</span>: top_k,
+        <span class="str">"max_date"</span>: max_doc_date,
+    }
+    raw = json.<span class="fn">dumps</span>(payload, sort_keys=<span class="kw">True</span>)
+    <span class="kw">return</span> <span class="str">"rag:retrieval:"</span> + hashlib.<span class="fn">sha256</span>(raw.<span class="fn">encode</span>()).hexdigest()[:<span class="num">32</span>]</pre>
+    </div>
+
+    <p>The <strong>quantisation step</strong> is the key insight. By rounding the embedding to 2 decimal places before hashing, semantically near-identical queries — "Q3 budget policy", "what is the Q3 budget policy", "tell me about Q3 budget" — often produce embeddings that round to the same quantised vector, hitting the same cache entry. This is semantic hashing: you get cache hits on paraphrase queries, not just exact string matches.</p>
+
+    <p>The <strong><code>max_doc_date</code></strong> component ensures that when new documents are indexed into OTCS, the cache key shifts — old cached results for that query will miss and get recomputed with the fresh corpus. No explicit invalidation needed for content updates.</p>
+
+    <h2 id="implementation">Implementation: Start Simple, Graduate to Redis</h2>
+
+    <p>The right progression for a retrieval cache is not to design the full distributed solution from day one. Start with an in-process dict and TTL. Graduate when you outgrow it.</p>
+
+    <h3>Stage 1: In-Process Dict (Under 10 RPS)</h3>
+
+    <div class="codeblock">
+      <div class="codeblock-title">retrieval_cache.py — in-process cache with TTL</div>
+      <pre><span class="kw">import</span> time, json
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">RetrievalCache</span>:
+    ttl_seconds: int = <span class="num">900</span>          <span class="cmt"># 15 minutes default</span>
+    max_entries: int = <span class="num">500</span>
+    _store: dict = field(default_factory=dict)
+    _hits: int = <span class="num">0</span>
+    _misses: int = <span class="num">0</span>
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, key: str) -> list | None:
+        entry = self._store.<span class="fn">get</span>(key)
+        <span class="kw">if</span> entry <span class="kw">is None</span>:
+            self._misses += <span class="num">1</span>
+            <span class="kw">return None</span>
+        chunks, ts = entry
+        <span class="kw">if</span> time.<span class="fn">time</span>() - ts > self.ttl_seconds:
+            <span class="kw">del</span> self._store[key]
+            self._misses += <span class="num">1</span>
+            <span class="kw">return None</span>
+        self._hits += <span class="num">1</span>
+        <span class="kw">return</span> chunks
+
+    <span class="kw">def</span> <span class="fn">set</span>(self, key: str, chunks: list):
+        <span class="kw">if</span> <span class="fn">len</span>(self._store) >= self.max_entries:
+            <span class="cmt"># Evict oldest entry</span>
+            oldest = <span class="fn">min</span>(self._store, key=<span class="kw">lambda</span> k: self._store[k][<span class="num">1</span>])
+            <span class="kw">del</span> self._store[oldest]
+        self._store[key] = (chunks, time.<span class="fn">time</span>())
+
+    <span class="kw">def</span> <span class="fn">hit_rate</span>(self) -> float:
+        total = self._hits + self._misses
+        <span class="kw">return</span> self._hits / total <span class="kw">if</span> total > <span class="num">0</span> <span class="kw">else</span> <span class="num">0.0</span></pre>
+    </div>
+
+    <h3>Stage 2: Redis (10+ RPS or Multiple Workers)</h3>
+
+    <p>Once you have multiple worker processes or need the cache to survive restarts, move to Redis. The interface stays identical — only the backend changes.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">redis_cache.py — drop-in Redis backend</div>
+      <pre><span class="kw">import</span> redis, json, zlib
+
+<span class="kw">class</span> <span class="fn">RedisRetrievalCache</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, url: str = <span class="str">"redis://localhost:6379"</span>, ttl: int = <span class="num">900</span>):
+        self.r = redis.<span class="fn">from_url</span>(url, decode_responses=<span class="kw">False</span>)
+        self.ttl = ttl
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, key: str) -> list | None:
+        raw = self.r.<span class="fn">get</span>(key)
+        <span class="kw">if</span> raw <span class="kw">is None</span>:
+            <span class="kw">return None</span>
+        <span class="kw">return</span> json.<span class="fn">loads</span>(zlib.<span class="fn">decompress</span>(raw))
+
+    <span class="kw">def</span> <span class="fn">set</span>(self, key: str, chunks: list):
+        compressed = zlib.<span class="fn">compress</span>(json.<span class="fn">dumps</span>(chunks).<span class="fn">encode</span>())
+        self.r.<span class="fn">setex</span>(key, self.ttl, compressed)  <span class="cmt"># TTL in seconds</span></pre>
+    </div>
+
+    <p>The <code>zlib</code> compression is worth adding from the start — chunk payloads are text-heavy and compress well (typically 60–70% reduction). Redis memory is not free, especially when you're caching hundreds of thousands of chunk sets.</p>
+
+    <h2 id="invalidation">Cache Invalidation Without an Event System</h2>
+
+    <p>The hardest part of caching isn't the cache — it's knowing when to invalidate it. Full event-driven invalidation (subscribing to OTCS change events, purging specific keys) is complex to build and maintain. For most deployments, <strong>TTL-based expiry plus content-date keying is sufficient</strong>.</p>
+
+    <p>The pattern:</p>
+    <ul>
+      <li>Your incremental sync job runs on a schedule (hourly, or nightly for low-change corpora)</li>
+      <li>After each sync, record the <code>max_modify_date</code> of all indexed documents</li>
+      <li>Include this date in every cache key</li>
+      <li>When documents update and the sync runs, the <code>max_modify_date</code> shifts — all cache keys for affected queries automatically miss and recompute</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Track hit rate by department or user role.</strong> Legal queries may have an 80% hit rate (highly repetitive). Strategy queries from senior leadership may have 10% (diverse, unpredictable). High variance between cohorts tells you which teams are underserved — and may indicate that their query templates could be standardised to improve cache efficiency.</p></div>
+    </div>
+
+    <h2 id="wiring">Wiring the Cache Into Your Pipeline</h2>
+
+    <p>The cache wraps the retrieval step. The LLM generation step always runs on a cache hit — you're caching the retrieved context, not the generated answer.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cached_rag.py — cache-aware retrieval pipeline</div>
+      <pre><span class="kw">async def</span> <span class="fn">retrieve_with_cache</span>(
+    query: str,
+    filters: dict,
+    embedder,
+    vector_store,
+    otcs_fetcher,
+    cache: RedisRetrievalCache,
+    max_doc_date: str,
+    top_k: int = <span class="num">10</span>,
+) -> list[dict]:
+
+    <span class="cmt"># 1. Embed query</span>
+    embedding = <span class="kw">await</span> embedder.<span class="fn">embed</span>(query)
+
+    <span class="cmt"># 2. Build cache key and check</span>
+    key = <span class="fn">make_retrieval_cache_key</span>(embedding, filters, top_k, max_doc_date)
+    cached = cache.<span class="fn">get</span>(key)
+    <span class="kw">if</span> cached <span class="kw">is not None</span>:
+        <span class="kw">return</span> cached  <span class="cmt"># ~5ms path</span>
+
+    <span class="cmt"># 3. Cache miss — full retrieval</span>
+    node_ids = <span class="kw">await</span> vector_store.<span class="fn">search</span>(embedding, filters, top_k)
+    chunks = <span class="kw">await</span> otcs_fetcher.<span class="fn">fetch_chunks</span>(node_ids)
+
+    <span class="cmt"># 4. Store and return</span>
+    cache.<span class="fn">set</span>(key, chunks)
+    <span class="kw">return</span> chunks</pre>
+    </div>
+
+    <h2 id="production">Production Considerations</h2>
+
+    <p>A few things that bite teams in production that aren't obvious in development:</p>
+
+    <ul>
+      <li><strong>Cache warming:</strong> On a cold start (new deployment, Redis flush), your first wave of queries all miss. If you have high traffic at startup, this can cause a latency spike. Pre-warm by replaying the top 50 most common queries from your logs before going live.</li>
+      <li><strong>ACL interaction:</strong> If you're doing <a href="blog-rag-acl-query-time.html">ACL-aware retrieval</a>, the cache key must include the user's permission scope. Two users with different permissions asking the same question should not share a cache entry. Add a hashed representation of the user's access group to the key.</li>
+      <li><strong>Cache stampede:</strong> When a popular cached entry expires, many concurrent requests may all miss simultaneously and trigger parallel retrievals. Solve with a simple mutex: the first request acquires a lock on the key while computing; others wait 200ms and retry.</li>
+    </ul>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p><strong>Start measuring hit rate from day one.</strong> Log every cache hit and miss with a timestamp and query hash. A hit rate below 20% after one week of real traffic means your semantic hashing quantisation is too fine — try rounding to 1 decimal place instead of 2. Above 80% may mean your TTL is too long and users are getting stale results.</p></div>
+    </div>
+
+    <h2 id="closing">Caching is Not Premature Optimisation</h2>
+
+    <p>Teams consistently underestimate how repetitive enterprise query patterns are. When the same 50 questions account for 40% of your daily query volume, not caching them is the inefficiency — not caching them.</p>
+
+    <p>The implementation is straightforward. Start with a 20-line in-process dict. Add TTL. Measure the hit rate. Graduate to Redis when you need shared state across workers. The cache key design — embedding quantisation plus content date — handles 90% of real-world cache invalidation concerns without needing a complex event subscription system.</p>
+
+    <p><strong>50 queries per second or 1 query every 10 seconds.</strong> The retrieval cache is what separates those two outcomes at scale.</p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+        </a>
+        <a href="blog-rag-metadata-indexing.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">What to Index from OpenText Content Server — and What to Leave Out</div>
+        </a>
+        <a href="blog-rag-node-id-preservation.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+        <a href="blog-rag-acl-query-time.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL Enforcement: Index Time vs Query Time in OpenText RAG</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+window.addEventListener('scroll', function() {
+  var el = document.getElementById('reading-progress');
+  var docH = document.documentElement.scrollHeight - window.innerHeight;
+  el.style.width = docH > 0 ? (window.scrollY / docH * 100) + '%' : '0%';
+});
+(function() {
+  var url = 'https://kapiluthra.github.io/blog-rag-retrieval-cache.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function() {
+    navigator.clipboard.writeText(url).then(function() {
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied';
+      b.classList.add('copied');
+      setTimeout(function() { b.textContent = '⧉ Copy link'; b.classList.remove('copied'); }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', function() {
+    var code = block.querySelector('pre').innerText;
+    navigator.clipboard.writeText(code).then(function() {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+  wrap.appendChild(btn);
+});
+var themeBtn = document.getElementById('theme-btn');
+themeBtn.addEventListener('click', function() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ku-theme', next);
+  themeBtn.textContent = next === 'dark' ? '◐' : '◑';
+});
+var storedTheme = localStorage.getItem('ku-theme') || 'light';
+themeBtn.textContent = storedTheme === 'dark' ? '◐' : '◑';
+</script>
+</body>
+</html>

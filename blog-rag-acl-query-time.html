@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACL Enforcement: Index Time vs Query Time in OpenText RAG — Kapil Uthra</title>
+<meta name="description" content="Post-retrieval ACL filtering is a trap: you retrieve inaccessible content, waste compute, and return empty results. Here's why early enforcement wins — and how to build it without killing performance.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-acl-query-time.html">
+<meta property="og:title" content="ACL Enforcement: Index Time vs Query Time in OpenText RAG">
+<meta property="og:description" content="You indexed a million documents. A restricted user queries. You filter after ranking — and discard 80% of results. You just wasted 900ms on content the user can't see. The fix is enforcing ACLs before vector search, not after.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ACL Enforcement: Index Time vs Query Time in OpenText RAG">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-box.danger .arch-name { color: var(--red); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] nav { background: rgba(245,242,236,0.95); }
+html[data-theme="light"] .nav-drawer { background: rgba(245,242,236,0.98); }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Security
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Security</div>
+    <h1 class="article-title">ACL Enforcement: Index Time vs Query Time in OpenText RAG</h1>
+    <p class="article-subtitle">The choice of when to apply permissions is not a security detail — it's an architecture decision that determines whether your system silently fails for restricted users or works reliably for everyone. Late enforcement sounds simpler until it hits production.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~11 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">acl</span>
+      <span class="tag">security</span>
+      <span class="tag">opentext</span>
+      <span class="tag">permissions</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>You indexed a million documents. Your retrieval is fast. Your LLM answers are good. Then you test with a restricted user — someone from finance, with access to a narrow slice of the repository — and they run a query. The system spends 900ms retrieving the top-20 results, applies your post-retrieval ACL check, and discards 17 of them because the user can't see them. Three results survive. Two are marginally relevant.</p>
+
+    <p>The user gets a weak answer. They ask the question again phrased differently. Same result. They stop using the system.</p>
+
+    <p>You just built a RAG system that works perfectly for administrators and fails for the users who matter most. <strong>The cause is where you chose to enforce permissions.</strong></p>
+
+    <h2 id="the-two-moments">The Two Enforcement Moments</h2>
+
+    <p>In any RAG pipeline over a permission-controlled content repository, you have two opportunities to apply access controls:</p>
+
+    <ul>
+      <li><strong>Early enforcement</strong> — before or during vector search. You constrain the search space to only documents the current user can access. The retrieval returns top-k results <em>from the accessible set</em>.</li>
+      <li><strong>Late enforcement</strong> — after vector search and ranking. You retrieve the top-k from the full corpus, then filter out anything the user can't see. The LLM gets whatever survives.</li>
+    </ul>
+
+    <p>Late enforcement is tempting because it feels simpler: index everything once, enforce permissions at the last moment. In practice, it systematically fails restricted users and introduces security risks that are subtle but real.</p>
+
+    <h2 id="why-late-fails">Why Late Enforcement Fails in Production</h2>
+
+    <h3>The Empty Results Trap</h3>
+
+    <p>When you retrieve top-k from the full corpus and then filter, the number of results that survive depends on how much of the corpus the user can access. For a general user with broad permissions, late filtering works fine — most of their top-k results pass the check. For a restricted user, it's a different story.</p>
+
+    <p>Consider a finance analyst who can access 8,000 documents out of a 200,000-document corpus (4%). If your vector search retrieves the top-20 results from the full corpus, statistically about 0–1 of those results fall within their accessible set. You return an effectively empty context. The LLM hallucinates or says "I don't have information on that." The user is baffled — the document they're looking for is right there in the system.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Late Enforcement — The Wasted Compute Problem</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Query</div><div class="arch-name">User + Question</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">Vector Search</div><div class="arch-name">Full Corpus Top-20</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box danger"><div class="arch-label">ACL Filter</div><div class="arch-name">Discard 17 of 20</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">LLM</div><div class="arch-name">3 weak results</div></div>
+      </div>
+    </div>
+
+    <h3>The Latency Waste</h3>
+
+    <p>Every document that gets filtered post-retrieval represents wasted work: a vector distance computation, potentially an OTCS REST fetch, a re-ranking pass. For a restricted user on a large corpus, you may be doing 10–20× more work than necessary — and delivering a worse result.</p>
+
+    <h3>The Semantic Leakage Risk</h3>
+
+    <p>This is the less obvious danger. Even after you filter out inaccessible chunks from the final context, those chunks influenced your retrieval scoring. A highly restricted document that ranked first in semantic similarity pulled other documents up in the ranking — documents that may be accessible but only tangentially relevant. The restricted document's semantic fingerprint is baked into your result ordering. As covered in detail in <a href="blog-acl-aware-rag.html">ACL-Aware RAG</a>, post-retrieval filtering is not a clean security boundary.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Post-retrieval filtering is not a security control.</strong> It's a convenience layer. Re-ranking algorithms compute scores based on the full retrieved set before you filter — inaccessible content shapes the ranking even when removed from the context. For genuine access control, enforcement must happen before retrieval.</p></div>
+    </div>
+
+    <h2 id="early-enforcement">Early Enforcement: The Right Architecture</h2>
+
+    <p>Early enforcement means constraining your vector store query to only search within documents the user is permitted to access. The user's accessible document set becomes a mandatory filter applied before any similarity computation.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Early Enforcement — Correct Architecture</div>
+      <div class="arch-flow">
+        <div class="arch-box"><div class="arch-label">Query</div><div class="arch-name">User + Question</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">ACL Resolver</div><div class="arch-name">Accessible Node IDs</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight"><div class="arch-label">Filtered Search</div><div class="arch-name">Scoped Top-20</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">LLM</div><div class="arch-name">20 relevant results</div></div>
+      </div>
+    </div>
+
+    <p>The mechanism: at index time, every chunk is stored in the vector store with its OTCS node ID as a metadata field. At query time, you resolve the current user's accessible node IDs first, then pass that set as a filter constraint on the vector query. The vector store only computes similarity over the accessible subset.</p>
+
+    <h2 id="acl-lookup">The ACL Lookup Problem — and How Caching Solves It</h2>
+
+    <p>The objection to early enforcement is always the same: "Resolving the user's accessible documents before every query is expensive. A user might have access to 50,000 nodes — I can't check each one per query."</p>
+
+    <p>This is a valid concern with a straightforward answer: <strong>cache the ACL resolution, not the retrieval.</strong></p>
+
+    <p>OTCS permissions don't change per query — they change per permission event (role change, document reclassification, workspace restructure). For most enterprise users, their permission set is stable for hours or days. A cache with a 10–15 minute TTL eliminates the N+1 lookup problem entirely.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">acl_resolver.py — cached ACL lookup with scoped indexing</div>
+      <pre><span class="kw">import</span> time, redis, json
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">CachedACLResolver</span>:
+    otcs_base_url: str
+    redis_client: redis.Redis
+    ttl_seconds: int = <span class="num">600</span>  <span class="cmt"># 10 minutes</span>
+
+    <span class="kw">def</span> <span class="fn">get_accessible_nodes</span>(self, ticket: str, indexed_node_ids: set[int]) -> set[int]:
+        <span class="cmt"># Try cache first</span>
+        cache_key = <span class="str">f"acl:{ticket[:16]}"</span>  <span class="cmt"># partial ticket as key prefix</span>
+        cached = self.redis_client.<span class="fn">get</span>(cache_key)
+        <span class="kw">if</span> cached:
+            all_accessible = set(json.<span class="fn">loads</span>(cached))
+            <span class="kw">return</span> all_accessible & indexed_node_ids  <span class="cmt"># intersect with indexed set</span>
+
+        <span class="cmt"># Cache miss — resolve from OTCS</span>
+        accessible = self.<span class="fn">_resolve_from_otcs</span>(ticket, indexed_node_ids)
+        self.redis_client.<span class="fn">setex</span>(
+            cache_key,
+            self.ttl_seconds,
+            json.<span class="fn">dumps</span>(<span class="fn">list</span>(accessible))
+        )
+        <span class="kw">return</span> accessible
+
+    <span class="kw">def</span> <span class="fn">_resolve_from_otcs</span>(self, ticket: str, node_ids: set[int]) -> set[int]:
+        <span class="cmt"># Use OTCS search API with OTCSTicket — only returns accessible nodes</span>
+        <span class="cmt"># POST /api/v2/search with node_id filter: OTCS enforces ACL server-side</span>
+        accessible = set()
+        batch = <span class="fn">list</span>(node_ids)
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="fn">len</span>(batch), <span class="num">100</span>):  <span class="cmt"># batch in groups of 100</span>
+            chunk = batch[i:i+<span class="num">100</span>]
+            ids_filter = <span class="str">" OR "</span>.<span class="fn">join</span>(<span class="str">f"OTNodeID:{nid}"</span> <span class="kw">for</span> nid <span class="kw">in</span> chunk)
+            resp = self.<span class="fn">_search</span>(ticket, ids_filter)
+            accessible.<span class="fn">update</span>(r[<span class="str">"id"</span>] <span class="kw">for</span> r <span class="kw">in</span> resp.<span class="fn">get</span>(<span class="str">"results"</span>, []))
+        <span class="kw">return</span> accessible</pre>
+    </div>
+
+    <p>The key insight in the implementation above: the OTCS search API itself enforces ACL. A search request authenticated with an OTCSTicket only returns nodes the ticket-holder can see. You're not writing custom permission logic — you're delegating to OTCS's existing access control and caching the result.</p>
+
+    <h2 id="index-time">Index Time vs Query Time: When Does Each Apply?</h2>
+
+    <p>Early enforcement at query time (resolving per user, per query) handles the common case. But there's a separate question about what to do at index time — specifically, whether to create user-specific indexes or a single shared index.</p>
+
+    <h3>Shared Index (Recommended)</h3>
+
+    <p>Index all documents into a single vector store with node ID metadata. Resolve user permissions at query time, pass as a filter. This is the right default: one index to maintain, permissions enforced dynamically, no synchronisation problem when permissions change.</p>
+
+    <h3>User-Scoped Index (Avoid)</h3>
+
+    <p>Create separate vector stores per user or user group. Index only documents each group can access. This sounds appealing because there's no runtime ACL resolution, but the maintenance cost is severe: when permissions change, you must re-index affected documents for every user scope that's impacted. In an enterprise with hundreds of user groups and frequently updated permissions, this becomes unmanageable quickly.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>Use group-level scoping for large deployments.</strong> Instead of per-user ACL resolution, resolve the user's effective OTCS groups (typically 5–20 groups per user) and tag embeddings with a list of group IDs that can access them. Querying then filters by group membership — fewer cache entries, faster resolution, and group permission changes only invalidate that group's cache entry.</p></div>
+    </div>
+
+    <h2 id="evaluation">Evaluating ACL Enforcement Quality</h2>
+
+    <p>ACL enforcement is one of the few areas where you absolutely must run evaluation as multiple personas. A single test user with broad access will never surface the failure modes.</p>
+
+    <p>The test matrix I run on every deployment:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">acl_test_matrix.py — multi-persona retrieval evaluation</div>
+      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Callable
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">PersonaTest</span>:
+    name: str
+    ticket: str          <span class="cmt"># OTCS ticket for this persona</span>
+    accessible_pct: float  <span class="cmt"># expected % of corpus accessible</span>
+    min_precision: float   <span class="cmt"># minimum acceptable precision@k</span>
+
+TEST_PERSONAS = [
+    <span class="fn">PersonaTest</span>(<span class="str">"admin"</span>,       ADMIN_TICKET,    <span class="num">1.00</span>, <span class="num">0.80</span>),
+    <span class="fn">PersonaTest</span>(<span class="str">"finance"</span>,     FINANCE_TICKET,  <span class="num">0.15</span>, <span class="num">0.70</span>),
+    <span class="fn">PersonaTest</span>(<span class="str">"contractor"</span>,  CONTRACTOR_TICKET, <span class="num">0.04</span>, <span class="num">0.65</span>),
+    <span class="fn">PersonaTest</span>(<span class="str">"read_only"</span>,  READONLY_TICKET, <span class="num">0.60</span>, <span class="num">0.75</span>),
+]
+
+<span class="kw">def</span> <span class="fn">run_acl_eval</span>(pipeline, test_queries: list[str], personas: list[PersonaTest]):
+    <span class="kw">for</span> persona <span class="kw">in</span> personas:
+        precisions = []
+        <span class="kw">for</span> query <span class="kw">in</span> test_queries:
+            results = pipeline.<span class="fn">retrieve</span>(query, ticket=persona.ticket)
+            <span class="cmt"># Verify every result is accessible to this persona</span>
+            violations = [r <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if not</span> <span class="fn">can_access</span>(persona.ticket, r.node_id)]
+            assert <span class="fn">len</span>(violations) == <span class="num">0</span>, <span class="str">f"ACL violation for {persona.name}: {violations}"</span>
+            precisions.<span class="fn">append</span>(<span class="fn">precision_at_k</span>(results, k=<span class="num">5</span>))
+
+        avg_precision = <span class="fn">sum</span>(precisions) / <span class="fn">len</span>(precisions)
+        assert avg_precision >= persona.min_precision, (
+            <span class="str">f"{persona.name} precision {avg_precision:.2f} &lt; threshold {persona.min_precision}"</span>
+        )</pre>
+    </div>
+
+    <p>The critical assertion is the violation check: <strong>every retrieved result must be accessible to the querying persona.</strong> If any result fails this check, your pre-retrieval filter is not working correctly. This is a hard failure, not a metric to optimise — either your ACL enforcement is correct or it isn't.</p>
+
+    <p>The precision check catches the silent failure mode: a restricted user gets technically correct results (all accessible) but far fewer of them, degrading precision below an acceptable threshold. If your restricted personas show precision drops greater than 20% compared to broad-access users on the same queries, your accessible document set is too small — likely because your indexed corpus doesn't include the right documents for those personas' query patterns.</p>
+
+    <h2 id="complex-acls">Handling Complex ACL Patterns in OTCS</h2>
+
+    <p>OTCS permissions are more nuanced than a simple allowed/denied flag. A few patterns that require special handling:</p>
+
+    <ul>
+      <li><strong>Inherited vs overridden permissions:</strong> A workspace may grant broad read access, but a document inside it may have restricted permissions set directly on the node. Always resolve at the node level, never assume workspace inheritance is complete.</li>
+      <li><strong>Time-limited access:</strong> Records Management workflows can grant temporary access (e.g., during an audit window). These need a shorter cache TTL — or event-driven invalidation triggered by the RM workflow state change.</li>
+      <li><strong>External user federation:</strong> OTDS-federated external users may have identities from a different directory. Their OTCSTicket is valid but their group memberships resolve against the federated store. Confirm your ACL resolver handles federated group IDs correctly — the OTCS search API will enforce this, but your cache key must include the full identity context, not just the ticket prefix.</li>
+    </ul>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p><strong>Tag embeddings with access group ID instead of individual ACLs.</strong> If your OTCS ACL model is primarily group-based (most enterprise deployments are), store a list of group IDs with each embedding rather than a list of user IDs. This makes the filter clause compact, keeps the cache manageable, and means permission changes only invalidate the affected group's cache entry — not every individual user's cache.</p></div>
+    </div>
+
+    <h2 id="closing">The Foundational Difference</h2>
+
+    <p>The difference between index-time, query-time early, and query-time late enforcement is not a detail to revisit once you're in production. It shapes whether your system works for the people who matter most — the restricted, role-scoped users who make up the majority of enterprise headcount.</p>
+
+    <p>Late enforcement is a prototype pattern that ships as a production system because it worked in testing with admin credentials. Early enforcement with a cached ACL resolver is a small upfront investment that guarantees every retrieved result is actually useful to the person who asked.</p>
+
+    <p><strong>Early enforcement feels like overhead until you hit production — then it's the only thing standing between you and silent failures for 80% of your users.</strong></p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-acl-aware-rag.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL-Aware RAG: Why Your Enterprise AI Must Respect Document Permissions</div>
+        </a>
+        <a href="blog-rag-retrieval-cache.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Performance</div>
+          <div class="related-post-title">Why You Need a Retrieval Cache in Your OpenText RAG Pipeline</div>
+        </a>
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+        </a>
+        <a href="blog-rag-node-id-preservation.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+window.addEventListener('scroll', function() {
+  var el = document.getElementById('reading-progress');
+  var docH = document.documentElement.scrollHeight - window.innerHeight;
+  el.style.width = docH > 0 ? (window.scrollY / docH * 100) + '%' : '0%';
+});
+(function() {
+  var url = 'https://kapiluthra.github.io/blog-rag-acl-query-time.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function() {
+    navigator.clipboard.writeText(url).then(function() {
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied';
+      b.classList.add('copied');
+      setTimeout(function() { b.textContent = '⧉ Copy link'; b.classList.remove('copied'); }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', function() {
+    var code = block.querySelector('pre').innerText;
+    navigator.clipboard.writeText(code).then(function() {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+  wrap.appendChild(btn);
+});
+var themeBtn = document.getElementById('theme-btn');
+themeBtn.addEventListener('click', function() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ku-theme', next);
+  themeBtn.textContent = next === 'dark' ? '◐' : '◑';
+});
+var storedTheme = localStorage.getItem('ku-theme') || 'light';
+themeBtn.textContent = storedTheme === 'dark' ? '◐' : '◑';
+</script>
+</body>
+</html>
