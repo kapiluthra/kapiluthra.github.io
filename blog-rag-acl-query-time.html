@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ACL Enforcement: Index Time vs Query Time in OpenText RAG — Kapil Uthra</title>
-<meta name="description" content="Post-retrieval ACL filtering is a trap: you retrieve inaccessible content, waste compute, and return empty results. Here's why early enforcement wins — and how to build it without killing performance.">
+<title>ACL Enforcement in OpenText RAG: Protecting Both Retrieval Paths — Kapil Uthra</title>
+<meta name="description" content="Hybrid RAG means two retrieval paths — vector and keyword. For enterprise security, ACLs must live in both stores. Here's the dual-store group-based pattern that scales.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://kapiluthra.github.io/blog-rag-acl-query-time.html">
-<meta property="og:title" content="ACL Enforcement: Index Time vs Query Time in OpenText RAG">
-<meta property="og:description" content="You indexed a million documents. A restricted user queries. You filter after ranking — and discard 80% of results. You just wasted 900ms on content the user can't see. The fix is enforcing ACLs before vector search, not after.">
+<meta property="og:title" content="ACL Enforcement in OpenText RAG: Protecting Both Retrieval Paths">
+<meta property="og:description" content="Hybrid search runs two retrieval paths in parallel. A VP with a million documents breaks naive node_id filtering on either one. The fix: store acl_group_id in both the vector store and metadata store, filter on tiny group sets, merge safely with RRF.">
 <meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ACL Enforcement: Index Time vs Query Time in OpenText RAG">
+<meta name="twitter:title" content="How to Enforce ACLs in OpenText RAG Without Breaking at Scale">
 <meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
@@ -87,6 +87,12 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1
 .arch-box.highlight .arch-name { color: var(--amber); }
 .arch-box.danger .arch-name { color: var(--red); }
 .arch-arrow { color: var(--text-3); font-size: 16px; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin: 1.5rem 0; }
+.compare-cell { background: var(--bg-2); padding: 1rem 1.25rem; }
+.compare-cell h4 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.compare-cell.bad h4 { color: var(--red); }
+.compare-cell.good h4 { color: var(--green); }
+.compare-cell p { font-family: var(--mono); font-size: 11px; color: var(--text-2); line-height: 1.6; margin-bottom: 0; }
 .section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
 .article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
 .article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
@@ -105,6 +111,7 @@ footer a:hover { color: var(--amber); opacity: 1; }
   .nav-hamburger { display: flex; }
   .article-wrap { padding: 76px 1rem 4rem; }
   .related-posts { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
   footer { padding: 1.5rem; }
   .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .codeblock pre { min-width: max-content; }
@@ -175,230 +182,271 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
   </div>
 
   <div class="article-meta">
-    <div class="article-category">AI/RAG · Security</div>
-    <h1 class="article-title">ACL Enforcement: Index Time vs Query Time in OpenText RAG</h1>
-    <p class="article-subtitle">The choice of when to apply permissions is not a security detail — it's an architecture decision that determines whether your system silently fails for restricted users or works reliably for everyone. Late enforcement sounds simpler until it hits production.</p>
+    <div class="article-category">AI/RAG · Security · Architecture</div>
+    <h1 class="article-title">ACL Enforcement in OpenText RAG: Protecting Both Retrieval Paths</h1>
+    <p class="article-subtitle">Hybrid search means two retrieval paths — vector for semantic, keyword for exact match. For enterprise security, ACLs must live in both stores and filter independently before results are merged. One unprotected path is all it takes for a permission leak.</p>
     <div class="article-byline">
       <span>Kapil Uthra</span>
       <span>May 2026</span>
-      <span>~11 min read</span>
+      <span>~12 min read</span>
     </div>
     <div class="article-tags">
       <span class="tag">rag</span>
       <span class="tag">acl</span>
       <span class="tag">security</span>
       <span class="tag">opentext</span>
+      <span class="tag">hybrid-search</span>
       <span class="tag">permissions</span>
     </div>
   </div>
 
   <div class="article-body">
 
-    <p>You indexed a million documents. Your retrieval is fast. Your LLM answers are good. Then you test with a restricted user — someone from finance, with access to a narrow slice of the repository — and they run a query. The system spends 900ms retrieving the top-20 results, applies your post-retrieval ACL check, and discards 17 of them because the user can't see them. Three results survive. Two are marginally relevant.</p>
+    <p>Your RAG pipeline runs hybrid search — vector for semantic matching, keyword for exact lookups — and you've tested it. It works. Then a VP with access to a million documents runs a query. One of two things happens: the system times out trying to filter the vector store by 800,000 node IDs, or the keyword path silently returns documents that user shouldn't see because the metadata store filter wasn't wired up. Either way, you have a production incident.</p>
 
-    <p>The user gets a weak answer. They ask the question again phrased differently. Same result. They stop using the system.</p>
+    <p>The fix isn't to optimise the document list lookup. <strong>It's to filter on the right dimension — group IDs, not document IDs — and to do it on both retrieval paths before results are merged.</strong></p>
 
-    <p>You just built a RAG system that works perfectly for administrators and fails for the users who matter most. <strong>The cause is where you chose to enforce permissions.</strong></p>
+    <h2 id="why-naive-fails">Why the Naive Pattern Fails at Scale</h2>
 
-    <h2 id="the-two-moments">The Two Enforcement Moments</h2>
+    <p>The intuitive ACL pattern:</p>
 
-    <p>In any RAG pipeline over a permission-controlled content repository, you have two opportunities to apply access controls:</p>
+    <ol>
+      <li>User submits a query</li>
+      <li>Resolve all document IDs the user can access (via OTCS REST or a permission table)</li>
+      <li>Pass that list as a <code>node_id IN [...]</code> filter to the vector store and/or metadata store</li>
+      <li>Run search within the filtered set</li>
+    </ol>
 
-    <ul>
-      <li><strong>Early enforcement</strong> — before or during vector search. You constrain the search space to only documents the current user can access. The retrieval returns top-k results <em>from the accessible set</em>.</li>
-      <li><strong>Late enforcement</strong> — after vector search and ranking. You retrieve the top-k from the full corpus, then filter out anything the user can't see. The LLM gets whatever survives.</li>
-    </ul>
+    <p>For a user with access to 500 documents, this works. For a user with access to 500,000 documents, you're passing a filter clause with half a million integer IDs. Most vector stores have limits on filter clause size. And even if your keyword store accepts it, the query planner still has to evaluate that predicate on every candidate row. The failure mode is entirely predictable — it's just a matter of when a high-access user shows up.</p>
 
-    <p>Late enforcement is tempting because it feels simpler: index everything once, enforce permissions at the last moment. In practice, it systematically fails restricted users and introduces security risks that are subtle but real.</p>
-
-    <h2 id="why-late-fails">Why Late Enforcement Fails in Production</h2>
-
-    <h3>The Empty Results Trap</h3>
-
-    <p>When you retrieve top-k from the full corpus and then filter, the number of results that survive depends on how much of the corpus the user can access. For a general user with broad permissions, late filtering works fine — most of their top-k results pass the check. For a restricted user, it's a different story.</p>
-
-    <p>Consider a finance analyst who can access 8,000 documents out of a 200,000-document corpus (4%). If your vector search retrieves the top-20 results from the full corpus, statistically about 0–1 of those results fall within their accessible set. You return an effectively empty context. The LLM hallucinates or says "I don't have information on that." The user is baffled — the document they're looking for is right there in the system.</p>
-
-    <div class="arch-diagram">
-      <div class="arch-title">Late Enforcement — The Wasted Compute Problem</div>
-      <div class="arch-flow">
-        <div class="arch-box"><div class="arch-label">Query</div><div class="arch-name">User + Question</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box"><div class="arch-label">Vector Search</div><div class="arch-name">Full Corpus Top-20</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box danger"><div class="arch-label">ACL Filter</div><div class="arch-name">Discard 17 of 20</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box"><div class="arch-label">LLM</div><div class="arch-name">3 weak results</div></div>
+    <div class="compare-grid">
+      <div class="compare-cell bad">
+        <h4>❌ Naive — filter by document list</h4>
+        <p>user has access to 800k docs<br>→ filter: node_id IN [1,2,3...800000]<br>→ times out / malformed clause<br>→ both retrieval paths break</p>
+      </div>
+      <div class="compare-cell good">
+        <h4>✓ Correct — filter by group (both stores)</h4>
+        <p>user belongs to 12 groups<br>→ filter: acl_group_id IN [g1,g2...g12]<br>→ fast, bounded, stable<br>→ works on vector + metadata store</p>
       </div>
     </div>
 
-    <h3>The Latency Waste</h3>
+    <h2 id="the-insight">The Architectural Insight: Dual-Store ACL with Group Filtering</h2>
 
-    <p>Every document that gets filtered post-retrieval represents wasted work: a vector distance computation, potentially an OTCS REST fetch, a re-ranking pass. For a restricted user on a large corpus, you may be doing 10–20× more work than necessary — and delivering a worse result.</p>
+    <p>OpenText Content Management permissions are group-based by design. A user belongs to a small number of groups — typically 5 to 50. Those groups grant access to potentially millions of documents. The asymmetry is the key: <strong>the user's group set is tiny and stable; their document set is large and dynamic.</strong></p>
 
-    <h3>The Semantic Leakage Risk</h3>
-
-    <p>This is the less obvious danger. Even after you filter out inaccessible chunks from the final context, those chunks influenced your retrieval scoring. A highly restricted document that ranked first in semantic similarity pulled other documents up in the ranking — documents that may be accessible but only tangentially relevant. The restricted document's semantic fingerprint is baked into your result ordering. As covered in detail in <a href="blog-acl-aware-rag.html">ACL-Aware RAG</a>, post-retrieval filtering is not a clean security boundary.</p>
-
-    <div class="callout warn">
-      <div class="callout-icon">⚠</div>
-      <div><p><strong>Post-retrieval filtering is not a security control.</strong> It's a convenience layer. Re-ranking algorithms compute scores based on the full retrieved set before you filter — inaccessible content shapes the ranking even when removed from the context. For genuine access control, enforcement must happen before retrieval.</p></div>
-    </div>
-
-    <h2 id="early-enforcement">Early Enforcement: The Right Architecture</h2>
-
-    <p>Early enforcement means constraining your vector store query to only search within documents the user is permitted to access. The user's accessible document set becomes a mandatory filter applied before any similarity computation.</p>
+    <p>The correct architecture exploits this asymmetry across both retrieval paths. At index time, tag every chunk with <code>acl_group_id</code> in both the vector store (for semantic search) and the metadata store (for exact-match and attribute queries). At query time, resolve the user's group memberships once — cached per session — and pass those same group IDs as the filter to whichever path runs. Both paths return permission-safe results. Reciprocal Rank Fusion merges them. No path has to trust the other.</p>
 
     <div class="arch-diagram">
-      <div class="arch-title">Early Enforcement — Correct Architecture</div>
-      <div class="arch-flow">
-        <div class="arch-box"><div class="arch-label">Query</div><div class="arch-name">User + Question</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box highlight"><div class="arch-label">ACL Resolver</div><div class="arch-name">Accessible Node IDs</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box highlight"><div class="arch-label">Filtered Search</div><div class="arch-name">Scoped Top-20</div></div>
-        <div class="arch-arrow">→</div>
-        <div class="arch-box"><div class="arch-label">LLM</div><div class="arch-name">20 relevant results</div></div>
+      <div class="arch-title">Hybrid Retrieval with Dual-Store ACL</div>
+      <div class="arch-flow" style="flex-direction:column;align-items:stretch;gap:1rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;justify-content:center;">
+          <div class="arch-box highlight"><div class="arch-label">Query Time</div><div class="arch-name">user → groups (cached) → filter clause</div></div>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div class="arch-box"><div class="arch-label">Path A — Semantic</div><div class="arch-name">vector store<br>acl_group_id IN [...]</div></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-box"><div class="arch-label">Result A</div><div class="arch-name">ranked chunks</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div class="arch-box"><div class="arch-label">Path B — Keyword/Attr</div><div class="arch-name">metadata store<br>acl_group_id IN [...]</div></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-box"><div class="arch-label">Result B</div><div class="arch-name">ranked chunks</div></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;justify-content:center;">
+          <div class="arch-arrow">↓</div>
+          <div class="arch-box highlight"><div class="arch-label">Merge</div><div class="arch-name">Reciprocal Rank Fusion</div></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box"><div class="arch-label">Stage 2</div><div class="arch-name">per-doc re-check (top-k only)</div></div>
+        </div>
       </div>
     </div>
 
-    <p>The mechanism: at index time, every chunk is stored in the vector store with its OTCS node ID as a metadata field. At query time, you resolve the current user's accessible node IDs first, then pass that set as a filter constraint on the vector query. The vector store only computes similarity over the accessible subset.</p>
+    <h2 id="index-time">Index Time: Store <code>acl_group_id</code> in Both Stores</h2>
 
-    <h2 id="acl-lookup">The ACL Lookup Problem — and How Caching Solves It</h2>
-
-    <p>The objection to early enforcement is always the same: "Resolving the user's accessible documents before every query is expensive. A user might have access to 50,000 nodes — I can't check each one per query."</p>
-
-    <p>This is a valid concern with a straightforward answer: <strong>cache the ACL resolution, not the retrieval.</strong></p>
-
-    <p>OTCS permissions don't change per query — they change per permission event (role change, document reclassification, workspace restructure). For most enterprise users, their permission set is stable for hours or days. A cache with a 10–15 minute TTL eliminates the N+1 lookup problem entirely.</p>
+    <p>The key indexing decision: <code>acl_group_id</code> must land in both the vector store and the metadata store. Each retrieval path needs to enforce ACL independently — if one store is missing the field, that path becomes a permission leak.</p>
 
     <div class="codeblock">
-      <div class="codeblock-title">acl_resolver.py — cached ACL lookup with scoped indexing</div>
-      <pre><span class="kw">import</span> time, redis, json
-<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+      <div class="codeblock-title">Dual-store indexing — acl_group_id in both records</div>
+      <pre><span class="cmt"># Vector store record (lean — for similarity search + group filter)</span>
+vector_store_record = {
+    <span class="str">"id"</span>: <span class="str">"chunk_4821993_0"</span>,
+    <span class="str">"embedding"</span>: [...],            <span class="cmt"># float vector</span>
+    <span class="str">"node_id"</span>: <span class="num">4821993</span>,            <span class="cmt"># OTCS DataID — link back to source</span>
+    <span class="str">"acl_group_id"</span>: <span class="str">"grp_legal"</span>,   <span class="cmt"># group that grants access — filter key</span>
+    <span class="str">"chunk_index"</span>: <span class="num">0</span>,
+}
 
-<span class="kw">@dataclass</span>
-<span class="kw">class</span> <span class="fn">CachedACLResolver</span>:
-    otcs_base_url: str
-    redis_client: redis.Redis
-    ttl_seconds: int = <span class="num">600</span>  <span class="cmt"># 10 minutes</span>
-
-    <span class="kw">def</span> <span class="fn">get_accessible_nodes</span>(self, ticket: str, indexed_node_ids: set[int]) -> set[int]:
-        <span class="cmt"># Try cache first</span>
-        cache_key = <span class="str">f"acl:{ticket[:16]}"</span>  <span class="cmt"># partial ticket as key prefix</span>
-        cached = self.redis_client.<span class="fn">get</span>(cache_key)
-        <span class="kw">if</span> cached:
-            all_accessible = set(json.<span class="fn">loads</span>(cached))
-            <span class="kw">return</span> all_accessible & indexed_node_ids  <span class="cmt"># intersect with indexed set</span>
-
-        <span class="cmt"># Cache miss — resolve from OTCS</span>
-        accessible = self.<span class="fn">_resolve_from_otcs</span>(ticket, indexed_node_ids)
-        self.redis_client.<span class="fn">setex</span>(
-            cache_key,
-            self.ttl_seconds,
-            json.<span class="fn">dumps</span>(<span class="fn">list</span>(accessible))
-        )
-        <span class="kw">return</span> accessible
-
-    <span class="kw">def</span> <span class="fn">_resolve_from_otcs</span>(self, ticket: str, node_ids: set[int]) -> set[int]:
-        <span class="cmt"># Use OTCS search API with OTCSTicket — only returns accessible nodes</span>
-        <span class="cmt"># POST /api/v2/search with node_id filter: OTCS enforces ACL server-side</span>
-        accessible = set()
-        batch = <span class="fn">list</span>(node_ids)
-        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="fn">len</span>(batch), <span class="num">100</span>):  <span class="cmt"># batch in groups of 100</span>
-            chunk = batch[i:i+<span class="num">100</span>]
-            ids_filter = <span class="str">" OR "</span>.<span class="fn">join</span>(<span class="str">f"OTNodeID:{nid}"</span> <span class="kw">for</span> nid <span class="kw">in</span> chunk)
-            resp = self.<span class="fn">_search</span>(ticket, ids_filter)
-            accessible.<span class="fn">update</span>(r[<span class="str">"id"</span>] <span class="kw">for</span> r <span class="kw">in</span> resp.<span class="fn">get</span>(<span class="str">"results"</span>, []))
-        <span class="kw">return</span> accessible</pre>
+<span class="cmt"># Metadata store record (keyed by node_id — for exact match + attribute queries)</span>
+metadata_store_record = {
+    <span class="str">"node_id"</span>: <span class="num">4821993</span>,
+    <span class="str">"name"</span>: <span class="str">"Contract Template v3.2"</span>,
+    <span class="str">"modify_date"</span>: <span class="str">"2026-03-14"</span>,
+    <span class="str">"version"</span>: <span class="num">3</span>,
+    <span class="str">"category"</span>: <span class="str">"Active Contract"</span>,
+    <span class="str">"workspace"</span>: <span class="str">"Legal Workspace"</span>,
+    <span class="str">"acl_group_id"</span>: <span class="str">"grp_legal"</span>,   <span class="cmt"># same field — enables keyword path ACL filter</span>
+    <span class="str">"full_acl"</span>: {<span class="str">"grp_legal"</span>: <span class="str">"SeeContents"</span>, <span class="str">"grp_admin"</span>: <span class="str">"Full"</span>},
+}</pre>
     </div>
 
-    <p>The key insight in the implementation above: the OTCS search API itself enforces ACL. A search request authenticated with an OTCSTicket only returns nodes the ticket-holder can see. You're not writing custom permission logic — you're delegating to OTCS's existing access control and caching the result.</p>
-
-    <h2 id="index-time">Index Time vs Query Time: When Does Each Apply?</h2>
-
-    <p>Early enforcement at query time (resolving per user, per query) handles the common case. But there's a separate question about what to do at index time — specifically, whether to create user-specific indexes or a single shared index.</p>
-
-    <h3>Shared Index (Recommended)</h3>
-
-    <p>Index all documents into a single vector store with node ID metadata. Resolve user permissions at query time, pass as a filter. This is the right default: one index to maintain, permissions enforced dynamically, no synchronisation problem when permissions change.</p>
-
-    <h3>User-Scoped Index (Avoid)</h3>
-
-    <p>Create separate vector stores per user or user group. Index only documents each group can access. This sounds appealing because there's no runtime ACL resolution, but the maintenance cost is severe: when permissions change, you must re-index affected documents for every user scope that's impacted. In an enterprise with hundreds of user groups and frequently updated permissions, this becomes unmanageable quickly.</p>
-
-    <div class="callout tip">
-      <div class="callout-icon">✓</div>
-      <div><p><strong>Use group-level scoping for large deployments.</strong> Instead of per-user ACL resolution, resolve the user's effective OTCS groups (typically 5–20 groups per user) and tag embeddings with a list of group IDs that can access them. Querying then filters by group membership — fewer cache entries, faster resolution, and group permission changes only invalidate that group's cache entry.</p></div>
-    </div>
-
-    <h2 id="evaluation">Evaluating ACL Enforcement Quality</h2>
-
-    <p>ACL enforcement is one of the few areas where you absolutely must run evaluation as multiple personas. A single test user with broad access will never surface the failure modes.</p>
-
-    <p>The test matrix I run on every deployment:</p>
-
-    <div class="codeblock">
-      <div class="codeblock-title">acl_test_matrix.py — multi-persona retrieval evaluation</div>
-      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
-<span class="kw">from</span> typing <span class="kw">import</span> Callable
-
-<span class="kw">@dataclass</span>
-<span class="kw">class</span> <span class="fn">PersonaTest</span>:
-    name: str
-    ticket: str          <span class="cmt"># OTCS ticket for this persona</span>
-    accessible_pct: float  <span class="cmt"># expected % of corpus accessible</span>
-    min_precision: float   <span class="cmt"># minimum acceptable precision@k</span>
-
-TEST_PERSONAS = [
-    <span class="fn">PersonaTest</span>(<span class="str">"admin"</span>,       ADMIN_TICKET,    <span class="num">1.00</span>, <span class="num">0.80</span>),
-    <span class="fn">PersonaTest</span>(<span class="str">"finance"</span>,     FINANCE_TICKET,  <span class="num">0.15</span>, <span class="num">0.70</span>),
-    <span class="fn">PersonaTest</span>(<span class="str">"contractor"</span>,  CONTRACTOR_TICKET, <span class="num">0.04</span>, <span class="num">0.65</span>),
-    <span class="fn">PersonaTest</span>(<span class="str">"read_only"</span>,  READONLY_TICKET, <span class="num">0.60</span>, <span class="num">0.75</span>),
-]
-
-<span class="kw">def</span> <span class="fn">run_acl_eval</span>(pipeline, test_queries: list[str], personas: list[PersonaTest]):
-    <span class="kw">for</span> persona <span class="kw">in</span> personas:
-        precisions = []
-        <span class="kw">for</span> query <span class="kw">in</span> test_queries:
-            results = pipeline.<span class="fn">retrieve</span>(query, ticket=persona.ticket)
-            <span class="cmt"># Verify every result is accessible to this persona</span>
-            violations = [r <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if not</span> <span class="fn">can_access</span>(persona.ticket, r.node_id)]
-            assert <span class="fn">len</span>(violations) == <span class="num">0</span>, <span class="str">f"ACL violation for {persona.name}: {violations}"</span>
-            precisions.<span class="fn">append</span>(<span class="fn">precision_at_k</span>(results, k=<span class="num">5</span>))
-
-        avg_precision = <span class="fn">sum</span>(precisions) / <span class="fn">len</span>(precisions)
-        assert avg_precision >= persona.min_precision, (
-            <span class="str">f"{persona.name} precision {avg_precision:.2f} &lt; threshold {persona.min_precision}"</span>
-        )</pre>
-    </div>
-
-    <p>The critical assertion is the violation check: <strong>every retrieved result must be accessible to the querying persona.</strong> If any result fails this check, your pre-retrieval filter is not working correctly. This is a hard failure, not a metric to optimise — either your ACL enforcement is correct or it isn't.</p>
-
-    <p>The precision check catches the silent failure mode: a restricted user gets technically correct results (all accessible) but far fewer of them, degrading precision below an acceptable threshold. If your restricted personas show precision drops greater than 20% compared to broad-access users on the same queries, your accessible document set is too small — likely because your indexed corpus doesn't include the right documents for those personas' query patterns.</p>
-
-    <h2 id="complex-acls">Handling Complex ACL Patterns in OTCS</h2>
-
-    <p>OTCS permissions are more nuanced than a simple allowed/denied flag. A few patterns that require special handling:</p>
-
-    <ul>
-      <li><strong>Inherited vs overridden permissions:</strong> A workspace may grant broad read access, but a document inside it may have restricted permissions set directly on the node. Always resolve at the node level, never assume workspace inheritance is complete.</li>
-      <li><strong>Time-limited access:</strong> Records Management workflows can grant temporary access (e.g., during an audit window). These need a shorter cache TTL — or event-driven invalidation triggered by the RM workflow state change.</li>
-      <li><strong>External user federation:</strong> OTDS-federated external users may have identities from a different directory. Their OTCSTicket is valid but their group memberships resolve against the federated store. Confirm your ACL resolver handles federated group IDs correctly — the OTCS search API will enforce this, but your cache key must include the full identity context, not just the ticket prefix.</li>
-    </ul>
+    <p>The vector store handles semantic similarity and group-filtered search. The metadata store handles exact lookups, attribute filters, and keyword queries — queries like "CV-2024-001" or "all Q3 Finance contracts" that don't belong in vector similarity at all (that's what Week 1 was about). Both stores carry <code>acl_group_id</code>; both filter on it before returning results. Neither has to trust the other's output.</p>
 
     <div class="callout info">
       <div class="callout-icon">ℹ</div>
-      <div><p><strong>Tag embeddings with access group ID instead of individual ACLs.</strong> If your OTCS ACL model is primarily group-based (most enterprise deployments are), store a list of group IDs with each embedding rather than a list of user IDs. This makes the filter clause compact, keeps the cache manageable, and means permission changes only invalidate the affected group's cache entry — not every individual user's cache.</p></div>
+      <div><p><strong>What if a document is accessible to multiple groups?</strong> Store one record per group that grants access — same chunk, same embedding, different <code>acl_group_id</code>. Do this in both stores. It increases index size slightly but keeps the query-time filter trivially simple. The alternative (storing a list of group IDs per record) requires stores that support array membership filters, which not all do.</p></div>
     </div>
 
-    <h2 id="closing">The Foundational Difference</h2>
+    <h2 id="query-time">Query Time: Resolve Groups, Filter, Re-Check</h2>
 
-    <p>The difference between index-time, query-time early, and query-time late enforcement is not a detail to revisit once you're in production. It shapes whether your system works for the people who matter most — the restricted, role-scoped users who make up the majority of enterprise headcount.</p>
+    <p>The query path has two stages. Stage 1 is fast and handles the bulk of filtering. Stage 2 is a targeted safety net for edge cases.</p>
 
-    <p>Late enforcement is a prototype pattern that ships as a production system because it worked in testing with admin credentials. Early enforcement with a cached ACL resolver is a small upfront investment that guarantees every retrieved result is actually useful to the person who asked.</p>
+    <h3>Stage 1 — Vector Search with Group Filter</h3>
 
-    <p><strong>Early enforcement feels like overhead until you hit production — then it's the only thing standing between you and silent failures for 80% of your users.</strong></p>
+    <div class="codeblock">
+      <div class="codeblock-title">acl_retrieval.py — group-based filtered search</div>
+      <pre><span class="kw">async def</span> <span class="fn">retrieve_with_acl</span>(
+    query_embedding: list[float],
+    user_ticket: str,
+    group_resolver,   <span class="cmt"># cached OTCS group lookup</span>
+    vector_store,
+    top_k: int = <span class="num">20</span>,
+) -> list[dict]:
+
+    <span class="cmt"># Resolve user's groups — cached per session, typically 5–50 IDs</span>
+    user_groups = <span class="kw">await</span> group_resolver.<span class="fn">get_groups</span>(user_ticket)
+
+    <span class="kw">if not</span> user_groups:
+        <span class="kw">return</span> []  <span class="cmt"># no group memberships → no access</span>
+
+    <span class="cmt"># Stage 1: vector search with group filter (fast — bounded filter clause)</span>
+    results = <span class="kw">await</span> vector_store.<span class="fn">search</span>(
+        embedding=query_embedding,
+        filter={<span class="str">"acl_group_id"</span>: {<span class="str">"$in"</span>: user_groups}},
+        k=top_k,
+    )
+    <span class="kw">return</span> results</pre>
+    </div>
+
+    <h3>Stage 2 — Per-Document Re-Check on Top-K Only</h3>
+
+    <p>Group-based filtering handles the common case. But OpenText supports document-level permission overrides — a user may be in a group that grants broad access but be explicitly denied on a specific node. Stage 2 catches these edge cases by doing a targeted ACL re-check on just the top-k results, not the whole corpus.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">Stage 2 — fine-grained per-document verification</div>
+      <pre><span class="kw">async def</span> <span class="fn">verify_top_k</span>(
+    results: list[dict],
+    user_ticket: str,
+    otcs_client,
+) -> list[dict]:
+    <span class="str">"""Re-check See Contents permission on each top-k node."""</span>
+    verified = []
+    <span class="kw">for</span> chunk <span class="kw">in</span> results:
+        node_id = chunk[<span class="str">"node_id"</span>]
+        <span class="cmt"># HEAD request to node content endpoint — 200 = accessible, 403 = denied</span>
+        ok = <span class="kw">await</span> otcs_client.<span class="fn">can_see_contents</span>(user_ticket, node_id)
+        <span class="kw">if</span> ok:
+            verified.<span class="fn">append</span>(chunk)
+    <span class="kw">return</span> verified
+
+<span class="cmt"># Full pipeline</span>
+<span class="kw">async def</span> <span class="fn">acl_aware_retrieve</span>(query_embedding, user_ticket, ...):
+    stage1 = <span class="kw">await</span> <span class="fn">retrieve_with_acl</span>(query_embedding, user_ticket, ...)
+    stage2 = <span class="kw">await</span> <span class="fn">verify_top_k</span>(stage1, user_ticket, otcs_client)
+    <span class="kw">return</span> stage2</pre>
+    </div>
+
+    <p>Stage 2 makes at most <code>top_k</code> OTCS API calls — typically 10–20. That's bounded and fast, unlike the naive pattern which makes unbounded calls proportional to the user's total accessible set.</p>
+
+    <h2 id="metadata-store-path">The Metadata Store Path: Exact Match with the Same ACL Key</h2>
+
+    <p>Vector search handles "find documents similar to this concept." The metadata store handles something different: "find the document named CV-2024-001" or "list all Q3 Finance contracts approved after June." These are exact-match and attribute queries — they should hit the metadata store directly with SQL-style filters, not be forced through vector similarity.</p>
+
+    <p>The ACL filter here uses the same key — <code>acl_group_id IN [user_groups]</code> — applied as a WHERE clause alongside whatever attribute predicates the query requires:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">metadata_retrieval.py — exact-match query with ACL filter</div>
+      <pre><span class="kw">async def</span> <span class="fn">search_metadata_store</span>(
+    query_text: str,
+    user_groups: list[str],
+    metadata_store,
+    filters: dict = <span class="kw">None</span>,
+    top_k: int = <span class="num">20</span>,
+) -> list[dict]:
+    <span class="str">"""Keyword/attribute query on metadata store with group ACL filter."""</span>
+
+    <span class="cmt"># Build the WHERE clause — ACL filter is always included</span>
+    where = {
+        <span class="str">"acl_group_id"</span>: {<span class="str">"$in"</span>: user_groups},  <span class="cmt"># non-negotiable</span>
+    }
+    <span class="kw">if</span> filters:
+        where.<span class="fn">update</span>(filters)  <span class="cmt"># e.g. {"category": "Active Contract", "workspace": "Legal"}</span>
+
+    results = <span class="kw">await</span> metadata_store.<span class="fn">search</span>(
+        query=query_text,
+        where=where,
+        k=top_k,
+    )
+    <span class="kw">return</span> results
+
+<span class="cmt"># Both paths run, then merge</span>
+<span class="kw">async def</span> <span class="fn">hybrid_retrieve_with_acl</span>(query, query_embedding, user_groups, ...):
+    semantic_hits = <span class="kw">await</span> <span class="fn">retrieve_with_acl</span>(query_embedding, user_groups, ...)
+    keyword_hits  = <span class="kw">await</span> <span class="fn">search_metadata_store</span>(query, user_groups, ...)
+    merged = <span class="fn">reciprocal_rank_fusion</span>([semantic_hits, keyword_hits])
+    <span class="kw">return await</span> <span class="fn">verify_top_k</span>(merged, user_ticket, otcs_client)</pre>
+    </div>
+
+    <p>The metadata store path is where exact-match queries live, but it's also the path that most pipelines forget to protect. If you add the group filter to your vector store and nothing else, a user can still get unfiltered results from the keyword path. Defense in depth means both paths carry the same ACL key and both enforce it.</p>
+
+    <h2 id="group-cache">Caching Group Memberships</h2>
+
+    <p>Group memberships change far less often than document content — usually only when HR updates a user's role or when a new project workspace is created. Cache the user-to-groups mapping per session with a TTL of 15–30 minutes as a safety net. But for real-time correctness, invalidate on permission events: when a user is added to or removed from an OpenText group, invalidate that user's cache entry immediately. The TTL catches everything else.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">group_resolver.py — cached group lookup</div>
+      <pre><span class="kw">class</span> <span class="fn">CachedGroupResolver</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, otcs_base_url: str, cache, ttl: int = <span class="num">1800</span>):
+        self.otcs_url = otcs_base_url
+        self.cache = cache
+        self.ttl = ttl  <span class="cmt"># 30 minutes default</span>
+
+    <span class="kw">async def</span> <span class="fn">get_groups</span>(self, ticket: str) -> list[str]:
+        key = <span class="str">f"groups:{ticket[:16]}"</span>
+        cached = self.cache.<span class="fn">get</span>(key)
+        <span class="kw">if</span> cached:
+            <span class="kw">return</span> cached
+
+        <span class="cmt"># OTCS REST: GET /api/v2/members/me/groups returns the user's group list</span>
+        groups = <span class="kw">await</span> self.<span class="fn">_fetch_groups_from_otcs</span>(ticket)
+        group_ids = [g[<span class="str">"id"</span>] <span class="kw">for</span> g <span class="kw">in</span> groups]
+        self.cache.<span class="fn">set</span>(key, group_ids, ttl=self.ttl)
+        <span class="kw">return</span> group_ids</pre>
+    </div>
+
+    <p>Group sets are small — a few dozen integers, a few kilobytes at most. They're trivial to cache and trivial to invalidate by user ID. This is the opposite of caching a per-user document list, which can be megabytes, changes constantly as documents are created and reclassified, and can't be granularly invalidated. The cache key doesn't even need to carry information about what documents the user can see — just who the user is.</p>
+
+    <h2 id="orchestration">A Note on Orchestration Frameworks</h2>
+
+    <p>Generic RAG orchestration libraries abstract the retrieval step in ways that can hide the filter clause from you. If you're using a high-level pipeline wrapper, verify that you can pass arbitrary metadata filters to the vector store call — specifically a multi-value <code>acl_group_id IN [...]</code> filter.</p>
+
+    <p>If you can't, build retrieval directly. ACL enforcement is not a feature to delegate to a framework abstraction. You need full control over what's passed to the vector store at query time, and you need the ability to add Stage 2 per-document verification without the framework intercepting the results.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Test with your highest-access users first.</strong> VPs, records managers, auditors — users with access to large swaths of the repository. They're the ones who expose naive ACL designs. If a broad-access user makes your filter clause time out or your memory spike, your design isn't production-ready regardless of how well it works for restricted users.</p></div>
+    </div>
+
+    <h2 id="closing">The Asymmetry Is the Design</h2>
+
+    <p>The reason group-based filtering scales is simple: filter cardinality stays tiny (5–50 group IDs) while the protected document space stays huge (millions of nodes). You're not filtering more efficiently — you're filtering on the right dimension entirely.</p>
+
+    <p>Hybrid search adds a second reason to get this right. Two retrieval paths run in parallel. If only one carries the ACL filter, the other path is a permission leak — and Reciprocal Rank Fusion will happily surface those unprotected results at the top of the merged list. Defense in depth means <code>acl_group_id</code> in both stores, enforced independently on both paths, merged only after both have returned safe results.</p>
+
+    <p>OpenText was designed around groups for exactly this reason — groups are the stable, manageable unit of access control. The architecture should match the permission model.</p>
+
+    <p><strong>Store the group on the chunk — in both stores. Cache the user's groups per session. Filter on groups on both retrieval paths. Re-verify on the top-k after fusion. That's the pattern that works at scale.</strong></p>
 
     <hr class="section-divider">
 
@@ -417,15 +465,15 @@ TEST_PERSONAS = [
         </a>
         <a href="blog-rag-retrieval-cache.html" class="related-post">
           <div class="related-post-cat">AI/RAG · Performance</div>
-          <div class="related-post-title">Why You Need a Retrieval Cache in Your OpenText RAG Pipeline</div>
-        </a>
-        <a href="blog-rag-hybrid-search.html" class="related-post">
-          <div class="related-post-cat">AI/RAG · Architecture</div>
-          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+          <div class="related-post-title">Caching in OpenText RAG: Skip the Pipeline, Not Just the Fetch</div>
         </a>
         <a href="blog-rag-node-id-preservation.html" class="related-post">
           <div class="related-post-cat">AI/RAG · Implementation</div>
           <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
         </a>
       </div>
     </div>
