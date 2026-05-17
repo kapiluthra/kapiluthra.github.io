@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='4' y='24' font-family='monospace' font-size='22' font-weight='bold' fill='%23d4a843'>K</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Metric to Know If Your OpenText RAG Is Working — Kapil Uthra</title>
+<meta name="description" content="Most OpenText Content Management RAG pipelines ship with zero evaluation. Here's the one metric that catches the most common failure — and why measuring it per user cohort exposes ACL bugs.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://kapiluthra.github.io/blog-rag-eval-metrics.html">
+<meta property="og:title" content="One Metric to Know If Your OpenText RAG Is Working">
+<meta property="og:description" content="RAG evaluation splits into retrieval and generation. A wrong answer could be either. But if you only measure one thing, measure context precision — and run it per user cohort to catch ACL bugs.">
+<meta property="og:image" content="https://kapiluthra.github.io/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="One Metric to Know If Your OpenText RAG Is Working">
+<meta name="twitter:image" content="https://kapiluthra.github.io/og-image.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #090c12; --bg-2: #0d1117; --bg-3: #13191f;
+  --border: #21262d; --border-2: #30363d;
+  --text: #f0ede8; --text-2: #8d96a3; --text-3: #424b57;
+  --amber: #e2b348; --amber-dim: #9b7735; --amber-glow: rgba(226,179,72,0.12);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --serif: 'Crimson Pro', Georgia, serif;
+  --green: #4ec97b; --blue: #5b9cf6; --red: #e06c75;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--mono); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; -webkit-font-smoothing: antialiased; background-image: radial-gradient(ellipse at 15% 40%, rgba(226,179,72,0.05) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(100,160,255,0.03) 0%, transparent 50%); }
+a { color: var(--amber); text-decoration: none; transition: opacity 0.15s; }
+a:hover { opacity: 0.75; }
+body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); pointer-events: none; z-index: 9999; }
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,12,18,0.95); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 52px; }
+.nav-logo { font-size: 13px; font-weight: 500; color: var(--amber); }
+.nav-logo span { color: var(--text-2); font-weight: 300; }
+.nav-links { display: flex; list-style: none; }
+.nav-links a { font-size: 12px; color: var(--text-2); padding: 0 1rem; height: 52px; display: flex; align-items: center; border-left: 1px solid transparent; border-right: 1px solid transparent; transition: all 0.15s; letter-spacing: 0.04em; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); background: var(--bg-2); border-color: var(--border); opacity: 1; }
+.article-wrap { max-width: 720px; margin: 0 auto; padding: 88px 2.5rem 6rem; }
+.article-back { font-size: 11px; color: var(--text-3); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.article-back a { color: var(--text-3); }
+.article-back a:hover { color: var(--amber); opacity: 1; }
+.article-meta { margin-bottom: 2.5rem; }
+.article-category { font-size: 10px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.article-title { font-family: var(--serif); font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.article-subtitle { font-family: var(--serif); font-size: 1.1rem; color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; font-style: italic; }
+.article-byline { display: flex; align-items: center; gap: 1.5rem; font-size: 11px; color: var(--text-3); padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.article-byline span { color: var(--text-2); }
+.article-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+.tag { font-size: 10px; color: var(--text-3); background: var(--bg-3); border: 1px solid var(--border); padding: 2px 8px; letter-spacing: 0.04em; }
+.article-body { padding-top: 2.5rem; }
+.article-body h2 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--amber); letter-spacing: 0.12em; text-transform: uppercase; margin: 3rem 0 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+.article-body h2::before { content: '##'; color: var(--text-3); font-weight: 300; }
+.article-body h3 { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); margin: 2rem 0 0.75rem; }
+.article-body h3::before { content: '### '; color: var(--text-3); font-weight: 300; font-size: 12px; }
+.article-body p { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.85; margin-bottom: 1.25rem; }
+.article-body p strong { color: var(--text); font-weight: 600; }
+.article-body p code { font-family: var(--mono); font-size: 12px; background: var(--bg-3); border: 1px solid var(--border-2); padding: 1px 6px; color: var(--green); }
+.article-body ul, .article-body ol { margin: 0.75rem 0 1.25rem 0; }
+.article-body li { font-family: var(--serif); font-size: 1.05rem; color: var(--text-2); line-height: 1.75; padding: 0.15rem 0 0.15rem 1.5rem; position: relative; }
+.article-body li::before { content: '▸'; position: absolute; left: 0; color: var(--amber); font-size: 10px; top: 6px; font-family: var(--mono); }
+.article-body ol { counter-reset: item; }
+.article-body ol li { counter-increment: item; }
+.article-body ol li::before { content: counter(item) '.'; color: var(--amber); font-family: var(--mono); font-size: 11px; top: 5px; }
+.codeblock { background: var(--bg-3); border: 1px solid var(--border-2); border-left: 3px solid var(--amber-dim); padding: 1.25rem 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+.codeblock-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+.codeblock pre { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-2); white-space: pre; }
+.codeblock .kw { color: var(--blue); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--text-3); font-style: italic; }
+.codeblock .fn { color: var(--amber); }
+.codeblock .num { color: #e5c07b; }
+.callout { border: 1px solid var(--border-2); background: var(--bg-2); padding: 1.25rem 1.5rem; margin: 1.75rem 0; display: flex; gap: 1rem; }
+.callout-icon { color: var(--amber); flex-shrink: 0; font-size: 14px; margin-top: 2px; }
+.callout p { margin-bottom: 0; font-size: 0.95rem; }
+.callout.warn { border-left: 3px solid #e5a020; }
+.callout.tip { border-left: 3px solid var(--green); }
+.callout.info { border-left: 3px solid var(--blue); }
+.arch-diagram { border: 1px solid var(--border); padding: 2rem; margin: 2rem 0; background: var(--bg-2); }
+.arch-title { font-size: 10px; color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: center; }
+.arch-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.arch-box { border: 1px solid var(--border-2); padding: 0.6rem 1rem; font-size: 11px; text-align: center; background: var(--bg-3); }
+.arch-box .arch-label { color: var(--text-3); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.arch-box .arch-name { color: var(--text); font-weight: 500; }
+.arch-box.highlight .arch-name { color: var(--amber); }
+.arch-box.danger .arch-name { color: var(--red); }
+.arch-arrow { color: var(--text-3); font-size: 16px; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin: 1.5rem 0; }
+.compare-cell { background: var(--bg-2); padding: 1rem 1.25rem; }
+.compare-cell h4 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.compare-cell.bad h4 { color: var(--red); }
+.compare-cell.good h4 { color: var(--green); }
+.compare-cell p { font-family: var(--mono); font-size: 11px; color: var(--text-2); line-height: 1.6; margin-bottom: 0; }
+.metrics-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: var(--mono); font-size: 12px; }
+.metrics-table th { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border-2); padding: 0.6rem 1rem; text-align: left; background: var(--bg-3); }
+.metrics-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: top; }
+.metrics-table tr:last-child td { border-bottom: none; }
+.metrics-table td:first-child { color: var(--amber); font-weight: 500; white-space: nowrap; }
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+.article-footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.article-footer h4 { font-size: 10px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.related-posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.related-post { background: var(--bg); padding: 1.25rem; transition: background 0.15s; display: block; color: var(--text); }
+.related-post:hover { background: var(--bg-2); opacity: 1; }
+.related-post-cat { font-size: 10px; color: var(--amber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.related-post-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+footer { border-top: 1px solid var(--border); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-3); margin-top: 2rem; }
+footer a { color: var(--text-3); }
+footer a:hover { color: var(--amber); opacity: 1; }
+#reading-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--amber); width: 0%; z-index: 200; transition: width 0.1s linear; }
+@media (max-width: 640px) {
+  nav { padding: 0 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .article-wrap { padding: 76px 1rem 4rem; }
+  .related-posts { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+  .codeblock { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .codeblock pre { min-width: max-content; }
+  .metrics-table { display: block; overflow-x: auto; }
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 6px; margin-right: -6px; }
+.nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text-2); transition: all 0.2s ease; transform-origin: center; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.nav-drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: rgba(9,12,18,0.98); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); z-index: 99; padding: 0.5rem 0; }
+.nav-drawer.open { display: block; }
+.nav-drawer a { display: block; padding: 0.75rem 1.5rem; font-size: 13px; color: var(--text-2); letter-spacing: 0.04em; border-bottom: 1px solid var(--border); transition: color 0.15s, background 0.15s; }
+.nav-drawer a:last-child { border-bottom: none; }
+.nav-drawer a:hover, .nav-drawer a.active { color: var(--amber); background: var(--bg-2); }
+.codeblock-wrap { position: relative; }
+.copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border); padding: 2px 8px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; z-index: 2; }
+.copy-btn:hover { color: var(--amber); border-color: var(--amber-dim); }
+.copy-btn.copied { color: #4ec97b; border-color: rgba(78,201,123,0.4); }
+.share-strip { border: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+.share-strip p { font-size: 12px; color: var(--text-2); font-family: var(--serif); }
+.share-btn { font-family: var(--mono); font-size: 11px; color: var(--text-3); background: var(--bg-2); border: 1px solid var(--border-2); padding: 5px 12px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.share-btn:hover { color: var(--amber); border-color: var(--amber-dim); opacity: 1; }
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+  body { background-image:none !important; }
+  body::before { display:none; }
+}
+html[data-theme="light"] { --bg:#f5f2ec;--bg-2:#ede9e0;--bg-3:#e4dfd3;--border:#cdc8bc;--border-2:#b8b2a4;--text:#1c1a16;--text-2:#4a4540;--text-3:#8a847a;--amber:#a06820;--amber-dim:#7a5018;--amber-glow:rgba(160,104,32,0.1);--green:#1d7a3a;--blue:#1a5cb0;--red:#b03030; }
+html[data-theme="light"] body { background-image:none !important; }
+html[data-theme="light"] nav { background: rgba(245,242,236,0.95); }
+html[data-theme="light"] .nav-drawer { background: rgba(245,242,236,0.98); }
+html[data-theme="light"] body::before { display:none; }
+html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#21262d;--border-2:#30363d;--text:#f0ede8;--text-2:#8d96a3;--text-3:#424b57;--amber:#e2b348;--amber-dim:#9b7735;--amber-glow:rgba(226,179,72,0.12);--green:#4ec97b;--blue:#5b9cf6;--red:#e06c75; }
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-2); font-size:13px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; padding:0; flex-shrink:0; line-height:1; }
+.theme-btn:hover { color:var(--amber); border-color:var(--amber-dim); }
+</style>
+<script>(function(){var t=localStorage.getItem("ku-theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+</head>
+<body>
+<div id="reading-progress"></div>
+
+<nav>
+  <div class="nav-logo">kapil<span>.uthra</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">home</a></li>
+    <li><a href="about.html">about</a></li>
+    <li><a href="resume.html">resume</a></li>
+    <li><a href="portfolio.html">portfolio</a></li>
+    <li><a href="blog.html" class="active">blog</a></li>
+    <li><a href="contact.html">contact</a></li>
+  </ul>
+  <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">◐</button>
+  <button class="nav-hamburger" id="nav-btn" onclick="toggleNav()"><span></span><span></span><span></span></button>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a href="index.html">home</a>
+  <a href="about.html">about</a>
+  <a href="resume.html">resume</a>
+  <a href="portfolio.html">portfolio</a>
+  <a href="blog.html" class="active">blog</a>
+  <a href="contact.html">contact</a>
+</div>
+
+<div class="article-wrap">
+
+  <div class="article-back">
+    <a href="blog.html">← blog</a> / AI/RAG · Evaluation
+  </div>
+
+  <div class="article-meta">
+    <div class="article-category">AI/RAG · Evaluation</div>
+    <h1 class="article-title">One Metric to Know If Your OpenText RAG Is Working</h1>
+    <p class="article-subtitle">Five weeks of architecture decisions — hybrid search, metadata indexing, node ID linkage, caching, ACL enforcement. But how do you know any of it is actually working? Most OpenText RAG pipelines go to production with zero evaluation. That's fine until a compliance question surfaces the wrong document.</p>
+    <div class="article-byline">
+      <span>Kapil Uthra</span>
+      <span>May 2026</span>
+      <span>~11 min read</span>
+    </div>
+    <div class="article-tags">
+      <span class="tag">rag</span>
+      <span class="tag">evaluation</span>
+      <span class="tag">metrics</span>
+      <span class="tag">opentext</span>
+      <span class="tag">context-precision</span>
+    </div>
+  </div>
+
+  <div class="article-body">
+
+    <p>You've built the pipeline. Hybrid search merging BM25 and vector results. Metadata indexed from OpenText categories. Node IDs threaded through every chunk so answers cite back to source documents. Three-layer caching. Group-based ACL enforcement on both retrieval paths. It looks right. It feels right. Users aren't complaining — yet.</p>
+
+    <p>Here's the uncomfortable question: <strong>how do you actually know it's working?</strong> Not "no one has complained" working. Not "it returns something" working. How do you know the right chunks are being retrieved, the answers are faithful to the source, and a restricted user isn't quietly seeing documents they shouldn't?</p>
+
+    <p>The answer is evaluation — and the good news is you don't need a full metrics suite to start. You need one metric, run consistently, and one OpenText-specific twist that catches the failure mode most pipelines miss entirely.</p>
+
+    <h2 id="retrieval-vs-generation">Two Failure Modes, One Wrong Answer</h2>
+
+    <p>Before picking a metric, understand what can actually go wrong. RAG has two distinct failure modes, and conflating them is how teams waste weeks tuning the wrong thing.</p>
+
+    <div class="arch-diagram">
+      <div class="arch-title">Where a Wrong Answer Can Come From</div>
+      <div class="arch-flow">
+        <div class="arch-box danger"><div class="arch-label">Retrieval Failure</div><div class="arch-name">wrong chunks fetched</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box"><div class="arch-label">LLM</div><div class="arch-name">generates from bad context</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box danger"><div class="arch-label">Wrong Answer</div><div class="arch-name">fix: retrieval</div></div>
+      </div>
+      <div class="arch-flow" style="margin-top:1rem;">
+        <div class="arch-box"><div class="arch-label">Retrieval OK</div><div class="arch-name">right chunks fetched</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box danger"><div class="arch-label">Generation Failure</div><div class="arch-name">LLM ignores or hallucinates</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box danger"><div class="arch-label">Wrong Answer</div><div class="arch-name">fix: prompt / model</div></div>
+      </div>
+    </div>
+
+    <p>A retrieval failure and a generation failure both produce a wrong answer — but the fix is completely different. Tuning your embedding model won't help if the LLM is ignoring the context it's given. Rewriting your prompt won't help if the retrieval pipeline is pulling the wrong chunks. Without measuring both stages separately, you're debugging blind.</p>
+
+    <div class="compare-grid">
+      <div class="compare-cell">
+        <h4>Retrieval Metrics</h4>
+        <p><strong style="color:var(--amber)">Context Precision</strong> — of the chunks you retrieved, how many were actually relevant?<br><br><strong style="color:var(--amber)">Context Recall</strong> — of all relevant chunks in the corpus, how many did you retrieve?</p>
+      </div>
+      <div class="compare-cell">
+        <h4>Generation Metrics</h4>
+        <p><strong style="color:var(--amber)">Faithfulness</strong> — does the answer only claim things supported by the retrieved chunks?<br><br><strong style="color:var(--amber)">Answer Relevancy</strong> — does the answer actually address what was asked?</p>
+      </div>
+    </div>
+
+    <p>All four matter. But if you're starting from zero, start with one.</p>
+
+    <h2 id="context-precision">The One Metric: Context Precision</h2>
+
+    <p>Context precision asks: of the chunks your pipeline retrieved, what fraction were actually useful for answering the question? It's the fastest signal that your retrieval — chunking strategy, embedding model, hybrid fusion weights — is broken. And it's the easiest to calculate without an LLM-as-judge setup.</p>
+
+    <p>The formula is simple:</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">context_precision.py — calculate retrieval quality</div>
+      <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Callable
+
+@dataclass
+<span class="kw">class</span> <span class="fn">EvalCase</span>:
+    question: str
+    expected_node_ids: list[int]   <span class="cmt"># OTCS DataIDs of relevant source docs</span>
+    retrieved_chunks: list[dict]   <span class="cmt"># output from your pipeline</span>
+
+<span class="kw">def</span> <span class="fn">context_precision</span>(
+    case: EvalCase,
+    relevance_fn: Callable[[dict, EvalCase], bool],
+) -> float:
+    <span class="str">"""
+    Average precision @ k — rewards ranking relevant chunks higher.
+    A score of 1.0 means all retrieved chunks were relevant.
+    A score of 0.3 means most retrieved context is noise.
+    """</span>
+    hits, precision_sum = <span class="num">0</span>, <span class="num">0.0</span>
+    <span class="kw">for</span> i, chunk <span class="kw">in</span> <span class="fn">enumerate</span>(case.retrieved_chunks, <span class="num">1</span>):
+        <span class="kw">if</span> <span class="fn">relevance_fn</span>(chunk, case):
+            hits += <span class="num">1</span>
+            precision_sum += hits / i   <span class="cmt"># precision at position i</span>
+    <span class="kw">return</span> precision_sum / <span class="fn">len</span>(case.retrieved_chunks) <span class="kw">if</span> case.retrieved_chunks <span class="kw">else</span> <span class="num">0.0</span>
+
+<span class="kw">def</span> <span class="fn">node_id_relevance</span>(chunk: dict, case: EvalCase) -> bool:
+    <span class="str">"""Simple relevance: did we retrieve a chunk from an expected source doc?"""</span>
+    <span class="kw">return</span> chunk[<span class="str">"node_id"</span>] <span class="kw">in</span> case.expected_node_ids
+
+<span class="cmt"># Score across your eval set</span>
+<span class="kw">def</span> <span class="fn">mean_context_precision</span>(cases: list[EvalCase]) -> float:
+    scores = [<span class="fn">context_precision</span>(c, <span class="fn">node_id_relevance</span>) <span class="kw">for</span> c <span class="kw">in</span> cases]
+    <span class="kw">return</span> <span class="fn">sum</span>(scores) / <span class="fn">len</span>(scores)</pre>
+    </div>
+
+    <p>Notice the relevance function uses <code>node_id</code> — the OTCS DataID threaded through every chunk in Week 3. This is why node ID preservation matters for more than just citations. Without it, you can't programmatically check whether retrieved chunks came from the right source documents. The architecture decisions compound.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">✓</div>
+      <div><p><strong>What's a good score?</strong> A context precision above 0.7 means most retrieved chunks are relevant — your retrieval is working. Between 0.4 and 0.7 is an area worth investigating: look at which query types underperform. Below 0.4 means retrieval is noisy and generation quality is mostly luck.</p></div>
+    </div>
+
+    <h2 id="eval-set">Building an Eval Set from Real OpenText Queries</h2>
+
+    <p>The eval set is where most teams cut corners and regret it. A generic eval set built from hypothetical questions tells you nothing about your specific OpenText corpus. You need questions that reflect what your users actually search for — drawn from query logs, user interviews, or your own knowledge of the content.</p>
+
+    <p>30–50 question/answer pairs is enough to start. Each case needs:</p>
+
+    <ol>
+      <li>The question — verbatim or close to how a user would phrase it</li>
+      <li>The expected source node IDs — which OTCS documents contain the correct answer</li>
+      <li>Optionally: a reference answer — what the correct response looks like</li>
+    </ol>
+
+    <div class="codeblock">
+      <div class="codeblock-title">eval_set.py — structure of an eval case</div>
+      <pre><span class="cmt"># Each case maps a real user question to the OTCS docs that answer it</span>
+eval_cases = [
+    {
+        <span class="str">"question"</span>: <span class="str">"What is the approval process for capital expenditure above $50,000?"</span>,
+        <span class="str">"expected_node_ids"</span>: [<span class="num">4821993</span>, <span class="num">4822001</span>],  <span class="cmt"># Finance Policy v4 + Approval Matrix</span>
+        <span class="str">"cohort"</span>: <span class="str">"general"</span>,                        <span class="cmt"># which user type should see this</span>
+    },
+    {
+        <span class="str">"question"</span>: <span class="str">"Show me all active contracts with Vendor XYZ"</span>,
+        <span class="str">"expected_node_ids"</span>: [<span class="num">3910244</span>, <span class="num">3910251</span>, <span class="num">3910288</span>],
+        <span class="str">"cohort"</span>: <span class="str">"legal"</span>,
+    },
+    {
+        <span class="str">"question"</span>: <span class="str">"What were the audit findings from Q3?"</span>,
+        <span class="str">"expected_node_ids"</span>: [<span class="num">5103882</span>],
+        <span class="str">"cohort"</span>: <span class="str">"restricted"</span>,                     <span class="cmt"># only certain groups should access this</span>
+    },
+]
+
+<span class="cmt"># Store as JSON — version-control it alongside your pipeline code</span></pre>
+    </div>
+
+    <p>The <code>cohort</code> field is the OpenText-specific addition. It tells you which user type each question belongs to — general access, legal team, restricted finance, and so on. That label is what makes the next step possible.</p>
+
+    <h2 id="cohort-eval">The OpenText Twist: Evaluate Per User Cohort</h2>
+
+    <p>Here's what generic RAG evaluation frameworks miss entirely. OpenText Content Management pipelines have ACL enforcement — different users can access different documents. If your eval always runs as a single user with broad access, you'll never catch the failure mode that matters most in enterprise: <strong>a restricted user retrieving documents they shouldn't see, or failing to retrieve documents they should.</strong></p>
+
+    <p>Run your eval set with (at minimum) two user profiles: a general-access user and a restricted user. Track context precision separately for each. If the scores diverge by more than 20 percentage points, something is wrong.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">cohort_eval.py — run eval per user ticket</div>
+      <pre><span class="kw">async def</span> <span class="fn">run_cohort_eval</span>(
+    eval_cases: list[dict],
+    pipeline,
+    user_tickets: dict[str, str],  <span class="cmt"># {"general": "ticket_a", "legal": "ticket_b", ...}</span>
+) -> dict[str, float]:
+    <span class="str">"""Run eval set under each user cohort. Returns precision per cohort."""</span>
+    results = {}
+
+    <span class="kw">for</span> cohort, ticket <span class="kw">in</span> user_tickets.<span class="fn">items</span>():
+        cohort_cases = [c <span class="kw">for</span> c <span class="kw">in</span> eval_cases <span class="kw">if</span> c[<span class="str">"cohort"</span>] == cohort]
+        <span class="kw">if not</span> cohort_cases:
+            <span class="kw">continue</span>
+
+        scores = []
+        <span class="kw">for</span> case <span class="kw">in</span> cohort_cases:
+            <span class="cmt"># Run the real pipeline — with real ACL enforcement</span>
+            retrieved = <span class="kw">await</span> pipeline.<span class="fn">retrieve</span>(
+                query=case[<span class="str">"question"</span>],
+                user_ticket=ticket,
+            )
+            eval_case = <span class="fn">EvalCase</span>(
+                question=case[<span class="str">"question"</span>],
+                expected_node_ids=case[<span class="str">"expected_node_ids"</span>],
+                retrieved_chunks=retrieved,
+            )
+            scores.<span class="fn">append</span>(<span class="fn">context_precision</span>(eval_case, <span class="fn">node_id_relevance</span>))
+
+        results[cohort] = <span class="fn">sum</span>(scores) / <span class="fn">len</span>(scores)
+        <span class="fn">print</span>(<span class="str">f"cohort={cohort}  precision={results[cohort]:.2f}  n={len(scores)}"</span>)
+
+    <span class="kw">return</span> results
+
+<span class="cmt"># Example output you want to see:
+# cohort=general    precision=0.82  n=30
+# cohort=legal      precision=0.79  n=12
+# cohort=restricted precision=0.81  n=8
+#
+# Example output that flags a problem:
+# cohort=general    precision=0.83  n=30
+# cohort=restricted precision=0.51  n=8  ← >20% divergence — ACL bug</span></pre>
+    </div>
+
+    <p>A >20% divergence between cohorts is a red flag that your ACL enforcement is inconsistent. Either the index was built with incorrect group tags, the group resolver is returning the wrong memberships for certain ticket types, or the metadata store path isn't applying the same filter as the vector store. Any of these will silently degrade the experience for restricted users — the exact people the ACL system was supposed to protect.</p>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠</div>
+      <div><p><strong>Test with your highest-access users too.</strong> A VP or records manager with access to everything is the canary for retrieval quality unconstrained by ACL. If their precision is dramatically higher than a general user on the same questions, your ACL filtering may be cutting too aggressively — discarding relevant chunks that should be accessible.</p></div>
+    </div>
+
+    <h2 id="four-metrics">The Full Metrics Picture</h2>
+
+    <p>Once context precision is stable and you're running it per cohort, add the other three metrics one at a time. Each one requires a bit more infrastructure but tells you something the others can't.</p>
+
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Stage</th>
+          <th>What it catches</th>
+          <th>How to calculate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Context Precision</td>
+          <td>Retrieval</td>
+          <td>Noisy retrieval — irrelevant chunks crowding out relevant ones</td>
+          <td>Average precision @ k against expected node IDs</td>
+        </tr>
+        <tr>
+          <td>Context Recall</td>
+          <td>Retrieval</td>
+          <td>Missed retrieval — relevant chunks exist in corpus but weren't fetched</td>
+          <td>Fraction of expected node IDs present in retrieved set</td>
+        </tr>
+        <tr>
+          <td>Faithfulness</td>
+          <td>Generation</td>
+          <td>Hallucination — answer makes claims not supported by retrieved chunks</td>
+          <td>LLM-as-judge: does each claim in the answer appear in context?</td>
+        </tr>
+        <tr>
+          <td>Answer Relevancy</td>
+          <td>Generation</td>
+          <td>Off-topic answers — LLM answered a different question than was asked</td>
+          <td>LLM-as-judge or embedding cosine similarity of Q vs answer</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Context recall is the natural complement to precision. Precision says "are the chunks you fetched good?" Recall says "are you missing good chunks?" A pipeline with high precision but low recall is finding relevant content when it retrieves anything, but often not retrieving enough — a chunking or embedding problem. A pipeline with high recall but low precision is casting a wide net and letting the LLM sort it out — a fusion or re-ranking problem.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ</div>
+      <div><p><strong>Faithfulness and answer relevancy both need an LLM judge,</strong> which adds cost and latency to your eval pipeline. Start with the retrieval metrics (precision and recall), which are purely deterministic and cheap. Add the generation metrics once retrieval is stable — otherwise you're evaluating a moving target.</p></div>
+    </div>
+
+    <h2 id="ci-gate">Make It a CI Gate, Not a Launch Checklist</h2>
+
+    <p>Evaluation run once at launch is nearly useless. The OpenText corpus changes. Users add documents, restructure workspaces, update categories. Your pipeline evolves — chunking strategy, fusion weights, a model swap. Each change can silently degrade retrieval quality, and you won't know until a user surfaces the wrong document in a compliance review.</p>
+
+    <p>The right cadence is to run your eval set on every significant pipeline change and on a weekly schedule regardless of changes. That weekly run is your drift detector.</p>
+
+    <div class="codeblock">
+      <div class="codeblock-title">eval_runner.py — weekly scheduled eval with drift detection</div>
+      <pre><span class="kw">import</span> json, datetime
+
+<span class="kw">async def</span> <span class="fn">run_weekly_eval</span>(pipeline, eval_cases, user_tickets, store):
+    results = <span class="kw">await</span> <span class="fn">run_cohort_eval</span>(eval_cases, pipeline, user_tickets)
+    timestamp = datetime.datetime.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>()
+
+    <span class="cmt"># Persist results — compare against previous run</span>
+    previous = store.<span class="fn">get_latest</span>()
+    entry = {<span class="str">"timestamp"</span>: timestamp, <span class="str">"scores"</span>: results}
+    store.<span class="fn">save</span>(entry)
+
+    <span class="kw">if</span> previous:
+        <span class="kw">for</span> cohort, score <span class="kw">in</span> results.<span class="fn">items</span>():
+            prev_score = previous[<span class="str">"scores"</span>].<span class="fn">get</span>(cohort, score)
+            delta = score - prev_score
+            <span class="kw">if</span> delta < -<span class="num">0.10</span>:  <span class="cmt"># >10% drop vs last week</span>
+                <span class="fn">alert</span>(<span class="str">f"PRECISION DROP: {cohort} {prev_score:.2f} → {score:.2f} ({delta:+.2f})"</span>)
+
+    <span class="kw">return</span> results
+
+<span class="cmt"># Structural changes that should trigger an immediate eval run:
+# - new chunking strategy or chunk size
+# - changed embedding model
+# - modified hybrid fusion weights
+# - OpenText Category restructure (changes metadata store records)
+# - new ACL group added or permission scope changed</span></pre>
+    </div>
+
+    <p>A 10% precision drop week-over-week is a meaningful signal. It doesn't mean something catastrophically broke — it might be a new batch of documents with different formatting, or a category rename that broke your metadata filters. But it's worth investigating before users notice.</p>
+
+    <h2 id="closing">The Discipline Matters More Than the Dashboard</h2>
+
+    <p>This series started with hybrid search — the architecture decision that makes retrieval work across structured and unstructured queries. It ends with evaluation — the discipline that tells you whether the architecture is actually delivering.</p>
+
+    <p>You don't need a full observability platform to start. You need:</p>
+
+    <ul>
+      <li>30–50 real queries drawn from your OpenText use case, tagged with expected source node IDs</li>
+      <li>Context precision calculated against that ground truth, run per user cohort</li>
+      <li>A weekly scheduled run with a simple drift alert</li>
+    </ul>
+
+    <p>That's enough to catch the most common failures — noisy retrieval, ACL inconsistency, and silent degradation as the corpus evolves. Everything else is refinement on top of that foundation.</p>
+
+    <p><strong>Measure context precision. Run it per cohort. Alert on drift. That's the evaluation habit that turns an OpenText RAG pipeline from "it seems to work" into "we know it works."</strong></p>
+
+    <hr class="section-divider">
+
+    <div class="share-strip">
+      <p>Found this useful? Share it with your team.</p>
+      <a class="share-btn" id="share-li" href="#" target="_blank" rel="noopener">Share on LinkedIn</a>
+      <button class="share-btn" id="copy-link">⧉ Copy link</button>
+    </div>
+
+    <div class="article-footer">
+      <h4>Related Reading</h4>
+      <div class="related-posts">
+        <a href="blog-rag-hybrid-search.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Architecture</div>
+          <div class="related-post-title">Why Vector-Only Search Fails in Enterprise ECM — and How Hybrid Search Fixes It</div>
+        </a>
+        <a href="blog-rag-acl-query-time.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Security</div>
+          <div class="related-post-title">ACL Enforcement in OpenText RAG: Protecting Both Retrieval Paths</div>
+        </a>
+        <a href="blog-rag-node-id-preservation.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Implementation</div>
+          <div class="related-post-title">Node ID Preservation: The Link Back to OpenText That Most RAG Pipelines Break</div>
+        </a>
+        <a href="blog-rag-retrieval-cache.html" class="related-post">
+          <div class="related-post-cat">AI/RAG · Performance</div>
+          <div class="related-post-title">Caching in OpenText RAG: Skip the Pipeline, Not Just the Fetch</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>$ © 2026 Kapil Uthra</span>
+  <span><a href="https://linkedin.com/in/kapiluthra" target="_blank">linkedin</a> · <a href="https://github.com/kapiluthra" target="_blank">github</a> · <a href="https://dev.to/kapiluthra" target="_blank">dev.to</a></span>
+</footer>
+
+<script>
+function toggleNav() {
+  document.getElementById('nav-btn').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('nav-btn');
+  var drawer = document.getElementById('nav-drawer');
+  if (btn && drawer && !btn.contains(e.target) && !drawer.contains(e.target)) {
+    btn.classList.remove('open');
+    drawer.classList.remove('open');
+  }
+});
+</script>
+<script>
+window.addEventListener('scroll', function() {
+  var el = document.getElementById('reading-progress');
+  var docH = document.documentElement.scrollHeight - window.innerHeight;
+  el.style.width = docH > 0 ? (window.scrollY / docH * 100) + '%' : '0%';
+});
+(function() {
+  var url = 'https://kapiluthra.github.io/blog-rag-eval-metrics.html';
+  document.getElementById('share-li').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url);
+  document.getElementById('copy-link').addEventListener('click', function() {
+    navigator.clipboard.writeText(url).then(function() {
+      var b = document.getElementById('copy-link');
+      b.textContent = '✓ Copied';
+      b.classList.add('copied');
+      setTimeout(function() { b.textContent = '⧉ Copy link'; b.classList.remove('copied'); }, 2000);
+    });
+  });
+})();
+document.querySelectorAll('.codeblock').forEach(function(block) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codeblock-wrap';
+  block.parentNode.insertBefore(wrap, block);
+  wrap.appendChild(block);
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'copy';
+  btn.addEventListener('click', function() {
+    var code = block.querySelector('pre').innerText;
+    navigator.clipboard.writeText(code).then(function() {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+  wrap.appendChild(btn);
+});
+var themeBtn = document.getElementById('theme-btn');
+themeBtn.addEventListener('click', function() {
+  var current = document.documentElement.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ku-theme', next);
+  themeBtn.textContent = next === 'dark' ? '◐' : '◑';
+});
+var storedTheme = localStorage.getItem('ku-theme') || 'light';
+themeBtn.textContent = storedTheme === 'dark' ? '◐' : '◑';
+</script>
+</body>
+</html>

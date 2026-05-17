@@ -264,11 +264,22 @@ html[data-theme="dark"] { --bg:#090c12;--bg-2:#0d1117;--bg-3:#13191f;--border:#2
     <div class="post-item" data-cat="tutorials">
       <div class="post-date">May 2026</div>
       <div class="post-body">
-        <div class="post-category">AI/RAG · Security</div>
-        <div class="post-title"><a href="blog-rag-acl-query-time.html">ACL Enforcement: Index Time vs Query Time in OpenText RAG</a></div>
-        <div class="post-desc">Post-retrieval ACL filtering is a trap: you retrieve inaccessible content, waste 900ms, and return weak answers to the users who need the system most. Here's why early enforcement wins — and how cached ACL resolution removes the performance objection.</div>
-        <div class="post-tags"><span class="tag">rag</span><span class="tag">acl</span><span class="tag">security</span><span class="tag">opentext</span></div>
+        <div class="post-category">AI/RAG · Evaluation</div>
+        <div class="post-title"><a href="blog-rag-eval-metrics.html">One Metric to Know If Your OpenText RAG Is Working</a></div>
+        <div class="post-desc">Most OpenText RAG pipelines go to production with zero evaluation. Start with context precision — the fastest signal that retrieval is broken — and run it per user cohort to catch ACL inconsistencies before a compliance review does.</div>
+        <div class="post-tags"><span class="tag">rag</span><span class="tag">evaluation</span><span class="tag">metrics</span><span class="tag">opentext</span></div>
         <div class="post-read">~11 min read</div>
+      </div>
+    </div>
+
+    <div class="post-item" data-cat="tutorials">
+      <div class="post-date">May 2026</div>
+      <div class="post-body">
+        <div class="post-category">AI/RAG · Security</div>
+        <div class="post-title"><a href="blog-rag-acl-query-time.html">ACL Enforcement in OpenText RAG: Protecting Both Retrieval Paths</a></div>
+        <div class="post-desc">Hybrid search means two retrieval paths — vector and keyword. A VP with a million documents breaks naive node_id filtering on either one. The fix: store acl_group_id in both stores, filter on group sets, merge with RRF, then re-verify top-k.</div>
+        <div class="post-tags"><span class="tag">rag</span><span class="tag">acl</span><span class="tag">security</span><span class="tag">opentext</span><span class="tag">hybrid-search</span></div>
+        <div class="post-read">~12 min read</div>
       </div>
     </div>
 
